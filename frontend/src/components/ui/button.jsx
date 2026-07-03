@@ -1,27 +1,27 @@
 import { forwardRef } from 'react';
 
 const Button = forwardRef(({
-    // ===== VARIAÇÕES =====
+    // VARIAÇÕES
     variant = 'primary',     // primary | secondary | danger | success | outline
     
-    // ===== TAMANHOS =====
+    // TAMANHOS
     size = 'md',            // sm | md | lg
     
-    // ===== ESTADOS =====
+    // ESTADOS
     disabled = false,
     loading = false,
     
-    // ===== TIPO =====
+    // TIPO
     type = 'button',        // button | submit | reset
     
-    // ===== ÍCONES =====
+    // ÍCONES
     leftIcon = null,
     rightIcon = null,
     
-    // ===== FUNÇÕES =====
+    // FUNÇÕES
     onClick = null,
     
-    // ===== OUTROS =====
+    // OUTROS
     className = '',
     children,
     ...props

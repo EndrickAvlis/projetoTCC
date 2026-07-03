@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ===== SEU DESIGN SYSTEM COM @theme ===== */
+
 @theme {
   /* Cores */
   --color-primary: #0A2647;
