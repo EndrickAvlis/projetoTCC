@@ -1,5 +1,5 @@
-import Button from "../ui/button";
-import ListLine from "../parts/listLine";
+import Button from "../ui/Button";
+import ListLine from "../parts/ListLine";
 
 // Componente puramente visual - não precisa de alterações para o backend
 // Apenas repassa props para os filhos
@@ -14,11 +14,8 @@ const SidePostos = ({
   onRechamar,
   onCancelar,
 }) => {
-  // TODO: Remover - log de debug
-  console.log("SidePostos - senhaAtual:", senhaAtual);
-  
   return (
-    <div className="w-70 h-screen bg-white border-r border-border flex flex-col">
+    <div className="w-80 h-screen bg-white border-r border-border flex flex-col ">
       {/* Contador */}
       <div className="p-4 border-b border-border bg-background flex flex-col items-center justify-center gap-1">
         <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">

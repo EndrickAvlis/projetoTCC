@@ -1,0 +1,27 @@
+import Button from "../ui/Button";
+import { MdLogout } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
+
+const Header = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    //TODO: Chamada do backend e limpeza do navegador
+    navigate("/");
+  };
+
+  return (
+    <header className="w-full h-14 bg-primary text-white px-6 flex justify-end">
+      <Button
+        variant="secondary"
+        onClick={handleLogout}
+        className="bg-transparent text-white px-5 hover:bg-white hover:text-primary"
+        leftIcon={<MdLogout />}
+      >
+        Sair
+      </Button>
+    </header>
+  );
+};
+
+export default Header;
