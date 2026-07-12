@@ -15,7 +15,7 @@ export const useSelectsTriagem = () => {
     { value: "manha", label: "Manhã" },
     { value: "tarde", label: "Tarde" },
     { value: "noite", label: "Noite" },
-    { value: "periodo", label: "Período" },
+    { value: "integral", label: "Integral" },
   ];
 
   useEffect(() => {
@@ -31,11 +31,10 @@ export const useSelectsTriagem = () => {
       { value: "Protese", label: "Prótese Dentária" },
     ];
 
-    // Simula um pequeno delay de rede de 500ms
     const timer = setTimeout(() => {
       setCursos(cursosMock);
       setCarregandoCursos(false);
-    }, 500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);

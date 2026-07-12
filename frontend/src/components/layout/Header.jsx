@@ -11,11 +11,11 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full h-14 bg-primary text-white px-6 flex justify-end">
+    <header className="w-full h-14 bg-primary text-white px-6 flex justify-end items-center">
       <Button
         variant="secondary"
         onClick={handleLogout}
-        className="bg-transparent text-white px-5 hover:bg-white hover:text-primary"
+        className="bg-transparent text-white max-h-10 px-5 hover:bg-primary-light"
         leftIcon={<MdLogout />}
       >
         Sair

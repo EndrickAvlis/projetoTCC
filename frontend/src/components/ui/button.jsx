@@ -43,7 +43,7 @@ const Button = forwardRef(({
         lg: 'px-6 py-3 text-lg',
     };
 
-    // ===== BASE (estilos comuns a todos) =====
+    // ===== BASE =====
     const baseStyles = `
         inline-flex items-center justify-center
         font-medium rounded-btn

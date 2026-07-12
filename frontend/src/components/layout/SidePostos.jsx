@@ -1,8 +1,6 @@
 import Button from "../ui/Button";
-import ListLine from "../parts/ListLine";
+import ListLine from "../common/ListLine";
 
-// Componente puramente visual - não precisa de alterações para o backend
-// Apenas repassa props para os filhos
 const SidePostos = ({
   pessoasEsperando,
   proximasSenhas,
@@ -15,10 +13,10 @@ const SidePostos = ({
   onCancelar,
 }) => {
   return (
-    <div className="w-80 h-screen bg-white border-r border-border flex flex-col ">
+    <div className="w-90 h-screen bg-white border-r border-border flex flex-col ">
       {/* Contador */}
       <div className="p-4 border-b border-border bg-background flex flex-col items-center justify-center gap-1">
-        <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">
+        <p className="text-[0.9rem] text-gray-500 font-medium tracking-wide uppercase">
           Aguardando
         </p>
         <p className="text-3xl font-bold text-primary">{pessoasEsperando}</p>
@@ -35,17 +33,28 @@ const SidePostos = ({
 
       {/* Botões */}
       <div className="p-4 border-t border-border flex flex-col gap-2">
-        <Button variant="primary" onClick={onChamar} disabled={!podeChamar}>
+        <Button
+          variant="primary"
+          onClick={onChamar}
+          disabled={!podeChamar}
+          size="lg"
+        >
           Chamar
         </Button>
         <Button
           variant="secondary"
           onClick={onRechamar}
           disabled={!podeRechamar}
+          size="lg"
         >
           Rechamar
         </Button>
-        <Button variant="danger" onClick={onCancelar} disabled={!podeCancelar}>
+        <Button
+          variant="danger"
+          onClick={onCancelar}
+          disabled={!podeCancelar}
+          size="lg"
+        >
           Encerrar
         </Button>
       </div>

@@ -8,8 +8,9 @@
   --color-background: #F2F2F2;
   --color-border: #CCCCCC;
   
-  --color-success-text: #2A941F;
-  --color-success-bg: #DCFFD5;
+  --color-success-strong: #2A941F;
+  --color-success-hover: #1b6914;
+  --color-success-light: #9bcf97;
   
   --color-danger-text: #FF3131;
   --color-danger-bg: #FFC9C9;

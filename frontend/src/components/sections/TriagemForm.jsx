@@ -5,6 +5,8 @@ import { IoMdSearch } from "react-icons/io";
 import { useState } from "react";
 import { useAtendimento } from "../../context/atendimentoContext";
 import { useSelectsTriagem } from "../../hooks/useSelectsTriagem";
+import FormaterCpf from "../../utils/formatters";
+import AtendimentoActions from "../common/AtendimentoActions";
 
 const TriagemForm = ({ finalizarSenha }) => {
   const {
@@ -15,30 +17,94 @@ const TriagemForm = ({ finalizarSenha }) => {
     dados,
     setDados,
   } = useAtendimento();
+
   const [inicioAtendimento, setInicioAtendimento] = useState(null);
   const { anos, periodos, cursos, carregandoCursos } = useSelectsTriagem();
-  const isDisabled = !dados.cpf || !dados.nome || !dados.curso || !dados.ano || !dados.periodo;
+
+  const SIZE = "lg";
+
+  const isDisabled =
+    !dados.cpf || !dados.nome || !dados.curso || !dados.ano || !dados.periodo;
 
   // TODO: Requisição para back.
-  const handleBuscar = () => {
-    console.log("Buscar CPF:", dados.cpf);
+  const handleBuscar = async () => {
+    if (!dados.cpf) return;
+
+    const cpfLimpo = dados.cpf.replace(/\D/g, "");
+    console.log("Buscando no banco o CPF:", cpfLimpo);
+
+    try {
+      //*matriculasMock deve ser substituido pela resposta do backend
+      const matriculasMock = [
+        {
+          nome: "Jefferson Silva Costa",
+          curso: "DS",
+          ano: "2",
+          periodo: "manha",
+        },
+        {
+          nome: "Jefferson Silva Costa",
+          curso: "Edif",
+          ano: "1",
+          periodo: "noite",
+        },
+      ];
+
+      //Sem matriculas
+      if (matriculasMock.length === 0) {
+        alert(
+          "Aluno não encontrado. Prossiga preenchendo os dados para cadastro manual.",
+        );
+        setDados((prev) => ({
+          ...prev,
+          nome: "",
+          curso: "",
+          ano: "",
+          periodo: "",
+        }));
+        return;
+      }
+
+      //Uma matricula
+      if (matriculasMock.length === 1) {
+        setDados({
+          cpf: dados.cpf,
+          ...matriculasMock[0],
+        });
+        return;
+      }
+
+      //Mais de uma matricula
+      alert(
+        "Aluno possui mais de um curso ativo! Selecione o Curso, Ano e Período corretos abaixo.",
+      );
+      setDados((prev) => ({
+        ...prev,
+        nome: matriculasMock[0].nome,
+        curso: "",
+        ano: "",
+        periodo: "",
+      }));
+    } catch (error) {
+      console.error("Erro ao processar busca de aluno no frontend:", error);
+    }
   };
 
-  // TODO: Fazer a fomatação correta dos dados e se eles estão preenchidos
   const formValido =
     dados.cpf && dados.nome && dados.curso && dados.ano && dados.periodo;
 
-  // TODO: Requisição para back.
   const handleFinalizar = () => {
     if (!formValido) return;
 
     const payload = {
       senha: senhaAtual,
       aluno: dados,
-      // TODO: A data de inicio deve vir ao apertar inciar atendimento
       inicio: inicioAtendimento,
       fim: new Date(),
     };
+
+    console.log(payload);
+
     finalizarSenha(senhaAtual);
     setAtendendo(false);
     setSenhaAtual(null);
@@ -52,25 +118,28 @@ const TriagemForm = ({ finalizarSenha }) => {
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg border border-border w-full max-w-5xl min-h-125 flex flex-col gap-6">
+    <div className="bg-white p-8 rounded-lg border border-border w-full max-w-5xl min-h-[500px] flex flex-col gap-6">
       {/* CPF + botão */}
       <div className="flex items-end gap-2 mb-4">
         <Input
           label="CPF do Aluno"
           value={dados.cpf}
           onChange={(e) => {
-            setDados((prev) => ({ ...prev, cpf: e.target.value }));
+            setDados((prev) => ({ ...prev, cpf: FormaterCpf(e.target.value) }));
           }}
           disabled={!atendendo}
           placeholder="000.000.000-00"
           className="flex-1"
-          required
+          maxLength={14}
+          size={SIZE}
         />
+
         <Button
           variant="secondary"
           onClick={handleBuscar}
-          className="h-10.5 px-3"
+          className="h-13.5 px-3"
           disabled={!dados.cpf}
+          size={SIZE}
         >
           <IoMdSearch size={20} />
         </Button>
@@ -86,7 +155,7 @@ const TriagemForm = ({ finalizarSenha }) => {
           }}
           disabled={!atendendo}
           placeholder="Nome completo"
-          required
+          size={SIZE}
         />
       </div>
 
@@ -103,7 +172,7 @@ const TriagemForm = ({ finalizarSenha }) => {
             carregandoCursos ? "Carregando cursos..." : "Selecione o curso..."
           }
           options={cursos}
-          required
+          size={SIZE}
         />
       </div>
 
@@ -119,8 +188,9 @@ const TriagemForm = ({ finalizarSenha }) => {
           placeholder="Ano..."
           options={anos}
           className="flex-1"
-          required
+          size={SIZE}
         />
+
         <Select
           label="Período"
           value={dados.periodo}
@@ -131,31 +201,15 @@ const TriagemForm = ({ finalizarSenha }) => {
           placeholder="Período..."
           options={periodos}
           className="flex-1"
-          required
+          size={SIZE}
         />
       </div>
 
       {/* Botões */}
-      <div className="flex gap-4 justify-between">
-        <Button
-          className="bg-[#7A8797] text-white hover:bg-[#6b7785]"
-          disabled={!senhaAtual || atendendo}
-          onClick={() => {
-            setAtendendo(true);
-            setInicioAtendimento(new Date());
-          }}
-        >
-          Iniciar Atendimento
-        </Button>
-
-        <Button
-          className="bg-[#7A8797] text-white hover:bg-[#6b7785]"
-          disabled={!atendendo || isDisabled}
-          onClick={handleFinalizar}
-        >
-          Finalizar Atendimento
-        </Button>
-      </div>
+          <AtendimentoActions
+          onIniciar={() => setAtendendo(true)}
+          onFinalizar={handleFinalizar}
+          />
     </div>
   );
 };

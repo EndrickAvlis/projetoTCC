@@ -33,7 +33,7 @@ export const useFila = () => {
         numero: "A009",
         horario: "10:15",
         status: "aguardando",
-        etapa: "triagem",
+        etapa: "docs",
       },
       {
         numero: "A0010",
@@ -79,6 +79,31 @@ export const useFila = () => {
     );
   };
 
+  const avancarSenha = (senhaAtual) => {
+    if (!senhaAtual) return;
+
+    let proximaEtapa = null;
+
+    if (senhaAtual.etapa === "triagem") proximaEtapa = "apm";
+    else if (senhaAtual.etapa === "apm") proximaEtapa = "docs";
+
+    if (!proximaEtapa) return;
+
+    console.log(`➡️ Avançando ${senhaAtual.numero} para ${proximaEtapa}`);
+
+    setFila((prev) =>
+      prev.map((s) =>
+        s.numero === senhaAtual.numero
+          ? {
+              ...s,
+              status: "aguardando",
+              etapa: proximaEtapa,
+            }
+          : s,
+      ),
+    );
+  };
+
   //TODO: O finalizar vai mudar o status e a etapa da senha passando para a proxima
   // TODO no futuro vai ter alguma forma de saber para qual etapa a senha vai.
   const finalizarSenha = (senhaAtual) => {
@@ -100,5 +125,6 @@ export const useFila = () => {
     chamarSenha,
     cancelarSenha,
     finalizarSenha,
+    avancarSenha,
   };
 };
