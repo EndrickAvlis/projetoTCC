@@ -11,6 +11,9 @@ const Select = forwardRef(
       options = [],
       placeholder = "Selecione...",
 
+      // TAMANHO
+      size = "md", // sm | md | lg
+
       // VALOR
       value = "",
       onChange = null,
@@ -33,10 +36,14 @@ const Select = forwardRef(
   ) => {
     // ID automático
     const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
-
+    const sizes = {
+      sm: "px-3 py-1.5 text-sm",
+      md: "px-4 py-2 text-base",
+      lg: "px-6 py-3 text-lg",
+    };
     // ESTILOS BASE
     const baseSelectStyles = `
-        w-full px-4 py-2 pr-10
+        w-full ${sizes[size]} pr-10
         border border-border
         rounded-btn
         text-body text-gray-800
@@ -95,9 +102,7 @@ const Select = forwardRef(
             {...props}
           >
             {/* PLACEHOLDER */}
-            {placeholder && <option value="">
-              {placeholder}
-            </option>}
+            {placeholder && <option value="">{placeholder}</option>}
 
             {/* OPÇÕES */}
             {options.map((option) => (

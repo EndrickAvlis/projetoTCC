@@ -1,11 +1,11 @@
 import { useState } from "react";
-import Button from "../components/ui/button";
-import Input from "../components/ui/input";
-import Select from "../components/ui/select";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
 import { FaUser, FaLock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-export default function Login() {
+const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [senha, setSenha] = useState("");
   const [funcao, setFuncao] = useState("");
@@ -63,7 +63,6 @@ export default function Login() {
             onChange={(e) => setUsername(e.target.value)}
             icon={<FaUser className="text-primary" />}
             iconPosition="left"
-            required
           />
 
           <Input
@@ -74,7 +73,6 @@ export default function Login() {
             onChange={(e) => setSenha(e.target.value)}
             icon={<FaLock className="text-primary" />}
             iconPosition="left"
-            required
           />
 
           <div className="flex gap-4 items-end">
@@ -84,7 +82,7 @@ export default function Login() {
               options={users}
               value={funcao}
               onChange={(e) => setFuncao(e.target.value)}
-              required
+
               id="funcao"
             />
 
@@ -96,7 +94,7 @@ export default function Login() {
                   placeholder="Digite"
                   value={guiche}
                   onChange={(e) => setGuiche(e.target.value)}
-                  required
+    
                 />
               </div>
             )}
@@ -115,3 +113,4 @@ export default function Login() {
     </div>
   );
 }
+export default LoginPage;
