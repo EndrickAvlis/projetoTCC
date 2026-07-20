@@ -4,16 +4,20 @@
 @theme {
   /* Cores */
   --color-primary: #0A2647;
+  --color-primary-strong: #041529;
   --color-primary-light: #1A3A6B;
   --color-background: #F2F2F2;
   --color-border: #CCCCCC;
   
-  --color-success-strong: #2A941F;
+  --color-success: #2A941F;
+  --color-success-strong: #15570e;
   --color-success-hover: #1b6914;
   --color-success-light: #9bcf97;
   
-  --color-danger-text: #FF3131;
-  --color-danger-bg: #FFC9C9;
+  --color-danger: #FF3131;
+  --color-danger-strong: #4d0909;
+  --color-danger-hover: #851515;
+  --color-danger-light: #FFC9C9;
   
   /* Arredondamentos */
   --radius-btn: 6px;
