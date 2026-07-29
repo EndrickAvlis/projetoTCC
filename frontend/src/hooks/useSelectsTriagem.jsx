@@ -1,48 +1,37 @@
-import { useState, useEffect } from "react";
+// Carrega os cursos da API e combina com os anos e períodos fixos do sistema.
+import { useEffect, useState } from "react";
+import { ANOS_CURSO, PERIODOS_CURSO } from "../constants/cursoOptions";
+import { listarCursos } from "../services/triagemService";
 
 export const useSelectsTriagem = () => {
   const [cursos, setCursos] = useState([]);
   const [carregandoCursos, setCarregandoCursos] = useState(true);
-
-  // Dados fixos de infraestrutura (não mudam com frequência)
-  const anos = [
-    { value: 1, label: "1º" },
-    { value: 2, label: "2º" },
-    { value: 3, label: "3º" },
-  ];
-
-  const periodos = [
-    { value: "manha", label: "Manhã" },
-    { value: "tarde", label: "Tarde" },
-    { value: "noite", label: "Noite" },
-    { value: "integral", label: "Integral" },
-  ];
+  const [erroCursos, setErroCursos] = useState(null);
 
   useEffect(() => {
-    // FUTURO BACKEND:
-    // fetch('/api/cursos')
-    //   .then(res => res.json())
-    //   .then(data => { setCursos(data); setCarregandoCursos(false); })
+    let ativo = true;
 
-    const cursosMock = [
-      { value: "DS", label: "Desenvolvimento de Sistemas" },
-      { value: "Edif", label: "Edificações" },
-      { value: "Meca", label: "Mecatrônica" },
-      { value: "Protese", label: "Prótese Dentária" },
-    ];
+    const carregarCursos = async () => {
+      try {
+        const catalogo = await listarCursos();
+        if (ativo) setCursos(catalogo);
+      } catch (erro) {
+        if (ativo) setErroCursos(erro.message);
+      } finally {
+        if (ativo) setCarregandoCursos(false);
+      }
+    };
 
-    const timer = setTimeout(() => {
-      setCursos(cursosMock);
-      setCarregandoCursos(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    carregarCursos();
+    return () => { ativo = false; };
   }, []);
 
   return {
-    anos,
-    periodos,
     cursos,
+    anos: ANOS_CURSO,
+    periodos: PERIODOS_CURSO,
     carregandoCursos,
+    catalogoDisponivel: cursos.length > 0,
+    erroCursos,
   };
 };

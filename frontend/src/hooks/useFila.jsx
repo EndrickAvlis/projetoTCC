@@ -1,130 +1,78 @@
-import { useState, useEffect } from "react";
+// Hook da fila: mantém na tela os dados retornados pelo filaService.
+import { useCallback, useEffect, useState } from "react";
+import {
+  cancelarSenha,
+  chamarProximaSenha,
+  listarFila,
+  rechamarSenha,
+} from "../services/filaService";
 
-export const useFila = () => {
-  const [fila, setFila] = useState([]);
+export const useFila = (etapa) => {
+  const [senhasAguardando, setSenhasAguardando] = useState([]);
+  const [carregandoFila, setCarregandoFila] = useState(true);
+  const [erroFila, setErroFila] = useState(null);
 
-  // * mock inicial (depois vira API)
-  useEffect(() => {
-    const dadosIniciais = [
-      {
-        numero: "A001",
-        horario: "10:00",
-        status: "aguardando",
-        etapa: "triagem",
-      },
-      {
-        numero: "A002",
-        horario: "10:05",
-        status: "aguardando",
-        etapa: "triagem",
-      },
-      {
-        numero: "A003",
-        horario: "10:10",
-        status: "aguardando",
-        etapa: "triagem",
-      },
-      { numero: "A004", horario: "10:15", status: "aguardando", etapa: "apm" },
-      { numero: "A005", horario: "10:20", status: "aguardando", etapa: "apm" },
-      { numero: "A006", horario: "10:00", status: "aguardando", etapa: "docs" },
-      { numero: "A007", horario: "10:05", status: "aguardando", etapa: "apm" },
-      { numero: "A008", horario: "10:10", status: "aguardando", etapa: "docs" },
-      {
-        numero: "A009",
-        horario: "10:15",
-        status: "aguardando",
-        etapa: "docs",
-      },
-      {
-        numero: "A0010",
-        horario: "10:20",
-        status: "aguardando",
-        etapa: "docs",
-      },
-    ];
-
-    setFila(dadosIniciais);
-  }, []);
-
-  const senhasAguardando = fila.filter((s) => s.status === "aguardando");
-
-  const chamarSenha = () => {
-    if (senhasAguardando.length === 0) {
-      console.log("Sem senhas");
-      return null;
+  const carregarFila = useCallback(async () => {
+    try {
+      setCarregandoFila(true);
+      setSenhasAguardando(await listarFila(etapa));
+      setErroFila(null);
+    } catch (erro) {
+      setErroFila(erro.message);
+      setSenhasAguardando([]);
+    } finally {
+      setCarregandoFila(false);
     }
+  }, [etapa]);
 
-    const proxima = senhasAguardando[0];
+  useEffect(() => {
+    let ativo = true;
 
-    console.log("Chamando:", proxima.numero);
+    // A primeira consulta respeita o ciclo de vida da tela para evitar atualizações tardias.
+    listarFila(etapa)
+      .then((senhas) => {
+        if (!ativo) return;
+        setSenhasAguardando(senhas);
+        setErroFila(null);
+      })
+      .catch((erro) => {
+        if (!ativo) return;
+        setErroFila(erro.message);
+        setSenhasAguardando([]);
+      })
+      .finally(() => {
+        if (ativo) setCarregandoFila(false);
+      });
 
-    //TODO: Mudança será feita pelo back
-    setFila((prev) =>
-      prev.map((s) =>
-        s.numero === proxima.numero ? { ...s, status: "em_atendimento" } : s,
-      ),
+    return () => {
+      ativo = false;
+    };
+  }, [etapa]);
+
+  const chamar = async () => {
+    const senha = await chamarProximaSenha(etapa);
+    setSenhasAguardando((atuais) =>
+      atuais.filter((item) => item.id !== senha?.id),
     );
-
-    return proxima;
+    return senha;
   };
 
-  const cancelarSenha = (senhaAtual) => {
-    console.log("Cancelando:", senhaAtual?.numero);
+  const rechamar = (senhaId) => rechamarSenha(senhaId);
 
-    //TODO: Mudança será feita pelo back
-    setFila((prev) =>
-      prev.map((s) =>
-        s.numero === senhaAtual.numero ? { ...s, status: "cancelada" } : s,
-      ),
-    );
-  };
-
-  const avancarSenha = (senhaAtual) => {
-    if (!senhaAtual) return;
-
-    let proximaEtapa = null;
-
-    if (senhaAtual.etapa === "triagem") proximaEtapa = "apm";
-    else if (senhaAtual.etapa === "apm") proximaEtapa = "docs";
-
-    if (!proximaEtapa) return;
-
-    console.log(`➡️ Avançando ${senhaAtual.numero} para ${proximaEtapa}`);
-
-    setFila((prev) =>
-      prev.map((s) =>
-        s.numero === senhaAtual.numero
-          ? {
-              ...s,
-              status: "aguardando",
-              etapa: proximaEtapa,
-            }
-          : s,
-      ),
-    );
-  };
-
-  //TODO: O finalizar vai mudar o status e a etapa da senha passando para a proxima
-  // TODO no futuro vai ter alguma forma de saber para qual etapa a senha vai.
-  const finalizarSenha = (senhaAtual) => {
-    console.log("Finalizada:", senhaAtual?.numero);
-
-    //TODO: Mudança será feita pelo back
-    setFila((prev) =>
-      prev.map((s) =>
-        s.numero === senhaAtual.numero
-          ? { ...s, status: "finalizada", etapa: "apm" }
-          : s,
-      ),
-    );
+  const cancelar = async (senhaId, motivo) => {
+    const senha = await cancelarSenha(senhaId, motivo);
+    await carregarFila();
+    return senha;
   };
 
   return {
-    fila,
     senhasAguardando,
-    chamarSenha,
-    cancelarSenha,
-    finalizarSenha,
-    avancarSenha,
+    carregandoFila,
+    erroFila,
+    limparErroFila: () => setErroFila(null),
+    carregarFila,
+    chamar,
+    rechamar,
+    cancelar,
   };
 };

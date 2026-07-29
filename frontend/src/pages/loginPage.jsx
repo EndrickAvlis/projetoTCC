@@ -1,45 +1,56 @@
+// Tela de login: envia credenciais e registra a sessão retornada pela API.
 import { useState } from "react";
+import { FaLock, FaUser } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
-import { FaUser, FaLock } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { autenticar } from "../services/authService";
+
+const TELAS = [
+  { value: "admin", label: "Administrador" },
+  { value: "secretaria", label: "Secretaria" },
+  { value: "triagem", label: "Triagem" },
+  { value: "apm", label: "APM" },
+  { value: "docs", label: "Docs" },
+];
+
+const TELAS_COM_GUICHE = ["triagem", "apm", "docs"];
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [senha, setSenha] = useState("");
-  const [funcao, setFuncao] = useState("");
-  const [erro, setErro] = useState("");
+  const [tela, setTela] = useState("");
   const [guiche, setGuiche] = useState("");
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
+  const { registrarSessao } = useAuth();
 
-  const users = [
-    { value: "admin", label: "Administrador" },
-    { value: "secretaria", label: "Secretaria" },
-    { value: "supervisor", label: "Supervisor" },
-    { value: "triagem", label: "Triagem" },
-    { value: "apm", label: "APM" },
-    { value: "docs", label: "Docs" },
-  ];
+  const exigeGuiche = TELAS_COM_GUICHE.includes(tela);
+  const formularioInvalido =
+    !username || !senha || !tela || (exigeGuiche && !guiche);
 
-  const isDisabled =
-    !username || !senha || !funcao ||
-    (["triagem", "apm", "docs"].includes(funcao) && !guiche);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (funcao === "triagem") navigate("/triagem");
-    else if (funcao === "apm") navigate("/apm");
-    else if (funcao === "docs") navigate("/docs");
-    else if (funcao === "admin") navigate("/admin");
-    else if (funcao === "secretaria") navigate("/secretaria");
-    else setErro("Função inválida");
-
-    // Futuro: chamar API de autenticação
-    console.log("Usuário:", username);
-    console.log("Função:", funcao);
-    console.log("Guichê:", guiche);
-    setErro("");
+    try {
+      setCarregando(true);
+      setErro("");
+      const resposta = await autenticar({
+        username,
+        senha,
+        tela,
+        guiche: exigeGuiche ? guiche : null,
+      });
+      const sessao = registrarSessao(resposta);
+      navigate(`/${sessao.telaAtual}`, { replace: true });
+    } catch (falha) {
+      setErro(falha.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -58,43 +69,43 @@ const LoginPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Nome de usuário"
+            size="md"
             placeholder="Digite seu usuário"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(event) => setUsername(event.target.value)}
             icon={<FaUser className="text-primary" />}
             iconPosition="left"
           />
 
           <Input
             label="Senha"
+            size="md"
             type="password"
             placeholder="Digite sua senha"
             value={senha}
-            onChange={(e) => setSenha(e.target.value)}
+            onChange={(event) => setSenha(event.target.value)}
             icon={<FaLock className="text-primary" />}
             iconPosition="left"
           />
 
           <div className="flex gap-4 items-end">
             <Select
-              label="Função"
-              placeholder="Selecione a funcionalidade..."
-              options={users}
-              value={funcao}
-              onChange={(e) => setFuncao(e.target.value)}
-
-              id="funcao"
+              label="Tela de acesso"
+              placeholder="Selecione a tela..."
+              options={TELAS}
+              value={tela}
+              onChange={(event) => setTela(event.target.value)}
+              id="tela"
             />
-
-            {["triagem", "apm", "docs"].includes(funcao) && (
+            {exigeGuiche && (
               <div className="max-w-37.5">
                 <Input
                   label="Guichê"
+                  size="md"
                   type="text"
                   placeholder="Digite"
                   value={guiche}
-                  onChange={(e) => setGuiche(e.target.value)}
-    
+                  onChange={(event) => setGuiche(event.target.value)}
                 />
               </div>
             )}
@@ -103,7 +114,8 @@ const LoginPage = () => {
           <Button
             variant="primary"
             className="w-full mt-2"
-            disabled={isDisabled}
+            disabled={formularioInvalido}
+            loading={carregando}
             type="submit"
           >
             Entrar
@@ -112,5 +124,6 @@ const LoginPage = () => {
       </div>
     </div>
   );
-}
+};
+
 export default LoginPage;
