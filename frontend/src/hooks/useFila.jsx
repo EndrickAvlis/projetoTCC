@@ -1,78 +1,50 @@
-// Hook da fila: mantém na tela os dados retornados pelo filaService.
+// Hook da fila: carrega a fila e o histórico diário, e reserva a senha escolhida.
 import { useCallback, useEffect, useState } from "react";
-import {
-  cancelarSenha,
-  chamarProximaSenha,
-  listarFila,
-  rechamarSenha,
-} from "../services/filaService";
+import { chamarSenhaSelecionada, listarChamadasHoje, listarFila } from "../services/filaService";
 
 export const useFila = (etapa) => {
   const [senhasAguardando, setSenhasAguardando] = useState([]);
+  const [senhasChamadasHoje, setSenhasChamadasHoje] = useState([]);
   const [carregandoFila, setCarregandoFila] = useState(true);
   const [erroFila, setErroFila] = useState(null);
 
+  // Atualiza as duas listas da lateral para refletir a fonte de verdade da API.
   const carregarFila = useCallback(async () => {
     try {
       setCarregandoFila(true);
-      setSenhasAguardando(await listarFila(etapa));
+      const [aguardando, historico] = await Promise.all([listarFila(etapa), listarChamadasHoje(etapa)]);
+      setSenhasAguardando(aguardando);
+      setSenhasChamadasHoje(historico);
       setErroFila(null);
     } catch (erro) {
       setErroFila(erro.message);
-      setSenhasAguardando([]);
     } finally {
       setCarregandoFila(false);
     }
   }, [etapa]);
 
+  // Carrega dados novamente sempre que o posto exibido mudar.
   useEffect(() => {
-    let ativo = true;
+    void Promise.resolve().then(carregarFila);
+  }, [carregarFila]);
 
-    // A primeira consulta respeita o ciclo de vida da tela para evitar atualizações tardias.
-    listarFila(etapa)
-      .then((senhas) => {
-        if (!ativo) return;
-        setSenhasAguardando(senhas);
-        setErroFila(null);
-      })
-      .catch((erro) => {
-        if (!ativo) return;
-        setErroFila(erro.message);
-        setSenhasAguardando([]);
-      })
-      .finally(() => {
-        if (ativo) setCarregandoFila(false);
-      });
-
-    return () => {
-      ativo = false;
-    };
-  }, [etapa]);
-
-  const chamar = async () => {
-    const senha = await chamarProximaSenha(etapa);
-    setSenhasAguardando((atuais) =>
-      atuais.filter((item) => item.id !== senha?.id),
+  // Reserva a senha clicada e a remove da fila somente após confirmação do backend.
+  const chamar = async (senhaId) => {
+    const senha = await chamarSenhaSelecionada(senhaId, etapa);
+    setSenhasAguardando((atuais) => atuais.filter((item) => item.id !== senha?.id));
+    setSenhasChamadasHoje((atuais) =>
+      atuais.some((item) => item.id === senha?.id) ? atuais : [senha, ...atuais],
     );
-    return senha;
-  };
-
-  const rechamar = (senhaId) => rechamarSenha(senhaId);
-
-  const cancelar = async (senhaId, motivo) => {
-    const senha = await cancelarSenha(senhaId, motivo);
-    await carregarFila();
     return senha;
   };
 
   return {
     senhasAguardando,
+    senhasChamadasHoje,
     carregandoFila,
     erroFila,
     limparErroFila: () => setErroFila(null),
     carregarFila,
     chamar,
-    rechamar,
-    cancelar,
   };
 };

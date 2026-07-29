@@ -94,15 +94,15 @@ model CursoAluno {
 
 model Senha {
   idSenha             Int       @id @default(autoincrement())
-  cpfAluno            String    @db.VarChar(15)
+  cpfAluno            String?   @db.VarChar(15)
   senhaCodigo         String    @db.VarChar(10)
   dataHoraInicioSenha DateTime
   dataHoraFimSenha    DateTime?
   etapaSenha          String    @db.VarChar(15)
-  tipoSenha           String    @db.VarChar(10)
+  tipoSenha           Boolean   @default(false)
   statusSenha         String    @db.VarChar(20)
 
-  aluno      Aluno            @relation(fields: [cpfAluno], references: [cpfAluno])
+  aluno      Aluno?           @relation(fields: [cpfAluno], references: [cpfAluno])
   historicos HistoricoSenha[]
 }
 

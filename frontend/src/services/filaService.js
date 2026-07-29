@@ -1,65 +1,44 @@
-// Serviço de fila: chama os endpoints e adapta a senha da API para a interface.
+// Serviço da fila: adapta senhas e chama os contratos de fila, histórico e prioridade.
 import { requisitarApi } from "./apiClient";
 
-const formatarHorario = (dataIso) => {
-  if (!dataIso) return "";
-
-  const data = new Date(dataIso);
-  if (Number.isNaN(data.getTime())) return "";
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(data);
-};
-
+// Normaliza os nomes do contrato para a interface sem alterar os dados originais da API.
 export const normalizarSenha = (senha) => {
   if (!senha) return null;
 
   return {
     ...senha,
-    numero: senha.codigo ?? senha.numero ?? "",
-    horario: formatarHorario(
-      senha.chamadaEm ?? senha.emitidaEm ?? senha.horario,
-    ),
-    etapa: senha.etapaAtual ?? senha.etapa,
+    numero: senha.codigo ?? senha.numero ?? senha.senhaCodigo ?? "",
+    etapa: senha.etapaAtual ?? senha.etapa ?? senha.etapaSenha,
+    prioritaria: Boolean(senha.tipoSenha ?? senha.prioritaria ?? senha.tipo === "prioritaria"),
   };
 };
 
+// Busca as senhas aguardando da etapa que está aberta no posto.
 export const listarFila = async (etapa) => {
-  const resposta = await requisitarApi(
-    `/filas?etapa=${encodeURIComponent(etapa)}`,
-  );
-  const senhas = resposta?.senhas ?? resposta ?? [];
-  return senhas.map(normalizarSenha);
+  const resposta = await requisitarApi(`/filas?etapa=${encodeURIComponent(etapa)}`);
+  return (resposta?.senhas ?? resposta ?? []).map(normalizarSenha);
 };
 
-export const chamarProximaSenha = async (etapa) => {
+// Busca as senhas chamadas no dia atual exclusivamente para a etapa solicitada.
+export const listarChamadasHoje = async (etapa) => {
+  const resposta = await requisitarApi(`/filas/historico?etapa=${encodeURIComponent(etapa)}`);
+  return (resposta?.senhas ?? resposta ?? []).map(normalizarSenha);
+};
+
+// Reserva a senha escolhida pelo atendente; o backend valida a etapa e a concorrência.
+export const chamarSenhaSelecionada = async (senhaId, etapa) => {
   const resposta = await requisitarApi("/filas/chamadas", {
     method: "POST",
-    body: JSON.stringify({ etapa }),
+    body: JSON.stringify({ senhaId, etapa }),
   });
   return normalizarSenha(resposta?.senha ?? resposta);
 };
 
-export const rechamarSenha = async (senhaId) => {
-  const resposta = await requisitarApi(
-    `/senhas/${encodeURIComponent(senhaId)}/rechamadas`,
-    { method: "POST" },
-  );
-  return {
-    ...resposta,
-    senha: normalizarSenha(resposta?.senha),
-  };
-};
-
-export const cancelarSenha = async (senhaId, motivo) => {
-  const resposta = await requisitarApi(
-    `/senhas/${encodeURIComponent(senhaId)}/cancelamentos`,
-    {
-      method: "POST",
-      body: JSON.stringify(motivo ? { motivo } : {}),
-    },
-  );
+// Atualiza a prioridade persistente da senha atualmente atendida.
+export const atualizarPrioridadeSenha = async (senhaId, tipoSenha) => {
+  const resposta = await requisitarApi(`/senhas/${encodeURIComponent(senhaId)}/prioridade`, {
+    method: "PATCH",
+    body: JSON.stringify({ tipoSenha }),
+  });
   return normalizarSenha(resposta?.senha ?? resposta);
 };

@@ -1,39 +1,23 @@
-// Estrutura comum dos postos: fila lateral, cabeçalho, conteúdo e erros.
+// Estrutura comum dos postos: reserva a senha selecionada e entrega os dados à tela da etapa.
 import Alert from "../ui/Alert";
 import { useAtendimento } from "../../hooks/useAtendimento";
 import { useFila } from "../../hooks/useFila";
 import { obterDetalheSenha } from "../../services/atendimentoService";
+import { atualizarPrioridadeSenha } from "../../services/filaService";
 import Header from "./Header";
 import SidePostos from "./SidePostos";
 
 const PostoLayout = ({ etapa, children }) => {
-  const {
-    senhaAtual,
-    setSenhaAtual,
-    carregando,
-    erro,
-    setErro,
-    setCarregando,
-    exibirDetalheSenha,
-    limparAtendimentoExibido,
-  } = useAtendimento();
-  const {
-    senhasAguardando,
-    carregandoFila,
-    erroFila,
-    limparErroFila,
-    chamar,
-    rechamar,
-    cancelar,
-  } = useFila(etapa);
+  const { senhaAtual, setSenhaAtual, carregando, erro, setErro, setCarregando, exibirDetalheSenha } = useAtendimento();
+  const { senhasAguardando, senhasChamadasHoje, carregandoFila, erroFila, limparErroFila, chamar } = useFila(etapa);
 
-  const handleChamar = async () => {
+  // Chama exatamente a senha clicada e carrega seu detalhe; na Triagem o detalhe pode não ter aluno.
+  const handleSelecionarSenha = async (senhaSelecionada) => {
     try {
       setCarregando(true);
-      const senha = await chamar();
+      const senha = await chamar(senhaSelecionada.id);
       if (!senha) return;
 
-      // Mantém a senha bloqueada na tela mesmo se a consulta de detalhe falhar.
       setSenhaAtual(senha);
       exibirDetalheSenha(await obterDetalheSenha(senha.id));
       setErro(null);
@@ -44,27 +28,13 @@ const PostoLayout = ({ etapa, children }) => {
     }
   };
 
-  const handleRechamar = async () => {
+  // Persiste a prioridade na API e substitui a senha atual pela versão confirmada pelo servidor.
+  const handleAlternarPrioridade = async (tipoSenha) => {
     if (!senhaAtual) return;
 
     try {
       setCarregando(true);
-      await rechamar(senhaAtual.id);
-      setErro(null);
-    } catch (falha) {
-      setErro(falha.message);
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  const handleCancelar = async () => {
-    if (!senhaAtual) return;
-
-    try {
-      setCarregando(true);
-      await cancelar(senhaAtual.id);
-      limparAtendimentoExibido();
+      setSenhaAtual(await atualizarPrioridadeSenha(senhaAtual.id, tipoSenha));
       setErro(null);
     } catch (falha) {
       setErro(falha.message);
@@ -79,29 +49,18 @@ const PostoLayout = ({ etapa, children }) => {
     <div className="flex h-screen" aria-label={`Posto de ${etapa}`}>
       <SidePostos
         pessoasEsperando={senhasAguardando.length}
-        proximasSenhas={senhasAguardando}
+        senhasAguardando={senhasAguardando}
+        senhasChamadasHoje={senhasChamadasHoje}
         senhaAtual={senhaAtual}
-        podeChamar={!ocupado && !senhaAtual}
-        podeRechamar={!ocupado && Boolean(senhaAtual)}
-        podeCancelar={!ocupado && Boolean(senhaAtual)}
-        onChamar={handleChamar}
-        onRechamar={handleRechamar}
-        onCancelar={handleCancelar}
+        onSelecionarSenha={handleSelecionarSenha}
+        onAlternarPrioridade={handleAlternarPrioridade}
+        carregando={ocupado}
       />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
         <Header />
         <main className="flex-1 bg-gray-100 p-4 overflow-auto flex items-center justify-center flex-col gap-4">
           {ocupado && <Alert type="info" message="Carregando atendimento..." />}
-          {(erro || erroFila) && (
-            <Alert
-              type="error"
-              message={erro ?? erroFila}
-              onClose={() => {
-                setErro(null);
-                limparErroFila();
-              }}
-            />
-          )}
+          {(erro || erroFila) && <Alert type="error" message={erro ?? erroFila} onClose={() => { setErro(null); limparErroFila(); }} />}
           {children}
         </main>
       </div>

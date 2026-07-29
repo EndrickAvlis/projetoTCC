@@ -17,7 +17,7 @@ Este é o contrato de integração entre frontend e backend. Ele define as rotas
 |---|---|
 | `etapaAtual` | `triagem`, `apm`, `docs` |
 | `status` | `aguardando`, `em_atendimento`, `finalizada`, `cancelada` |
-| `tipo` | `normal`, `prioritaria` |
+| `tipoSenha` | `false` (normal) ou `true` (prioritária) |
 | `tipoUsuario` | `administrador`, `supervisor`, `atendente` |
 | `formaPagamento` | `dinheiro`, `pix`, `debito`, `credito`, `outro` |
 
@@ -100,13 +100,13 @@ O backend encerra a sessão ativa e libera o guichê. Resposta sugerida: `204 No
   "codigo": "N001",
   "etapaAtual": "triagem",
   "status": "aguardando",
-  "tipo": "normal",
+  "tipoSenha": false,
   "emitidaEm": "2026-07-28T10:00:00-03:00",
   "chamadaEm": null
 }
 ```
 
-O frontend atual exibe `numero` e `horario`. O futuro `filaService` deve mapear `codigo → numero` e formatar `emitidaEm` ou `chamadaEm → horario` em um único lugar. O backend não deve retornar horário formatado como `"10:00"`.
+O frontend exibe apenas `numero`; o `filaService` mapeia `codigo → numero`. O backend não deve retornar horário formatado como `"10:00"`.
 
 ### `GET /filas?etapa={etapa}`
 
@@ -122,7 +122,7 @@ Resposta:
       "codigo": "N001",
       "etapaAtual": "triagem",
       "status": "aguardando",
-      "tipo": "normal",
+      "tipoSenha": false,
       "emitidaEm": "2026-07-28T10:00:00-03:00",
       "chamadaEm": null
     }
@@ -131,45 +131,39 @@ Resposta:
 }
 ```
 
-Retornar somente senhas `aguardando`, já ordenadas pelo backend. A API decide prioridade; o frontend não filtra nem reordena.
+Retornar somente senhas `aguardando`. A prioridade é apenas um marcador visual (`tipoSenha`); o atendente escolhe a senha a chamar.
 
 ### `POST /filas/chamadas`
 
-Usado pelo botão **Chamar** em `PostoLayout`.
+Usado ao clicar em uma senha aguardando no `PostoLayout`.
 
 ```json
-{ "etapa": "triagem" }
+{ "senhaId": "S001", "etapa": "triagem" }
 ```
 
 O backend deve, em uma transação atômica:
 
-1. validar a permissão da sessão para a etapa;
-2. selecionar a próxima senha pela regra de duas prioritárias para uma normal;
-3. impedir que dois guichês recebam a mesma senha;
+1. validar a permissão da sessão e se a senha pertence à etapa informada;
+2. confirmar que a senha está `aguardando`;
+3. impedir atomicamente que dois guichês chamem a mesma senha;
 4. mudar o status para `em_atendimento`;
 5. associar a chamada ao atendente e guichê da sessão.
 
 Resposta: `{ "senha": { ...formato padrão de senha... } }`.
 
-### `POST /senhas/:senhaId/rechamadas`
+### `GET /filas/historico?etapa={etapa}`
 
-Usado pelo botão **Rechamar**. Registra a nova chamada e publica o evento do painel. Resposta sugerida:
+Usado pela aba **Chamadas hoje** do Posto Lateral. Retorna somente senhas chamadas na etapa solicitada, entre 00:00 e 23:59 do dia atual no fuso configurado pelo servidor. A resposta tem o mesmo formato de `GET /filas`; seus itens são apenas para consulta.
 
-```json
-{ "senha": { "id": "S001", "codigo": "N001" }, "rechamadaEm": "2026-07-28T10:06:00-03:00" }
-```
+### `PATCH /senhas/:senhaId/prioridade`
 
-### `POST /senhas/:senhaId/cancelamentos`
-
-Usado pelo botão **Encerrar**.
-
-Corpo opcional:
+Usado pelo controle **Ativar/Remover prioridade** da senha atual.
 
 ```json
-{ "motivo": "Atendimento cancelado pelo posto" }
+{ "tipoSenha": true }
 ```
 
-O backend valida o estado permitido e responde com a senha cancelada.
+O backend persiste o booleano na senha e devolve `{ "senha": { ... } }`. A prioridade acompanha a senha em todas as etapas e deve aparecer na fila, histórico e detalhe.
 
 ## 4. Detalhe da senha, aluno e Triagem
 
@@ -201,7 +195,7 @@ Resposta exigida por `exibirDetalheSenha`:
 }
 ```
 
-`matricula` pode ser `null`. Nesse caso, o frontend deve exibir campos vazios, nunca dados do atendimento anterior.
+Na Triagem, `aluno` e `matricula` podem ser `null`, pois a senha ainda não possui vínculo com aluno. Nesse caso, o frontend deve exibir campos vazios, nunca dados do atendimento anterior. Em APM e Docs, o backend deve retornar os dados do aluno vinculado.
 
 ### `GET /alunos?cpf={cpf}`
 
@@ -369,8 +363,8 @@ Estrutura sugerida:
 backend/src/
   routes/
     authRoutes.js           # /auth/login, /auth/me, /auth/logout
-    filaRoutes.js           # /filas e /senhas/:id/(rechamadas|cancelamentos)
-    senhaRoutes.js          # /senhas/:id/detalhe e /senhas/:id/aluno
+    filaRoutes.js           # /filas, /filas/historico e /filas/chamadas
+    senhaRoutes.js          # /senhas/:id/detalhe, /senhas/:id/aluno e /senhas/:id/prioridade
     atendimentoRoutes.js    # /atendimentos
     alunoRoutes.js          # /alunos e /cursos
     apmRoutes.js            # /apm/catalogo-venda e vendas da APM
@@ -397,7 +391,7 @@ Quando o modo de teste for removido, criar ou completar estes serviços sem faze
 frontend/src/services/
   apiClient.js          # URL base, Authorization, erro padrão
   authService.js        # login, me, logout
-  filaService.js        # listar, chamar, rechamar, cancelar
+  filaService.js        # listar, consultar histórico, chamar senha selecionada e alterar prioridade
   atendimentoService.js # detalhe, iniciar, finalizar
   triagemService.js     # já existe: cursos, aluno, salvar dados
   apmService.js         # catálogo, venda, finalizar sem venda

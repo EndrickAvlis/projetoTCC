@@ -1,59 +1,91 @@
-// Lista visual da senha atual e das próximas senhas aguardando atendimento.
-const ListLine = ({ senhas, variant = "sidepanel", senhaAtual }) => {
-  const variantStyles = {
-    sidepanel: {
-      container: "flex flex-col gap-1",
-      maxItens: 6,
-    },
+// Grade reutilizável que mostra a senha atual e as listas da lateral do posto.
+const ListLine = ({
+  senhas,
+  senhaAtual,
+  historico = false,
+  onSelecionarSenha,
+  onAlternarPrioridade,
+  desabilitada = false,
+  prioridadeDesabilitada = false,
+}) => {
+  // Exibe uma senha da fila como botão ou uma senha do histórico como informação somente leitura.
+  const renderizarSenha = (senha) => {
+    const className = [
+      "min-h-16 rounded-btn border px-2 py-2 text-center font-bold text-primary transition-colors",
+      senha.prioritaria ? "border-amber-500 border-2" : "border-border",
+      historico
+        ? "bg-gray-50 text-gray-500 cursor-default"
+        : "bg-background hover:bg-primary/10 hover:border-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary",
+      desabilitada && !historico ? "opacity-60 cursor-not-allowed" : "",
+    ].join(" ");
+
+    if (historico) {
+      return (
+        <div key={senha.id} className={className}>
+          {senha.numero}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        key={senha.id}
+        type="button"
+        className={className}
+        disabled={desabilitada}
+        onClick={() => onSelecionarSenha?.(senha)}
+        aria-label={`Chamar senha ${senha.numero}`}
+      >
+        {senha.numero}
+      </button>
+    );
   };
 
-  const estilo = variantStyles[variant];
-  // INTEGRAÇÃO BACKEND: a API já fornece somente senhas aguardando, na ordem
-  // correta. O componente apenas limita quantas delas serão exibidas.
-  const proximas = senhas.slice(0, estilo.maxItens);
+  const mensagemVazia = historico
+    ? "Nenhuma senha foi chamada neste posto hoje."
+    : "Nenhuma senha aguardando atendimento.";
 
   return (
-    <div className={estilo.container}>
+    <div className="flex flex-col gap-4 p-4">
       {senhaAtual && (
-        <div className="bg-primary text-white w-full px-4 py-3 flex flex-col items-start">
-          <div className="text-[0.9rem] text-white/60 uppercase tracking-wider mb-1 font-bold">
+        <div className="bg-primary text-white rounded-btn w-full px-4 py-3">
+          <div className="text-[0.8rem] text-white/70 uppercase tracking-wider font-bold">
             Em atendimento
           </div>
-          <div className="flex justify-between items-center w-full">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-[1.5rem] font-bold tracking-wider">
               {senhaAtual.numero}
             </span>
-            <span className="text-[1.2rem] text-white/60">
-              {senhaAtual.horario}
-            </span>
+            {senhaAtual.prioritaria && (
+              <span className="text-xs font-semibold uppercase">
+                Prioritária
+              </span>
+            )}
           </div>
+          {onAlternarPrioridade && (
+            <button
+              type="button"
+              className="mt-3 rounded-btn border border-white/70 px-3 py-1 text-sm font-semibold hover:bg-white/15 disabled:opacity-60"
+              disabled={prioridadeDesabilitada}
+              onClick={() => onAlternarPrioridade(!senhaAtual.prioritaria)}
+            >
+              {senhaAtual.prioritaria
+                ? "Remover prioridade"
+                : "Ativar prioridade"}
+            </button>
+          )}
         </div>
       )}
 
-      <div className="flex flex-col gap-1 mx-4 my-5">
-        <div className="uppercase text-[0.9rem] font-semibold text-gray-400 tracking-wider my-1">
-          Próximas
+      {senhas.length > 0 ? (
+        <div className="grid grid-cols-3 gap-2">
+          {senhas.map(renderizarSenha)}
         </div>
-        {proximas.length > 0 ? (
-          proximas.map((senha) => (
-            <div
-              key={senha.numero}
-              className="w-full h-15 bg-background flex border border-border rounded-btn justify-between items-center px-2 py-1.5"
-            >
-              <span className="font-bold text-primary text-[1.2rem]">
-                {senha.numero}
-              </span>
-              <span className="text-[0.9rem] opacity-80 text-gray-500">
-                {senha.horario}
-              </span>
-            </div>
-          ))
-        ) : (
-          <p className="flex justify-center items-center w-full h-13 mt-3 bg-background border border-border rounded-btn text-sm text-gray-400 italic py-2 px-2">
-            Nenhuma senha na fila
-          </p>
-        )}
-      </div>
+      ) : (
+        <p className="flex min-h-20 items-center justify-center rounded-btn border border-border bg-background px-3 text-center text-sm italic text-gray-400">
+          {mensagemVazia}
+        </p>
+      )}
     </div>
   );
 };
