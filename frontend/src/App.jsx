@@ -8,6 +8,7 @@ import TriagemPage from "./pages/TriagemPage";
 import ApmPage from "./pages/ApmPage";
 import DocsPage from "./pages/DocsPage";
 import AcessoNegadoPage from "./pages/AcessoNegadoPage";
+import EmitirSenhaPage from "./pages/EmitirSenhaPage";
 
 function App() {
   return (
@@ -16,18 +17,10 @@ function App() {
         <AtendimentoProvider>
           <Routes>
             <Route path="/" element={<LoginPage />} />
-            <Route
-              path="/triagem"
-              element={<TriagemPage />}
-            />
-            <Route
-              path="/apm"
-              element={<ApmPage />}
-            />
-            <Route
-              path="/docs"
-              element={<DocsPage />}
-            />
+            <Route path="/triagem" element={<TriagemPage />} />
+            <Route path="/apm" element={<ApmPage />} />
+            <Route path="/docs" element={<DocsPage />} />
+            <Route path="/emitir-senha" element={<EmitirSenhaPage />} />
             {/* <Route
               path="/admin"
               element={<RotaProtegida tela="admin"><TelaEmConstrucaoPage titulo="Administração" /></RotaProtegida>}
@@ -39,7 +32,13 @@ function App() {
             <Route path="/acesso-negado" element={<AcessoNegadoPage />} />
             <Route
               path="*"
-              element={<div style={{ padding: "20px", color: "red", fontSize: "20px" }}>Página não encontrada.</div>}
+              element={
+                <div
+                  style={{ padding: "20px", color: "red", fontSize: "20px" }}
+                >
+                  Página não encontrada.
+                </div>
+              }
             />
           </Routes>
         </AtendimentoProvider>
