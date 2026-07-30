@@ -94,7 +94,7 @@ model CursoAluno {
 model Senha {
   idSenha             Int       @id @default(autoincrement())
   idAluno            String?   @db.VarChar(15)
-  senhaCodigo         String    @db.VarChar(10)
+  senhaCodigo         Int    
   dataHoraInicioSenha DateTime
   dataHoraFimSenha    DateTime?
   etapaSenha          String    @db.VarChar(15)
