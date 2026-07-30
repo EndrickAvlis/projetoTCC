@@ -9,19 +9,25 @@ export const normalizarSenha = (senha) => {
     ...senha,
     numero: senha.codigo ?? senha.numero ?? senha.senhaCodigo ?? "",
     etapa: senha.etapaAtual ?? senha.etapa ?? senha.etapaSenha,
-    prioritaria: Boolean(senha.tipoSenha ?? senha.prioritaria ?? senha.tipo === "prioritaria"),
+    prioritaria: Boolean(
+      senha.tipoSenha ?? senha.prioritaria ?? senha.tipo === "prioritaria",
+    ),
   };
 };
 
 // Busca as senhas aguardando da etapa que está aberta no posto.
 export const listarFila = async (etapa) => {
-  const resposta = await requisitarApi(`/filas?etapa=${encodeURIComponent(etapa)}`);
+  const resposta = await requisitarApi(
+    `/filas?etapa=${encodeURIComponent(etapa)}`,
+  );
   return (resposta?.senhas ?? resposta ?? []).map(normalizarSenha);
 };
 
 // Busca as senhas chamadas no dia atual exclusivamente para a etapa solicitada.
 export const listarChamadasHoje = async (etapa) => {
-  const resposta = await requisitarApi(`/filas/historico?etapa=${encodeURIComponent(etapa)}`);
+  const resposta = await requisitarApi(
+    `/filas/historico?etapa=${encodeURIComponent(etapa)}`,
+  );
   return (resposta?.senhas ?? resposta ?? []).map(normalizarSenha);
 };
 
@@ -36,9 +42,12 @@ export const chamarSenhaSelecionada = async (senhaId, etapa) => {
 
 // Atualiza a prioridade persistente da senha atualmente atendida.
 export const atualizarPrioridadeSenha = async (senhaId, tipoSenha) => {
-  const resposta = await requisitarApi(`/senhas/${encodeURIComponent(senhaId)}/prioridade`, {
-    method: "PATCH",
-    body: JSON.stringify({ tipoSenha }),
-  });
+  const resposta = await requisitarApi(
+    `/senhas/${encodeURIComponent(senhaId)}/prioridade`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ tipoSenha }),
+    },
+  );
   return normalizarSenha(resposta?.senha ?? resposta);
 };
