@@ -1,6 +1,6 @@
 // Hook da fila: carrega a fila e o histórico diário, e reserva a senha escolhida.
 import { useCallback, useEffect, useState } from "react";
-import { chamarSenhaSelecionada, listarChamadasHoje, listarFila } from "../services/filaService";
+import { chamarSenhaSelecionada /*, listarChamadasHoje*/, listarFila } from "../services/filaService";
 
 export const useFila = (etapa) => {
   const [senhasAguardando, setSenhasAguardando] = useState([]);
@@ -12,9 +12,10 @@ export const useFila = (etapa) => {
   const carregarFila = useCallback(async () => {
     try {
       setCarregandoFila(true);
-      const [aguardando, historico] = await Promise.all([listarFila(etapa), listarChamadasHoje(etapa)]);
+      //! const [aguardando, historico] = await Promise.all([listarFila(etapa), listarChamadasHoje(etapa)]);
+      const aguardando = await listarFila(etapa);
       setSenhasAguardando(aguardando);
-      setSenhasChamadasHoje(historico);
+      setSenhasChamadasHoje([]);
       setErroFila(null);
     } catch (erro) {
       setErroFila(erro.message);
