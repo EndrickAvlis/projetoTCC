@@ -37,4 +37,14 @@ export const valorTextoParaDecimal = (valor) => {
 export const ehValorMonetarioEmDigitacao = (valor) =>
   /^\d*(?:[,.]\d{0,2})?$/.test(valor);
 
+export const formatarSenha = (codigo) => {
+  const numero = Number(codigo);
+
+  if (!Number.isInteger(numero) || numero < 1) {
+    return "";
+  }
+
+  return `A${String(numero).padStart(3, "0")}`;
+};
+
 export default FormaterCpf;

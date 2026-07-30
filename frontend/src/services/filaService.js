@@ -7,11 +7,9 @@ export const normalizarSenha = (senha) => {
 
   return {
     ...senha,
-    numero: senha.codigo ?? senha.numero ?? senha.senhaCodigo ?? "",
-    etapa: senha.etapaAtual ?? senha.etapa ?? senha.etapaSenha,
-    prioritaria: Boolean(
-      senha.tipoSenha ?? senha.prioritaria ?? senha.tipo === "prioritaria",
-    ),
+    numero: senha.codigo,
+    etapa: senha.etapaAtual,
+    prioritaria: senha.tipoSenha,
   };
 };
 
@@ -50,4 +48,14 @@ export const atualizarPrioridadeSenha = async (senhaId, tipoSenha) => {
     },
   );
   return normalizarSenha(resposta?.senha ?? resposta);
+};
+
+// Emite uma nova senha no banco
+export const emitirSenha = async () => {
+  const resposta = await requisitarApi("/senhas", {
+    method: "POST",
+    autenticada: false,
+  });
+
+  return normalizarSenha(resposta.senha);
 };

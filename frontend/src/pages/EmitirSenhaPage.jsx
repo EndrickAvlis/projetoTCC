@@ -1,10 +1,29 @@
+import { useState } from "react";
 import logoEtec from "../assets/logoEtec.png";
+import { emitirSenha } from "../services/filaService";
+import { formatarSenha } from "../utils/formatters";
 
 const EmitirSenhaPage = () => {
-    const handleClick = () => {
+  const [senhaEmitida, setSenhaEmitida] = useState(null);
+  const [emitindo, setEmitindo] = useState(false);
+  const [erro, setErro] = useState(null);
 
+  const handleEmitirSenha = async () => {
+    if (emitindo) return;
+
+    try {
+      setEmitindo(true);
+      setErro(null);
+
+      const senha = await emitirSenha();
+      setSenhaEmitida(senha);
+    } catch (erro) {
+      setErro(erro.message);
+    } finally {
+      setEmitindo(false);
     }
-    
+  };
+
   return (
     <main className="min-h-screen bg-white">
       <section className="flex min-h-screen w-full flex-col bg-white">
@@ -37,10 +56,13 @@ const EmitirSenhaPage = () => {
                 active:bg-primary-strong
                 sm:min-h-50
                 sm:text-5xl
+                disabled:cursor-not-allowed 
+                disabled:opacity-70
               "
-              onClick={HandleClick()}
+              onClick={handleEmitirSenha}
+              disabled={emitindo}
             >
-              Emitir senha
+              {emitindo ? "Emitindo" : "Emitir Senha"}
             </button>
           </div>
         </div>
@@ -71,9 +93,15 @@ const EmitirSenhaPage = () => {
               Senha atual
             </p>
 
-            <p className="mt-2 text-6xl font-extrabold leading-none text-gray-700 sm:text-8xl"></p>
+            <p className="mt-2 text-6xl font-extrabold leading-none text-gray-700 sm:text-8xl">
+              {senhaEmitida ? formatarSenha(senhaEmitida.numero) : ""}
+            </p>
           </section>
-
+          {erro && (
+            <p role="alert" className="mt-4 text-lg font-semibold text-danger">
+              {erro}
+            </p>
+          )}
           <p className="mt-5 text-lg font-bold text-[#1a1a1a] sm:text-2xl">
             Pegue sua senha na impressora.
           </p>
