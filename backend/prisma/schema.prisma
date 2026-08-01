@@ -5,6 +5,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum TipoVoluntario {
+  admin
+  supervisor
+  atendente
+}
+
 model Produto {
   idProduto         Int     @id @default(autoincrement())
   nomeProduto       String  @db.VarChar(50)
@@ -109,7 +115,7 @@ model Voluntario {
   idVoluntario     Int    @id @default(autoincrement())
   nomeVoluntario   String @db.VarChar(100)
   senhaVoluntario  String @db.VarChar(50)
-  tipoVoluntario   String @db.VarChar(20)
+  tipoVoluntario   TipoVoluntario @default(atendente)
   statusVoluntario String @db.VarChar(20)
 
   compras    Compra[]
