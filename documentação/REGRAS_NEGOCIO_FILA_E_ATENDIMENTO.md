@@ -21,18 +21,11 @@ Uma senha tem exatamente uma etapa atual e um status:
 | `finalizada` | Concluiu a etapa Docs; não volta à fila. |
 | `cancelada` | Foi encerrada antes do fim do fluxo; não volta à fila. |
 
-## 2. Chamar a próxima senha
+## 2. Chamar a senha selecionada
 
-Somente o endpoint `POST /filas/chamadas` pode escolher e reservar uma senha. A operação deve ser atômica para que dois guichês nunca recebam a mesma senha.
+O atendente escolhe uma senha aguardando diretamente no Posto Lateral. `POST /filas/chamadas` recebe o `senhaId` e a `etapa`; ele não escolhe a próxima senha. A validação de etapa, estado, reserva, associação com atendente/guichê e atualização para `em_atendimento` devem ocorrer na mesma transação, impedindo chamadas concorrentes da mesma senha.
 
-Por etapa, a ordem deve respeitar a regra de atendimento:
-
-1. Atender até duas senhas `prioritaria` consecutivas, quando existirem.
-2. Havendo senha `normal` aguardando depois dessas duas, atender uma normal.
-3. Se não houver prioritária, atender a próxima normal e zerar o contador.
-4. Se não houver normal, a prioritária pode continuar sendo atendida.
-
-O contador de prioritárias consecutivas pertence à fila da etapa e deve ser mantido no banco. A seleção, a atualização de status e a associação com atendente/guichê devem ocorrer na mesma transação.
+`Senha.tipoSenha` é um booleano persistente: `true` identifica uma senha prioritária e `false`, uma senha normal. A prioridade pode ser alterada na senha atual e deve acompanhar todo o fluxo, sem reordenamento automático da fila pelo backend.
 
 ## 3. Histórico de atendimento
 
@@ -57,12 +50,11 @@ Somente `POST /atendimentos/:atendimentoId/finalizacoes` pode finalizar um atend
 
 O frontend apenas exibe a senha retornada pela API. Ele não contém tabela de transição, nem muda `etapaAtual` ou `status` localmente.
 
-## 5. Cancelamento e rechamada
+## 5. Histórico exibido no posto
 
-- Apenas uma senha em estado permitido pelo backend pode ser cancelada.
-- O cancelamento registra quem realizou a ação, quando e, se exigido, o motivo.
-- Rechamar não escolhe outra senha nem inicia novo histórico; apenas registra/emite uma nova chamada para a senha já reservada.
-- A chamada deve poder ser enviada ao painel público pelo backend.
+- `GET /filas/historico?etapa={etapa}` exibe apenas as senhas chamadas naquele posto no dia atual.
+- O histórico é consulta: seus itens nunca podem iniciar uma nova chamada.
+- Uma senha chamada na Triagem só aparece no histórico da APM ou Docs depois de ser chamada nessas respectivas etapas.
 
 ## 6. Fonte de verdade
 

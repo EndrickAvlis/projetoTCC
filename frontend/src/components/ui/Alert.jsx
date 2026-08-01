@@ -1,3 +1,4 @@
+// Alerta visual reutilizável para mensagens de sucesso, erro, aviso e informação.
 import { IoMdClose } from "react-icons/io";
 
 const Alert = ({

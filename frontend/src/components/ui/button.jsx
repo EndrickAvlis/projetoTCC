@@ -1,3 +1,4 @@
+// Botão reutilizável com variações visuais, tamanhos e estado de carregamento.
 import { forwardRef } from 'react';
 
 const Button = forwardRef(({
@@ -29,10 +30,10 @@ const Button = forwardRef(({
     
     // ===== ESTILOS POR VARIANTE =====
     const variants = {
-        primary: 'bg-primary text-white hover:bg-primary-light active:bg-[#081E3A] focus-visible:outline-primary',
+        primary: 'bg-primary text-white hover:bg-primary-light active:bg-primary-strong focus-visible:outline-primary',
         secondary: 'bg-[#E0E0E0] text-[#1A1A1A] hover:bg-[#D0D0D0] active:bg-[#C0C0C0] focus-visible:outline-[#999999]',
-        danger: 'bg-white text-danger-text border border-danger-text hover:bg-danger-bg active:bg-[#FFB0B0] focus-visible:outline-danger-text',
-        success: 'bg-success-text text-white hover:bg-[#23801A] active:bg-[#1A6B13] focus-visible:outline-success-text',
+        danger: 'bg-white text-danger border border-danger hover:bg-danger-hover active:bg-danger-light focus-visible:outline-danger-text',
+        success: 'bg-success text-white hover:bg-success-hover active:bg-success-strong focus-visible:outline-success-text',
         outline: 'bg-transparent text-primary border border-primary hover:bg-primary hover:text-white active:bg-primary-light focus-visible:outline-primary',
     };
 
