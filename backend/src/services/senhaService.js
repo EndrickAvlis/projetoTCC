@@ -33,7 +33,7 @@ const obterIntervaloDia = (hoje) => {
 // Função para emitir a senha e salva-la no banco
 // Ela filtra a senha para ser a proxima ou a primeira do dia
 // Salva essa senha com o código correto, a hora de emissão, a primeira etapa e com o status aguardando.
-export const emitirSenha = async () => {
+export const criarSenha = async () => {
   const agora = new Date();
   const { inicioDia, fimDia } = obterIntervaloDia(agora);
 
@@ -52,6 +52,7 @@ export const emitirSenha = async () => {
     },
   });
 
+  
   const proximoCodigo = (ultimaSenha?.senhaCodigo ?? 0) + 1;
 
   return prisma.senha.create({

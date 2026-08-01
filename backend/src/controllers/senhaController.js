@@ -1,4 +1,4 @@
-import { emitirSenha as criarSenha } from "../services/senhaService.js";
+import { criarSenha } from "../services/senhaService.js";
 
 export const emitirSenha = async (_req, res) => {
   try {
@@ -6,7 +6,7 @@ export const emitirSenha = async (_req, res) => {
 
     return res.status(201).json({
       senha: {
-        id: senha.idSenha,
+        idSenha: senha.idSenha,
         codigo: senha.senhaCodigo,
         emitidaEm: senha.dataHoraInicioSenha,
         etapaAtual: senha.etapaSenha,

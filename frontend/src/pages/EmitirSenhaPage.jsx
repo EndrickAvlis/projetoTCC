@@ -51,6 +51,7 @@ const EmitirSenhaPage = () => {
                 tracking-wide
                 text-white
                 shadow-lg
+                cursor-pointer
                 transition
                 hover:bg-primary-light
                 active:bg-primary-strong

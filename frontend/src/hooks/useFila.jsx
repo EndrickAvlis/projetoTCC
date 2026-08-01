@@ -9,24 +9,38 @@ export const useFila = (etapa) => {
   const [erroFila, setErroFila] = useState(null);
 
   // Atualiza as duas listas da lateral para refletir a fonte de verdade da API.
-  const carregarFila = useCallback(async () => {
+  const carregarFila = useCallback(async ({ silencioso = false } = {}) => {
     try {
-      setCarregandoFila(true);
-      //! const [aguardando, historico] = await Promise.all([listarFila(etapa), listarChamadasHoje(etapa)]);
-      const aguardando = await listarFila(etapa);
-      setSenhasAguardando(aguardando);
-      setSenhasChamadasHoje([]);
-      setErroFila(null);
+      if (!silencioso) {
+        setCarregandoFila(true);
+      }
+        //! const [aguardando, historico] = await Promise.all([listarFila(etapa), listarChamadasHoje(etapa)]);
+        const aguardando = await listarFila(etapa);
+        setSenhasAguardando(aguardando);
+        setSenhasChamadasHoje([]);
+        setErroFila(null);
+      
+
     } catch (erro) {
       setErroFila(erro.message);
     } finally {
-      setCarregandoFila(false);
+      if (!silencioso) {
+        setCarregandoFila(false);
+      }
     }
   }, [etapa]);
 
   // Carrega dados novamente sempre que o posto exibido mudar.
   useEffect(() => {
-    void Promise.resolve().then(carregarFila);
+    void carregarFila();
+
+    const intervalo = window.setInterval(() => {
+      void carregarFila({ silencioso: true });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalo);
+    };
   }, [carregarFila]);
 
   // Reserva a senha clicada e a remove da fila somente após confirmação do backend.

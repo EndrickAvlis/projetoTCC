@@ -1,4 +1,5 @@
 // Grade reutilizável que mostra a senha atual e as listas da lateral do posto.
+import { formatarSenha } from "../../utils/formatters";
 const ListLine = ({
   senhas,
   senhaAtual,
@@ -36,7 +37,7 @@ const ListLine = ({
         onClick={() => onSelecionarSenha?.(senha)}
         aria-label={`Chamar senha ${senha.numero}`}
       >
-        {senha.numero}
+        {senha ? formatarSenha(senha.numero):""}
       </button>
     );
   };
@@ -54,7 +55,7 @@ const ListLine = ({
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-[1.5rem] font-bold tracking-wider">
-              {senhaAtual.numero}
+              {senhaAtual ? formatarSenha(senhaAtual.numero) : ""}
             </span>
             {senhaAtual.prioritaria && (
               <span className="text-xs font-semibold uppercase">

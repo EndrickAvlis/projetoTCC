@@ -59,8 +59,8 @@ const PostoLayout = ({ etapa, children }) => {
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
         <Header />
         <main className="flex-1 bg-gray-100 p-4 overflow-auto flex items-center justify-center flex-col gap-4">
-          {ocupado && <Alert type="info" message="Carregando atendimento..." />}
-          {(erro || erroFila) && <Alert type="error" message={erro ?? erroFila} onClose={() => { setErro(null); limparErroFila(); }} />}
+          {/* {ocupado && <Alert type="info" message="Carregando atendimento..." />} */}
+          {/* {(erro || erroFila) && <Alert type="error" message={erro ?? erroFila} onClose={() => { setErro(null); limparErroFila(); }} />} */}
           {children}
         </main>
       </div>

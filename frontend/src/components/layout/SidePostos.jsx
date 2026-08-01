@@ -1,7 +1,7 @@
 // Barra lateral compartilhada que alterna entre a fila disponível e o histórico diário do posto.
 import { useState } from "react";
 import Button from "../ui/Button";
-import ListLine from "../common/ListLine";
+import ListLine from "../common/ListFila";
 
 const SidePostos = ({ pessoasEsperando, senhasAguardando, senhasChamadasHoje, senhaAtual, onSelecionarSenha, onAlternarPrioridade, carregando }) => {
   // Mantém a visualização ativa sem sair da tela de atendimento.
@@ -12,7 +12,7 @@ const SidePostos = ({ pessoasEsperando, senhasAguardando, senhasChamadasHoje, se
   return (
     <aside className="w-80 h-screen shrink-0 bg-white border-r border-border flex flex-col">
       <div className="p-4 border-b border-border bg-background flex flex-col items-center justify-center gap-1">
-        <p className="text-[0.9rem] text-gray-500 font-medium tracking-wide uppercase">Aguardando</p>
+        <p className="text-[0.9rem] text-gray-500 font-medium tracking-wide uppercase">Senhas Aguardando</p>
         <p className="text-3xl font-bold text-primary">{pessoasEsperando}</p>
       </div>
 

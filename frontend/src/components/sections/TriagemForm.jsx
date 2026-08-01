@@ -82,10 +82,10 @@ const TriagemForm = () => {
 
   return (
     <div className="bg-white p-8 rounded-lg border border-border w-full max-w-5xl min-h-125 flex flex-col gap-6">
-      {erroCursos && <Alert type="error" message={erroCursos} />}
+      {/* {erroCursos && <Alert type="error" message={erroCursos} />}
       {!carregandoCursos && !catalogoDisponivel && !erroCursos && (
         <Alert type="info" message="Nenhum curso está disponível no momento." />
-      )}
+      )} */}
 
       <div className="flex items-end gap-2 mb-4">
         <Input
