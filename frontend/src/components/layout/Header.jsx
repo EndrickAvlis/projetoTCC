@@ -24,7 +24,7 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full min-h-14 bg-primary text-white px-6 flex justify-between items-center gap-4">
+    <header className="w-full min-h-14 bg-primary text-text-inverse px-6 flex justify-between items-center gap-4">
       <div>
         <p>Usuário: {usuario?.nome ?? ""}</p>
         <p>
@@ -35,7 +35,7 @@ const Header = () => {
       <Button
         variant="secondary"
         onClick={handleLogout}
-        className="bg-transparent text-white max-h-10 px-5 hover:bg-primary-light"
+        className="bg-transparent text-text-inverse max-h-10 px-5 hover:bg-primary-hover"
         leftIcon={<MdLogout />}
       >
         Sair

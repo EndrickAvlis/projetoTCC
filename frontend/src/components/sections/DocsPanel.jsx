@@ -8,12 +8,12 @@ const DocsPanel = () => {
   const SIZE = "md";
 
   return (
-    <div className="bg-white p-8 rounded-lg border border-border w-full max-w-5xl min-h-125 flex flex-col justify-between gap-6">
+    <div className="bg-surface p-8 rounded-lg border border-border w-full max-w-5xl min-h-125 flex flex-col justify-between gap-6">
       <div className="border-b border-border pb-4">
         <h2 className="text-title font-bold text-primary uppercase tracking-wide">
           Conferência e Entrega de Documentos
         </h2>
-        <p className="text-body text-gray-500 mt-1">
+        <p className="text-body text-text-secondary mt-1">
           Última etapa do fluxo de matrícula. Confirme os dados abaixo antes de
           encerrar o atendimento.
         </p>

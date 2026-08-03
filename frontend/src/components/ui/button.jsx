@@ -30,11 +30,11 @@ const Button = forwardRef(({
     
     // ===== ESTILOS POR VARIANTE =====
     const variants = {
-        primary: 'bg-primary text-white hover:bg-primary-light active:bg-primary-strong focus-visible:outline-primary',
-        secondary: 'bg-[#E0E0E0] text-[#1A1A1A] hover:bg-[#D0D0D0] active:bg-[#C0C0C0] focus-visible:outline-[#999999]',
-        danger: 'bg-white text-danger border border-danger hover:bg-danger-hover active:bg-danger-light focus-visible:outline-danger-text',
-        success: 'bg-success text-white hover:bg-success-hover active:bg-success-strong focus-visible:outline-success-text',
-        outline: 'bg-transparent text-primary border border-primary hover:bg-primary hover:text-white active:bg-primary-light focus-visible:outline-primary',
+        primary: 'bg-primary text-text-inverse hover:bg-primary-hover active:bg-primary-active',
+        secondary: 'bg-surface-muted text-text-primary hover:bg-disabled-bg active:bg-border',
+        danger: 'bg-surface text-status-danger border border-status-danger hover:bg-status-danger-bg active:bg-status-danger-bg',
+        success: 'bg-status-success text-text-inverse hover:bg-status-success active:bg-status-success',
+        outline: 'bg-transparent text-primary border border-primary hover:bg-primary hover:text-text-inverse active:bg-primary-active',
     };
 
     // ===== ESTILOS POR TAMANHO =====

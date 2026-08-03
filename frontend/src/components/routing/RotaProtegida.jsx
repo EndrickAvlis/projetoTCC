@@ -8,7 +8,7 @@ const RotaProtegida = ({ tela, children }) => {
 
   if (validandoSessao) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-background">
+      <main className="min-h-screen flex items-center justify-center bg-page">
         Validando sessão...
       </main>
     );

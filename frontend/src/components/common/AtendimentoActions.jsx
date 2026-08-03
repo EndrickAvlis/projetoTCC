@@ -64,7 +64,7 @@ const AtendimentoActions = ({
   return (
     <div className="flex gap-4 justify-between">
       <Button
-        className="w-75 bg-primary hover:bg-primary-light"
+        className="w-75 bg-primary hover:bg-primary-hover"
         disabled={!senhaAtual || atendendo}
         onClick={handleIniciar}
         size="lg"

@@ -1,33 +1,65 @@
 @import "tailwindcss";
 
-/* ===== SEU DESIGN SYSTEM COM @theme ===== */
+/* Design tokens globais: use apenas estes nomes nos componentes. */
 @theme {
-  /* Cores */
+  /* Marca e interacao */
   --color-primary: #0A2647;
-  --color-primary-strong: #041529;
-  --color-primary-light: #1A3A6B;
-  --color-background: #F2F2F2;
-  --color-border: #CCCCCC;
-  
-  --color-success: #2A941F;
-  --color-success-strong: #15570e;
-  --color-success-hover: #1b6914;
-  --color-success-light: #9bcf97;
-  
-  --color-danger: #FF3131;
-  --color-danger-strong: #4d0909;
-  --color-danger-hover: #851515;
-  --color-danger-light: #FFC9C9;
-  
-  /* Arredondamentos */
+  --color-primary-hover: #12365F;
+  --color-primary-active: #041529;
+  --color-primary-text-muted: #B4C8DE;
+  --color-primary-border: #B4C8DE;
+  --color-focus-ring: #4C90D9;
+
+  /* Superficies */
+  --color-page: #F2F4F7;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F7F9FC;
+  --color-disabled-bg: #E9EEF5;
+  --color-border: #D7DFEA;
+  --color-border-strong: #B7C4D4;
+
+  /* Texto */
+  --color-text-primary: #172033;
+  --color-text-secondary: #667085;
+  --color-text-disabled: #98A2B3;
+  --color-text-inverse: #FFFFFF;
+
+  /* Status */
+  --color-status-success: #1F7A1F;
+  --color-status-success-bg: #DCFCE7;
+  --color-status-warning: #9A6700;
+  --color-status-warning-bg: #FFF2CC;
+  --color-status-info: #175CD3;
+  --color-status-info-bg: #E8F1FF;
+  --color-status-danger: #B42318;
+  --color-status-danger-bg: #FEE4E2;
+
+  /* Area administrativa */
+  --color-admin-sidebar: #0A2647;
+  --color-admin-sidebar-hover: #12365F;
+  --color-admin-sidebar-active: #1A4B7A;
+  --color-admin-sidebar-text: #DCE8F5;
+  --color-admin-sidebar-text-muted: #A9BDD3;
+  --color-admin-sidebar-divider: #35516F;
+
+  /* Forma e tipografia */
   --radius-btn: 6px;
-  
-  /* Fontes */
-  --font-family-sans: 'Inter', 'Roboto', sans-serif;
-  
-  /* Tamanhos de fonte */
+  --font-sans: "Inter", "Roboto", sans-serif;
   --font-size-title: 24px;
   --font-size-section: 18px;
   --font-size-body: 14px;
   --font-size-highlight: 20px;
+}
+
+@layer base {
+  button,
+  input,
+  select,
+  textarea,
+  a {
+    &:focus-visible {
+      outline: 3px solid var(--color-focus-ring);
+      outline-offset: 2px;
+    }
+  }
 }

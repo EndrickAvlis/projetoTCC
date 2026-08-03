@@ -48,20 +48,20 @@ const Select = forwardRef(
         w-full ${sizes[size]} pr-10
         border border-border
         rounded-btn
-        text-body text-gray-800
-        bg-white
+        text-body text-text-primary
+        bg-surface
         appearance-none
-        focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+        focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-transparent
         transition-all duration-200
         disabled:opacity-60 disabled:cursor-not-allowed
-        ${error ? "border-danger-text focus:ring-danger-text" : ""}
+        ${error ? "border-status-danger focus:ring-status-danger" : ""}
         ${selectClassName}
     `;
 
     // SETA PERSONALIZADA
     const ArrowIcon = () => (
       <svg
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
         width="20"
         height="20"
         viewBox="0 0 20 20"
@@ -86,7 +86,7 @@ const Select = forwardRef(
             className={`block text-sm font-medium text-primary mb-1 ${labelClassName}`}
           >
             {label}
-            {required && <span className="text-danger-text ml-1">*</span>}
+            {required && <span className="text-status-danger ml-1">*</span>}
           </label>
         )}
 
@@ -123,7 +123,7 @@ const Select = forwardRef(
         </div>
 
         {/* MENSAGEM DE ERRO */}
-        {error && <p className="mt-1 text-sm text-danger-text">{error}</p>}
+        {error && <p className="mt-1 text-sm text-status-danger">{error}</p>}
       </div>
     );
   },

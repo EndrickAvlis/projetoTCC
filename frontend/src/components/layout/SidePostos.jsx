@@ -10,9 +10,9 @@ const SidePostos = ({ pessoasEsperando, senhasAguardando, senhasChamadasHoje, se
   const senhasExibidas = exibindoHistorico ? senhasChamadasHoje : senhasAguardando;
 
   return (
-    <aside className="w-80 h-screen shrink-0 bg-white border-r border-border flex flex-col">
-      <div className="p-4 border-b border-border bg-background flex flex-col items-center justify-center gap-1">
-        <p className="text-[0.9rem] text-gray-500 font-medium tracking-wide uppercase">Senhas Aguardando</p>
+    <aside className="w-80 h-screen shrink-0 bg-surface border-r border-border flex flex-col">
+      <div className="p-4 border-b border-border bg-page flex flex-col items-center justify-center gap-1">
+        <p className="text-[0.9rem] text-text-secondary font-medium tracking-wide uppercase">Senhas Aguardando</p>
         <p className="text-3xl font-bold text-primary">{pessoasEsperando}</p>
       </div>
 
@@ -26,7 +26,7 @@ const SidePostos = ({ pessoasEsperando, senhasAguardando, senhasChamadasHoje, se
       </div>
 
       <div className="px-4 pt-4">
-        <h2 className="uppercase text-[0.9rem] font-semibold text-gray-400 tracking-wider">
+        <h2 className="uppercase text-[0.9rem] font-semibold text-text-secondary tracking-wider">
           {exibindoHistorico ? "Chamadas hoje" : "Aguardando atendimento"}
         </h2>
       </div>

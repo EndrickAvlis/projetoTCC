@@ -13,10 +13,10 @@ const ListLine = ({
   const renderizarSenha = (senha) => {
     const className = [
       "min-h-16 rounded-btn border px-2 py-2 text-center font-bold text-primary transition-colors",
-      senha.prioritaria ? "border-amber-500 border-2" : "border-border",
+      senha.prioritaria ? "border-status-warning border-2" : "border-border",
       historico
-        ? "bg-gray-50 text-gray-500 cursor-default"
-        : "bg-background hover:bg-primary/10 hover:border-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary",
+        ? "bg-surface-muted text-text-secondary cursor-default"
+        : "bg-page hover:bg-status-info-bg hover:border-primary cursor-pointer focus:outline-none focus:ring-2 focus:ring-focus-ring",
       desabilitada && !historico ? "opacity-60 cursor-not-allowed" : "",
     ].join(" ");
 
@@ -49,8 +49,8 @@ const ListLine = ({
   return (
     <div className="flex flex-col gap-4 p-4">
       {senhaAtual && (
-        <div className="bg-primary text-white rounded-btn w-full px-4 py-3">
-          <div className="text-[0.8rem] text-white/70 uppercase tracking-wider font-bold">
+        <div className="bg-primary text-text-inverse rounded-btn w-full px-4 py-3">
+          <div className="text-[0.8rem] text-primary-text-muted uppercase tracking-wider font-bold">
             Em atendimento
           </div>
           <div className="flex items-center justify-between gap-2">
@@ -66,7 +66,7 @@ const ListLine = ({
           {onAlternarPrioridade && (
             <button
               type="button"
-              className="mt-3 rounded-btn border border-white/70 px-3 py-1 text-sm font-semibold hover:bg-white/15 disabled:opacity-60"
+              className="mt-3 rounded-btn border border-primary-border px-3 py-1 text-sm font-semibold hover:bg-primary-hover disabled:opacity-60"
               disabled={prioridadeDesabilitada}
               onClick={() => onAlternarPrioridade(!senhaAtual.prioritaria)}
             >
@@ -83,7 +83,7 @@ const ListLine = ({
           {senhas.map(renderizarSenha)}
         </div>
       ) : (
-        <p className="flex min-h-20 items-center justify-center rounded-btn border border-border bg-background px-3 text-center text-sm italic text-gray-400">
+        <p className="flex min-h-20 items-center justify-center rounded-btn border border-border bg-page px-3 text-center text-sm italic text-text-secondary">
           {mensagemVazia}
         </p>
       )}

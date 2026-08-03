@@ -57,13 +57,13 @@ const Input = forwardRef(
   w-full ${sizes[size]}
   border border-border
   rounded-btn
-  text-gray-800
-  placeholder-gray-400
-  bg-white
-  focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+  text-text-primary
+  placeholder:text-text-secondary
+  bg-surface
+  focus:outline-none focus:ring-2 focus:ring-focus-ring focus:border-transparent
   transition-all duration-200
   disabled:opacity-60 disabled:cursor-not-allowed
-  ${error ? "border-danger-text focus:ring-danger-text" : ""}
+  ${error ? "border-status-danger focus:ring-status-danger" : ""}
   ${icon && iconPosition === "left" ? "pl-10" : ""}
   ${icon && iconPosition === "right" ? "pr-10" : ""}
   ${inputClassName}
@@ -73,7 +73,7 @@ const Input = forwardRef(
     const inputWithIcon = (
       <div className="relative">
         {icon && iconPosition === "left" && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
             {icon}
           </span>
         )}
@@ -93,7 +93,7 @@ const Input = forwardRef(
         />
 
         {icon && iconPosition === "right" && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
             {icon}
           </span>
         )}
@@ -109,7 +109,7 @@ const Input = forwardRef(
             className={`block text-sm font-medium text-primary mb-1 ${labelClassName}`}
           >
             {label}
-            {required && <span className="text-danger-text ml-1">*</span>}
+            {required && <span className="text-status-danger ml-1">*</span>}
           </label>
         )}
 
@@ -117,7 +117,7 @@ const Input = forwardRef(
         {inputWithIcon}
 
         {/* MENSAGEM DE ERRO */}
-        {error && <p className="mt-1 text-sm text-danger-text">{error}</p>}
+        {error && <p className="mt-1 text-sm text-status-danger">{error}</p>}
       </div>
     );
   },
