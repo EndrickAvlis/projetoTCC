@@ -7,10 +7,10 @@ const ListaUniformes = ({ itens, onAlterarComprada, onAlterarRetirada, onExcluir
   if (!itens.length) return null;
 
   return (
-    <section className="bg-white border border-border rounded-lg overflow-hidden">
+    <section className="bg-surface border border-border rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full min-w-185 text-sm">
-          <thead className="bg-gray-100 text-primary text-left">
+          <thead className="bg-surface-muted text-primary text-left">
             <tr>
               <th className="p-3">Tamanho</th>
               <th className="p-3">Preço unit.</th>
@@ -31,7 +31,7 @@ const ListaUniformes = ({ itens, onAlterarComprada, onAlterarRetirada, onExcluir
                   <td className="p-3"><ControleQuantidade valor={item.quantidadeComprada} onDiminuir={() => onAlterarComprada(item.id, -1)} onAumentar={() => onAlterarComprada(item.id, 1)} desabilitarDiminuir={disabled || item.quantidadeComprada <= 1} disabled={disabled} /></td>
                   <td className="p-3">
                     <ControleQuantidade valor={item.quantidadeRetirada} onDiminuir={() => onAlterarRetirada(item.id, -1)} onAumentar={() => onAlterarRetirada(item.id, 1)} desabilitarDiminuir={disabled || item.quantidadeRetirada <= 0} desabilitarAumentar={disabled || item.quantidadeRetirada >= limiteRetirada} disabled={disabled} />
-                    {pendente > 0 && <p className="mt-1 text-xs text-amber-700">{pendente} pendente(s)</p>}
+                    {pendente > 0 && <p className="mt-1 text-xs text-status-warning">{pendente} pendente(s)</p>}
                   </td>
                   <td className="p-3 font-semibold">{formatarMoeda(item.preco * item.quantidadeComprada)}</td>
                   <td className="p-3 text-right"><Button variant="danger" size="sm" disabled={disabled} onClick={() => onExcluir(item.id)} aria-label={`Excluir uniforme tamanho ${item.tamanho}`}><IoMdTrash size={18} /></Button></td>

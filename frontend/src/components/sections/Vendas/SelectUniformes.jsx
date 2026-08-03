@@ -19,10 +19,10 @@ const SelectUniformes = ({ uniformes = [], onAdicionar, disabled = false }) => {
   };
 
   return (
-    <section className="bg-white border border-border rounded-lg p-5 space-y-4">
+    <section className="bg-surface border border-border rounded-lg p-5 space-y-4">
       <div>
         <h2 className="text-section font-semibold text-primary">Uniformes</h2>
-        <p className="text-sm text-gray-500">Itens sem estoque também podem ser vendidos e ficam pendentes para retirada.</p>
+        <p className="text-sm text-text-secondary">Itens sem estoque também podem ser vendidos e ficam pendentes para retirada.</p>
       </div>
       <div className="flex flex-col sm:flex-row gap-3">
         <Select

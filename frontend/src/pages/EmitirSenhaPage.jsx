@@ -25,8 +25,8 @@ const EmitirSenhaPage = () => {
   };
 
   return (
-    <main className="min-h-screen bg-white">
-      <section className="flex min-h-screen w-full flex-col bg-white">
+    <main className="min-h-screen bg-surface">
+      <section className="flex min-h-screen w-full flex-col bg-surface">
         <div className="flex flex-1 flex-col items-center px-6 pt-8 pb-10 sm:px-10 sm:pt-10">
           <img
             src={logoEtec}
@@ -49,12 +49,12 @@ const EmitirSenhaPage = () => {
                 font-bold
                 uppercase
                 tracking-wide
-                text-white
+                text-text-inverse
                 shadow-lg
                 cursor-pointer
                 transition
-                hover:bg-primary-light
-                active:bg-primary-strong
+                hover:bg-primary-hover
+                active:bg-primary-active
                 sm:min-h-50
                 sm:text-5xl
                 disabled:cursor-not-allowed 
@@ -68,7 +68,7 @@ const EmitirSenhaPage = () => {
           </div>
         </div>
 
-        <footer className="flex w-full flex-col items-center bg-[#f5f5f6] px-6 py-8 text-center sm:py-10">
+        <footer className="flex w-full flex-col items-center bg-surface-muted px-6 py-8 text-center sm:py-10">
           <section
             aria-label="Senha emitida"
             className="
@@ -82,7 +82,7 @@ const EmitirSenhaPage = () => {
               rounded-xl
               border-7
               border-primary
-              bg-white
+              bg-surface
               px-6
               pt-4
               pb-6
@@ -94,16 +94,16 @@ const EmitirSenhaPage = () => {
               Senha atual
             </p>
 
-            <p className="mt-2 text-6xl font-extrabold leading-none text-gray-700 sm:text-8xl">
+            <p className="mt-2 text-6xl font-extrabold leading-none text-text-primary sm:text-8xl">
               {senhaEmitida ? formatarSenha(senhaEmitida.numero) : ""}
             </p>
           </section>
           {erro && (
-            <p role="alert" className="mt-4 text-lg font-semibold text-danger">
+            <p role="alert" className="mt-4 text-lg font-semibold text-status-danger">
               {erro}
             </p>
           )}
-          <p className="mt-5 text-lg font-bold text-[#1a1a1a] sm:text-2xl">
+          <p className="mt-5 text-lg font-bold text-text-primary sm:text-2xl">
             Pegue sua senha na impressora.
           </p>
         </footer>

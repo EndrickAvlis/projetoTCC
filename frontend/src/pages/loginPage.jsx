@@ -54,14 +54,14 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="bg-white border border-border rounded-lg p-8 max-w-md w-full shadow-sm">
+    <div className="min-h-screen flex items-center justify-center bg-page p-4">
+      <div className="bg-surface border border-border rounded-lg p-8 max-w-md w-full shadow-sm">
         <h1 className="text-body font-bold text-primary text-center mb-6">
           Entrar no sistema
         </h1>
 
         {erro && (
-          <div className="bg-danger-bg text-danger-text border border-danger-text rounded-md px-4 py-2 text-sm mb-4">
+          <div className="bg-status-danger-bg text-status-danger border border-status-danger rounded-md px-4 py-2 text-sm mb-4">
             {erro}
           </div>
         )}

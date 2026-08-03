@@ -8,7 +8,7 @@ const InfoAluno = ({ aluno }) => {
     .join(" — ");
 
   return (
-    <section className="bg-[#E9EAEC] border border-[#B9C2CE] rounded-lg p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" aria-label="Informações do aluno">
+    <section className="bg-surface-muted border border-border-strong rounded-lg p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" aria-label="Informações do aluno">
       <DadoAluno titulo="Nome" valor={aluno.nome || "Aluno não identificado"} />
       <DadoAluno titulo="Curso" valor={identificacaoAcademica || "—"} />
       <DadoAluno titulo="CPF" valor={aluno.cpf || "—"} />
@@ -18,8 +18,8 @@ const InfoAluno = ({ aluno }) => {
 
 const DadoAluno = ({ titulo, valor }) => (
   <div>
-    <p className="text-sm text-gray-500">{titulo}</p>
-    <p className="font-semibold text-gray-900">{valor}</p>
+    <p className="text-sm text-text-secondary">{titulo}</p>
+    <p className="font-semibold text-text-primary">{valor}</p>
   </div>
 );
 

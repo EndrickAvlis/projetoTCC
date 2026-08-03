@@ -34,7 +34,7 @@ function App() {
               path="*"
               element={
                 <div
-                  style={{ padding: "20px", color: "red", fontSize: "20px" }}
+                  className="p-5 text-xl text-status-danger"
                 >
                   Página não encontrada.
                 </div>
