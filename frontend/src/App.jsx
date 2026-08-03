@@ -1,5 +1,5 @@
 // Configura os contextos globais e as rotas principais do frontend.
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AtendimentoProvider } from "./context/atendimentoContext";
 import { AuthProvider } from "./context/authContext";
 import RotaProtegida from "./components/routing/RotaProtegida";
@@ -9,6 +9,15 @@ import ApmPage from "./pages/ApmPage";
 import DocsPage from "./pages/DocsPage";
 import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import EmitirSenhaPage from "./pages/EmitirSenhaPage";
+import AdminLayout from "./components/sections/Adm/adminLayout";
+import DashboardPage from "./pages/Adm/dashboardPage";
+import FilasPage from "./pages/Adm/filasPage";
+import AlunosPage from "./pages/Adm/alunosPage";
+import CursosPage from "./pages/Adm/cursosPage";
+import ProdutosPage from "./pages/Adm/produtosPage";
+import RelatoriosPage from "./pages/Adm/relatoriosPage";
+import UsuariosPage from "./pages/Adm/usuariosPage";
+import ConfiguracoesPage from "./pages/Adm/configuracoesPage";
 
 function App() {
   return (
@@ -21,15 +30,18 @@ function App() {
             <Route path="/apm" element={<ApmPage />} />
             <Route path="/docs" element={<DocsPage />} />
             <Route path="/emitir-senha" element={<EmitirSenhaPage />} />
-            {/* <Route
-              path="/admin"
-              element={<RotaProtegida tela="admin"><TelaEmConstrucaoPage titulo="Administração" /></RotaProtegida>}
-            />
-            <Route
-              path="/secretaria"
-              element={<RotaProtegida tela="secretaria"><TelaEmConstrucaoPage titulo="Secretaria" /></RotaProtegida>}
-            /> */}
             <Route path="/acesso-negado" element={<AcessoNegadoPage />} />
+            <Route path="admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="filas" element={<FilasPage />} />
+              <Route path="alunos" element={<AlunosPage />} />
+              <Route path="cursos" element={<CursosPage />} />
+              <Route path="produtos" element={<ProdutosPage />} />
+              <Route path="relatorios" element={<RelatoriosPage />} />
+              <Route path="usuarios" element={<UsuariosPage />} />
+              <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            </Route>
             <Route
               path="*"
               element={
