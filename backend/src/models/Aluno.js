@@ -1,4 +1,4 @@
-class Aluno {
+export default class Aluno {
     constructor({
         cpf = null,
         ano = null,

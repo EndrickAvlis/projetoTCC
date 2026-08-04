@@ -1,4 +1,4 @@
-class Contribuicao {
+export default class Contribuicao {
     constructor({
         id = null,
         valor = null,

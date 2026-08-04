@@ -1,4 +1,4 @@
-class HistoricoSenha {
+export default class HistoricoSenha {
     constructor({
         id = null,
         etapa = null,

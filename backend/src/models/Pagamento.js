@@ -1,4 +1,4 @@
-class Pagamento {
+export default class Pagamento {
     constructor({
         id = null,
         valor = null,

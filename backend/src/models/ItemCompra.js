@@ -1,4 +1,4 @@
-class ItemCompra {
+export default class ItemCompra {
     constructor({
         codProduto = null,
         codCompra = null,

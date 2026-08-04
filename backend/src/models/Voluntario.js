@@ -1,4 +1,4 @@
-class Voluntario {
+export default class Voluntario {
     constructor({
         id = null,
         nome = null,
