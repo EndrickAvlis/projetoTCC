@@ -1,0 +1,6 @@
+class ItemCompra {
+    constructor({
+        
+    } = {}){
+    }
+}
