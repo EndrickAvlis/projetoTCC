@@ -9,15 +9,15 @@ import ApmPage from "./pages/ApmPage";
 import DocsPage from "./pages/DocsPage";
 import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import EmitirSenhaPage from "./pages/EmitirSenhaPage";
-import AdminLayout from "./components/sections/Adm/adminLayout";
-import DashboardPage from "./pages/Adm/dashboardPage";
-import FilasPage from "./pages/Adm/filasPage";
-import AlunosPage from "./pages/Adm/alunosPage";
-import CursosPage from "./pages/Adm/cursosPage";
-import ProdutosPage from "./pages/Adm/produtosPage";
-import RelatoriosPage from "./pages/Adm/relatoriosPage";
-import UsuariosPage from "./pages/Adm/usuariosPage";
-import ConfiguracoesPage from "./pages/Adm/configuracoesPage";
+import AdminLayout from "./features/admin/layout/adminLayout";
+import DashboardPage from "./features/admin/pages/dashboardPage";
+import FilasPage from "./features/admin/pages/filasPage";
+import AlunosPage from "./features/admin/pages/alunosPage";
+import CursosPage from "./features/admin/pages/cursosPage";
+import ProdutosPage from "./features/admin/pages/produtosPage";
+import RelatoriosPage from "./features/admin/pages/relatoriosPage";
+import UsuariosPage from "./features/admin/pages/usuariosPage";
+import ConfiguracoesPage from "./features/admin/pages/configuracoesPage";
 
 function App() {
   return (
