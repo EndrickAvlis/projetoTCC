@@ -7,12 +7,12 @@ export const normalizarSenha = (senha) => {
 
   return {
     ...senha,
+    id: senha.idSenha,
     numero: senha.codigo,
     etapa: senha.etapaAtual,
     prioritaria: senha.tipoSenha,
   };
 };
-
 // Busca as senhas aguardando da etapa que está aberta no posto.
 export const listarFila = async (etapa) => {
   const resposta = await requisitarApi(

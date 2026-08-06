@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { emitirSenha } from "../controllers/senhaController.js";
+import * as senhaController from "../controllers/senhaController.js";
 
 const senhaRouter = Router();
 
-senhaRouter.post("/", emitirSenha)
+senhaRouter.post("/", senhaController.emitirSenha)
+senhaRouter.patch("/:id/prioridade", senhaController.alterarPrioridadeSenha)
 
 export default senhaRouter;

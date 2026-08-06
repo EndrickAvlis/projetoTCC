@@ -52,7 +52,7 @@ export const criarSenha = async () => {
     },
   });
 
-  
+
   const proximoCodigo = (ultimaSenha?.senhaCodigo ?? 0) + 1;
 
   return prisma.senha.create({
@@ -73,3 +73,25 @@ export const criarSenha = async () => {
     },
   });
 };
+export const alterarPrioridadeSenha = async (id, tipoSenha) => {
+  const senha = await prisma.senha.findUnique({
+    where: { idSenha: id },
+  })
+
+  if(!senha) {
+    throw new Error("SENHA_NAO_ENCONTRADA")
+  }
+
+  if (senha.statusSenha === "finalizada") {
+    throw new Error("SENHA_FINALIZADA");
+  }
+
+  const senhaAtualizada = await prisma.senha.update({
+    where: { idSenha: id },
+    data: { tipoSenha },
+  })
+
+  return senhaAtualizada;
+}
+
+
