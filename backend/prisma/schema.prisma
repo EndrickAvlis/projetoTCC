@@ -1,6 +1,7 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
 }
@@ -10,6 +11,14 @@ enum TipoVoluntario {
   supervisor
   atendente
 }
+
+enum PeriodoCurso {
+  manha
+  tarde
+  noite
+  integral
+}
+
 
 model Produto {
   idProduto         Int     @id @default(autoincrement())
@@ -70,11 +79,24 @@ model Contribuicao {
 }
 
 model Curso {
-  idCurso      Int    @id @default(autoincrement())
-  periodoCurso String @db.VarChar(20)
-  nomeCurso    String @db.VarChar(100)
+  idCurso   Int     @id @default(autoincrement())
+  nomeCurso String  @db.VarChar(100)
+  arquivado Boolean @default(false)
 
+ofertas OfertaCurso[]
   cursosAluno CursoAluno[]
+}
+
+model OfertaCurso {
+  idOferta         Int          @id @default(autoincrement())
+  idCurso          Int
+  periodo          PeriodoCurso
+  vagasTotais      Int
+  matriculaAtiva   Boolean      @default(true)
+
+  curso            Curso        @relation(fields: [idCurso], references: [idCurso])
+
+  @@unique([idCurso, periodo])
 }
 
 model Aluno {
@@ -113,11 +135,11 @@ model Senha {
 }
 
 model Voluntario {
-  idVoluntario     Int    @id @default(autoincrement())
-  nomeVoluntario   String @db.VarChar(100)
-  senhaVoluntario  String @db.VarChar(50)
+  idVoluntario     Int            @id @default(autoincrement())
+  nomeVoluntario   String         @db.VarChar(100)
+  senhaVoluntario  String         @db.VarChar(50)
   tipoVoluntario   TipoVoluntario @default(atendente)
-  statusVoluntario String @db.VarChar(20)
+  statusVoluntario String         @db.VarChar(20)
 
   compras    Compra[]
   historicos HistoricoSenha[]
@@ -127,7 +149,7 @@ model HistoricoSenha {
   idHistorico             Int       @id @default(autoincrement())
   codSenha                Int
   codVoluntario           Int
-  etapaHistorico String? @db.VarChar(15)
+  etapaHistorico          String?   @db.VarChar(15)
   dataHoraInicioHistorico DateTime
   dataHoraFimHistorico    DateTime?
 
