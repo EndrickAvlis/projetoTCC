@@ -3,44 +3,45 @@
 /* Design tokens globais: use apenas estes nomes nos componentes. */
 @theme {
   /* Marca e interacao */
-  --color-primary: #0A2647;
-  --color-primary-hover: #12365F;
+  --color-primary: #0a2647;
+  --color-primary-hover: #12365f;
   --color-primary-active: #041529;
-  --color-primary-text-muted: #B4C8DE;
-  --color-primary-border: #B4C8DE;
-  --color-focus-ring: #4C90D9;
+  --color-primary-text-muted: #b4c8de;
+  --color-primary-border: #b4c8de;
+  --color-focus-ring: #4c90d9;
 
   /* Superficies */
-  --color-page: #F2F4F7;
-  --color-surface: #FFFFFF;
-  --color-surface-muted: #F7F9FC;
-  --color-disabled-bg: #E9EEF5;
-  --color-border: #D7DFEA;
-  --color-border-strong: #B7C4D4;
+  --color-page: #f2f4f7;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f9fc;
+  --color-disabled-bg: #e9eef5;
+  --color-border: #d7dfea;
+  --color-border-strong: #b7c4d4;
+  --color-table-head: #EBEDF0;
 
   /* Texto */
   --color-text-primary: #172033;
   --color-text-secondary: #667085;
-  --color-text-disabled: #98A2B3;
-  --color-text-inverse: #FFFFFF;
+  --color-text-disabled: #98a2b3;
+  --color-text-inverse: #ffffff;
 
   /* Status */
-  --color-status-success: #1F7A1F;
-  --color-status-success-bg: #DCFCE7;
-  --color-status-warning: #9A6700;
-  --color-status-warning-bg: #FFF2CC;
-  --color-status-info: #175CD3;
-  --color-status-info-bg: #E8F1FF;
-  --color-status-danger: #B42318;
-  --color-status-danger-bg: #FEE4E2;
+  --color-status-success: #1f7a1f;
+  --color-status-success-bg: #dcfce7;
+  --color-status-warning: #9a6700;
+  --color-status-warning-bg: #fff2cc;
+  --color-status-info: #175cd3;
+  --color-status-info-bg: #e8f1ff;
+  --color-status-danger: #b42318;
+  --color-status-danger-bg: #fee4e2;
 
   /* Area administrativa */
-  --color-admin-sidebar: #0A2647;
-  --color-admin-sidebar-hover: #12365F;
-  --color-admin-sidebar-active: #1A4B7A;
-  --color-admin-sidebar-text: #DCE8F5;
-  --color-admin-sidebar-text-muted: #A9BDD3;
-  --color-admin-sidebar-divider: #35516F;
+  --color-admin-sidebar: #0a2647;
+  --color-admin-sidebar-hover: #12365f;
+  --color-admin-sidebar-active: #1a4b7a;
+  --color-admin-sidebar-text: #dce8f5;
+  --color-admin-sidebar-text-muted: #a9bdd3;
+  --color-admin-sidebar-divider: #35516f;
 
   /* Forma e tipografia */
   --radius-btn: 6px;
@@ -61,5 +62,61 @@
       outline: 3px solid var(--color-focus-ring);
       outline-offset: 2px;
     }
+  }
+}
+
+@keyframes modal-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes offer-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-modal-overlay {
+    animation: modal-overlay-in 160ms ease-out both;
+  }
+
+  .animate-modal-panel {
+    animation: modal-panel-in 200ms ease-out both;
+  }
+
+  .animate-offer-expand {
+    animation: offer-expand-in 180ms ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-modal-overlay,
+  .animate-modal-panel,
+  .animate-offer-expand {
+    animation: none;
   }
 }

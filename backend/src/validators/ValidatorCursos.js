@@ -1,6 +1,43 @@
 const periodosValidos = new Set(["manha", "tarde", "noite", "integral"]);
 
-const normalizarNome = (nome) => (typeof nome === "string" ? nome.trim() : "");
+const palavrasMinusculas = new Set([
+  "a",
+  "as",
+  "o",
+  "os",
+  "de",
+  "da",
+  "das",
+  "do",
+  "dos",
+  "e",
+  "em",
+  "na",
+  "nas",
+  "no",
+  "nos",
+  "para",
+  "por",
+]);
+
+const normalizarNome = (nome) => {
+  if (typeof nome !== "string") {
+    return "";
+  }
+
+  return nome
+    .trim()
+    .toLocaleLowerCase("pt-BR")
+    .split(/\s+/)
+    .map((palavra, indice) => {
+      if (indice > 0 && palavrasMinusculas.has(palavra)) {
+        return palavra;
+      }
+
+      return palavra.charAt(0).toLocaleUpperCase("pt-BR") + palavra.slice(1);
+    })
+    .join(" ");
+};
 
 const normalizarPeriodo = (periodo) =>
   typeof periodo === "string" ? periodo.trim().toLowerCase() : "";

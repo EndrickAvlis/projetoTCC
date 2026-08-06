@@ -2,8 +2,8 @@ import {
     adminNavigation,
     adminFooterNavigation,
 } from "../constants/adminNavigation";
-import AdminLogoutButton from "../components/adminLogoutButton";
-import AdminNavItem from "../components/adminNavItem";
+import AdminLogoutButton from "../components/admin/adminLogoutButton";
+import AdminNavItem from "../components/admin/AdminNavItem";
 import {
     FiChevronLeft,
     FiChevronRight,
@@ -11,7 +11,7 @@ import {
 
 const AdminSideBar = ({ collapsed, onToggle }) => {
     return (
-        <aside className={`sticky top-0 flex h-screen shrink-0 flex-col overflow-hidden bg-admin-sidebar p-4 text-admin-sidebar-text transition-[width] duration-300 ${collapsed ? "w-20" : "w-72"}`}>
+        <aside className={`sticky top-0 flex h-screen shrink-0 flex-col overflow-hidden bg-admin-sidebar p-4 text-admin-sidebar-text transition-[width] duration-[250ms] ease-out ${collapsed ? "w-20" : "w-72"}`}>
             <div className="border-b border-admin-sidebar-divider pb-5">
                 <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
                     {!collapsed && (
