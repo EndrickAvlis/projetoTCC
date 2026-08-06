@@ -1,4 +1,4 @@
-class Curso {
+export default class Curso {
     constructor({
         id = null,
         periodo = null,

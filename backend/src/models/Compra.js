@@ -1,4 +1,4 @@
-class Compra {
+export default class Compra {
     constructor({
         id = null,
         valor = null,

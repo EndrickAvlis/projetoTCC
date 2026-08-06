@@ -12,7 +12,7 @@ const Input = forwardRef(
       labelClassName = "",
 
       // TAMANHOS
-      size = "lg", // sm | md | lg
+      size = "md", // sm | md | lg
 
       // PLACEHOLDER
       placeholder = "",

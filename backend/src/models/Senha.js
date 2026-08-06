@@ -1,4 +1,4 @@
-class Senha {   
+export default class Senha {   
     constructor({
         id = null,
         codigo = null,
@@ -16,6 +16,6 @@ class Senha {
         this.emitidaEm = emitidaEm;
         this.chamadaEm = chamadaEm;
         this.tipo = tipo;
-        this.idAluno = idAluno;
+        this.codAluno = codAluno;
     }
 }

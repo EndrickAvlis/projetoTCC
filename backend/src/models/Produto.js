@@ -1,4 +1,4 @@
-class Produto {
+export default class Produto {
     constructor({
         id = null,
         nome = null,

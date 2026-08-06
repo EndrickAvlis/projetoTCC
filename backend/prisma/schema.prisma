@@ -1,6 +1,7 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
 }
@@ -10,6 +11,14 @@ enum TipoVoluntario {
   supervisor
   atendente
 }
+
+enum PeriodoCurso {
+  manha
+  tarde
+  noite
+  integral
+}
+
 
 model Produto {
   idProduto         Int     @id @default(autoincrement())
@@ -25,12 +34,12 @@ model Produto {
 model Compra {
   idCompra       Int      @id @default(autoincrement())
   codVoluntario  Int
-  cpfAluno       String   @db.VarChar(15)
+  codAluno       Int
   valorCompra    Decimal  @db.Decimal(6, 2)
   dataHoraCompra DateTime
   codigoRetirada String   @db.VarChar(100)
 
-  aluno         Aluno          @relation(fields: [cpfAluno], references: [cpfAluno])
+  aluno         Aluno          @relation(fields: [codAluno], references: [idAluno])
   voluntario    Voluntario     @relation(fields: [codVoluntario], references: [idVoluntario])
   itensCompra   ItemCompra[]
   pagamentos    Pagamento[]
@@ -38,17 +47,17 @@ model Compra {
 }
 
 model ItemCompra {
-  idProduto              Int
-  idCompra               Int
+  codProduto              Int
+  codCompra               Int
   precoUnitario          Decimal @db.Decimal(5, 2)
   quantidadeItem         Int
   quantidadeRetiradaItem Int
   statusItem             String  @db.VarChar(20)
 
-  produto Produto @relation(fields: [idProduto], references: [idProduto])
-  compra  Compra  @relation(fields: [idCompra], references: [idCompra])
+  produto Produto @relation(fields: [codProduto], references: [idProduto])
+  compra  Compra  @relation(fields: [codCompra], references: [idCompra])
 
-  @@id([idProduto, idCompra])
+  @@id([codProduto, codCompra])
 }
 
 model Pagamento {
@@ -70,15 +79,29 @@ model Contribuicao {
 }
 
 model Curso {
-  idCurso      Int    @id @default(autoincrement())
-  periodoCurso String @db.VarChar(20)
-  nomeCurso    String @db.VarChar(100)
+  idCurso   Int     @id @default(autoincrement())
+  nomeCurso String  @db.VarChar(100)
+  arquivado Boolean @default(false)
 
+ofertas OfertaCurso[]
   cursosAluno CursoAluno[]
 }
 
+model OfertaCurso {
+  idOferta         Int          @id @default(autoincrement())
+  idCurso          Int
+  periodo          PeriodoCurso
+  vagasTotais      Int
+  matriculaAtiva   Boolean      @default(true)
+
+  curso            Curso        @relation(fields: [idCurso], references: [idCurso])
+
+  @@unique([idCurso, periodo])
+}
+
 model Aluno {
-  cpfAluno  String @id @db.VarChar(15)
+  idAluno   Int    @id @default(autoincrement()) 
+  cpfAluno  String @db.VarChar(15)
   anoAluno  Int
   nomeAluno String @db.VarChar(100)
 
@@ -88,18 +111,18 @@ model Aluno {
 }
 
 model CursoAluno {
-  idCurso  Int
-  cpfAluno String @db.VarChar(15)
+  codCurso  Int
+  codAluno  Int
 
-  curso Curso @relation(fields: [idCurso], references: [idCurso])
-  aluno Aluno @relation(fields: [cpfAluno], references: [cpfAluno])
+  curso Curso @relation(fields: [codCurso], references: [idCurso])
+  aluno Aluno @relation(fields: [codAluno], references: [idAluno])
 
-  @@id([idCurso, cpfAluno])
+  @@id([codCurso, codAluno])
 }
 
 model Senha {
   idSenha             Int       @id @default(autoincrement())
-  idAluno            String?   @db.VarChar(15)
+  codAluno            Int?
   senhaCodigo         Int    
   dataHoraInicioSenha DateTime
   dataHoraFimSenha    DateTime?
@@ -107,16 +130,16 @@ model Senha {
   tipoSenha           Boolean   @default(false)
   statusSenha         String    @db.VarChar(20)
 
-  aluno      Aluno?           @relation(fields: [idAluno], references: [cpfAluno])
+  aluno      Aluno?           @relation(fields: [codAluno], references: [idAluno])
   historicos HistoricoSenha[]
 }
 
 model Voluntario {
-  idVoluntario     Int    @id @default(autoincrement())
-  nomeVoluntario   String @db.VarChar(100)
-  senhaVoluntario  String @db.VarChar(50)
+  idVoluntario     Int            @id @default(autoincrement())
+  nomeVoluntario   String         @db.VarChar(100)
+  senhaVoluntario  String         @db.VarChar(50)
   tipoVoluntario   TipoVoluntario @default(atendente)
-  statusVoluntario String @db.VarChar(20)
+  statusVoluntario String         @db.VarChar(20)
 
   compras    Compra[]
   historicos HistoricoSenha[]
@@ -126,7 +149,7 @@ model HistoricoSenha {
   idHistorico             Int       @id @default(autoincrement())
   codSenha                Int
   codVoluntario           Int
-  etapaHistorico String? @db.VarChar(15)
+  etapaHistorico          String?   @db.VarChar(15)
   dataHoraInicioHistorico DateTime
   dataHoraFimHistorico    DateTime?
 
