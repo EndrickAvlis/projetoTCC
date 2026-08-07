@@ -12,7 +12,7 @@ enum TipoVoluntario {
   atendente
 }
 
-enum PeriodoCurso {
+enum Periodo {
   manha
   tarde
   noite
@@ -83,14 +83,14 @@ model Curso {
   nomeCurso String  @db.VarChar(100)
   arquivado Boolean @default(false)
 
-  ofertas OfertaCurso[]
+  periodos PeriodoCurso[]
   cursosAluno CursoAluno[]
 }
 
-model OfertaCurso {
-  idOferta         Int          @id @default(autoincrement())
+model PeriodoCurso {
+  idPeriodo        Int          @id @default(autoincrement())
   codCurso         Int
-  periodo          PeriodoCurso
+  periodo          Periodo
   vagasTotais      Int
   matriculaAtiva   Boolean      @default(true)
 
