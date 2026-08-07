@@ -9,7 +9,7 @@ export const listarCursosAdmin = async (req, res) => {
 
   if (arquivado !== undefined && arquivado !== "true" && arquivado !== "false"){
     return res.status(400).json({
-      message: "O filtro arquivado deve ser true ou false.",
+      message: "O valor de arquivado deve ser true ou false.",
       code: "FILTRO_ARQUIVADO_INVALIDO",
     });
   }

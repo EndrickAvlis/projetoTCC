@@ -26,14 +26,12 @@ export const pesquisarCursosAdmin = async ({
   prisma.curso.findMany({
     where: {
       arquivado,
-      ...(busca
-        ? {
+      ...(busca? {
             nomeCurso: {
               contains: busca,
               mode: "insensitive",
             },
-          }
-        : {}),
+          } : {}),
     },
     select: cursoSelect,
     orderBy: {
