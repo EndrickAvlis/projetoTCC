@@ -10,8 +10,8 @@ cursoRoutes.post('/', cursoController.criarCursoAdmin)
 cursoRoutes.patch('/:cursoId', cursoController.atualizarNomeCursoAdmin)
 cursoRoutes.patch('/:cursoId/arquivamento', cursoController.alterarArquivamentoCurso)
 
-cursoRoutes.post('/:cursoId/ofertas', cursoController.criarOfertaCursoAdmin)
+cursoRoutes.post('/:cursoId/periodos', cursoController.criarPeriodoCursoAdmin)
 
-cursoRoutes.patch('/:cursoId/ofertas/:ofertaId', cursoController.atualizarOfertaCursoAdmin)
+cursoRoutes.patch('/:cursoId/periodos/:periodoId', cursoController.atualizarPeriodoCursoAdmin)
 
 export default cursoRoutes;

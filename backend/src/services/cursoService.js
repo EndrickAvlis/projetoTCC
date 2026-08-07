@@ -1,7 +1,7 @@
 import prisma from "../config/prisma.js";
 
-const ofertaSelect = {
-  idOferta: true,
+const periodoSelect = {
+  idPeriodo: true,
   periodo: true,
   vagasTotais: true,
   matriculaAtiva: true,
@@ -11,8 +11,8 @@ const cursoSelect = {
   idCurso: true,
   nomeCurso: true,
   arquivado: true,
-  ofertas: {
-    select: ofertaSelect,
+  periodos: {
+    select: periodoSelect,
     orderBy: {
       periodo: "asc",
     },
@@ -39,15 +39,15 @@ export const pesquisarCursosAdmin = async ({
     },
   });
 
-export const criarCurso = async ({ nome, ofertas }) =>
+export const criarCurso = async ({ nome, periodos }) =>
   prisma.curso.create({
     data: {
       nomeCurso: nome,
-      ofertas: {
-        create: ofertas.map((oferta) => ({
-          periodo: oferta.periodo,
-          vagasTotais: oferta.vagasTotais,
-          matriculaAtiva: oferta.matriculaAtiva,
+      periodos: {
+        create: periodos.map((periodoCurso) => ({
+          periodo: periodoCurso.periodo,
+          vagasTotais: periodoCurso.vagasTotais,
+          matriculaAtiva: periodoCurso.matriculaAtiva,
         })),
       },
     },
@@ -86,9 +86,9 @@ export const arquivarCurso = async (cursoId, arquivado) =>
     if (atualizacao.count === 0) return null;
 
     if (arquivado) {
-      await transacao.ofertaCurso.updateMany({
+      await transacao.periodoCurso.updateMany({
         where: {
-          idCurso: cursoId,
+          codCurso: cursoId,
         },
         data: {
           matriculaAtiva: false,
@@ -104,7 +104,7 @@ export const arquivarCurso = async (cursoId, arquivado) =>
     });
   });
 
-export const adicionarOfertaCurso = async (cursoId, oferta) => {
+export const adicionarPeriodoCurso = async (cursoId, periodoCurso) => {
   const curso = await prisma.curso.findUnique({
     where: {
       idCurso: cursoId,
@@ -122,47 +122,47 @@ export const adicionarOfertaCurso = async (cursoId, oferta) => {
 
   if (curso.arquivado) {
     const erro = new Error(
-      "Não é possível criar ofertas em um curso arquivado.",
+      "Não é possível criar períodos em um curso arquivado.",
     );
     erro.code = "CURSO_ARQUIVADO";
     throw erro;
   }
 
-  return prisma.ofertaCurso.create({
+  return prisma.periodoCurso.create({
     data: {
-      idCurso: cursoId,
-      periodo: oferta.periodo,
-      vagasTotais: oferta.vagasTotais,
-      matriculaAtiva: oferta.matriculaAtiva,
+      codCurso: cursoId,
+      periodo: periodoCurso.periodo,
+      vagasTotais: periodoCurso.vagasTotais,
+      matriculaAtiva: periodoCurso.matriculaAtiva,
     },
-    select: ofertaSelect,
+    select: periodoSelect,
   });
 };
 
-export const atualizarOfertaCurso = async (cursoId, ofertaId, oferta) => {
-  const atualizacao = await prisma.ofertaCurso.updateMany({
+export const atualizarPeriodoCurso = async (cursoId, periodoId, periodoCurso) => {
+  const atualizacao = await prisma.periodoCurso.updateMany({
     where: {
-      idOferta: ofertaId,
-      idCurso: cursoId,
+      idPeriodo: periodoId,
+      codCurso: cursoId,
     },
     data: {
-      periodo: oferta.periodo,
-      vagasTotais: oferta.vagasTotais,
-      matriculaAtiva: oferta.matriculaAtiva,
+      periodo: periodoCurso.periodo,
+      vagasTotais: periodoCurso.vagasTotais,
+      matriculaAtiva: periodoCurso.matriculaAtiva,
     },
   });
   if (atualizacao.count === 0) return null;
 
-  return prisma.ofertaCurso.findUnique({
+  return prisma.periodoCurso.findUnique({
     where: {
-      idOferta: ofertaId,
+      idPeriodo: periodoId,
     },
-    select: ofertaSelect,
+    select: periodoSelect,
   });
 };
 
-export const listarOfertasDisponiveis = async () =>
-  prisma.ofertaCurso.findMany({
+export const listarPeriodosDisponiveis = async () =>
+  prisma.periodoCurso.findMany({
     where: {
       matriculaAtiva: true,
       curso: {
@@ -170,7 +170,7 @@ export const listarOfertasDisponiveis = async () =>
       },
     },
     select: {
-      idOferta: true,
+      idPeriodo: true,
       periodo: true,
       vagasTotais: true,
       curso: {

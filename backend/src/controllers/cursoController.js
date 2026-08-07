@@ -2,18 +2,18 @@ import * as cursoService from "../services/cursoService.js";
 import * as validatorCursos from "../validators/ValidatorCursos.js";
 
 //Formatações e validações
-const formatarOferta = (oferta) => ({
-  id: oferta.idOferta,
-  periodo: oferta.periodo,
-  vagasTotais: oferta.vagasTotais,
-  matriculaAtiva: oferta.matriculaAtiva,
+const formatarPeriodo = (periodoCurso) => ({
+  id: periodoCurso.idPeriodo,
+  periodo: periodoCurso.periodo,
+  vagasTotais: periodoCurso.vagasTotais,
+  matriculaAtiva: periodoCurso.matriculaAtiva,
 });
 
 const formatarCurso = (curso) => ({
   id: curso.idCurso,
   nome: curso.nomeCurso,
   arquivado: curso.arquivado,
-  ofertas: curso.ofertas.map(formatarOferta),
+  periodos: curso.periodos.map(formatarPeriodo),
 });
 
 const obterIdValido = (valor) => {
@@ -56,15 +56,15 @@ const responderErroBanco = (res, erro, mensagem) => {
 
   if (erro.code === "CURSO_ARQUIVADO") {
     return res.status(409).json({
-      message: "Não é possível criar ofertas em um curso arquivado.",
+      message: "Não é possível criar períodos em um curso arquivado.",
       code: "CURSO_ARQUIVADO",
     });
   }
 
   if (erro.code === "P2002") {
     return res.status(409).json({
-      message: "Já existe uma oferta deste curso para esse período.",
-      code: "OFERTA_DUPLICADA",
+      message: "Já existe um período deste curso para esse horário.",
+      code: "PERIODO_DUPLICADO",
     });
   }
   console.error(mensagem, erro);
@@ -75,7 +75,7 @@ const responderErroBanco = (res, erro, mensagem) => {
   });
 };
 
-//Funções para os cursos e suas ofertas
+// Funções para os cursos e seus períodos
 export const listarCursosAdmin = async (req, res) => {
   const filtroArquivado = normalizarFiltroArquivado(req.query.arquivado);
 
@@ -207,7 +207,7 @@ export const alterarArquivamentoCurso = async (req, res) => {
   }
 };
 
-export const criarOfertaCursoAdmin = async (req, res) => {
+export const criarPeriodoCursoAdmin = async (req, res) => {
   const cursoId = obterIdValido(req.params.cursoId);
 
   if (!cursoId) {
@@ -217,67 +217,67 @@ export const criarOfertaCursoAdmin = async (req, res) => {
     });
   }
 
-  const validacao = validatorCursos.validarOfertaCurso(req.body);
+  const validacao = validatorCursos.validarPeriodoCurso(req.body);
 
   if (!validacao.valido) {
     return res.status(400).json({
-      message: "Dados da oferta inválidos.",
-      code: "OFERTA_INVALIDA",
+      message: "Dados do período inválidos.",
+      code: "PERIODO_INVALIDO",
       details: validacao.erros,
     });
   }
 
   try {
-    const oferta = await cursoService.adicionarOfertaCurso(
+    const periodoCurso = await cursoService.adicionarPeriodoCurso(
       cursoId,
       validacao.dados,
     );
 
     return res.status(201).json({
-      oferta: formatarOferta(oferta),
+      periodo: formatarPeriodo(periodoCurso),
     });
   } catch (error) {
-    return responderErroBanco(res, error, "Erro ao criar oferta:");
+    return responderErroBanco(res, error, "Erro ao criar período:");
   }
 };
 
-export const atualizarOfertaCursoAdmin = async (req, res) => {
+export const atualizarPeriodoCursoAdmin = async (req, res) => {
   const cursoId = obterIdValido(req.params.cursoId);
-  const ofertaId = obterIdValido(req.params.ofertaId);
+  const periodoId = obterIdValido(req.params.periodoId);
 
-  if (!cursoId || !ofertaId) {
+  if (!cursoId || !periodoId) {
     return res.status(400).json({
-      message: "Informe IDs de curso e oferta válidos.",
+      message: "Informe IDs de curso e período válidos.",
       code: "ID_INVALIDO",
     });
   }
 
-  const validacao = validatorCursos.validarOfertaCurso(req.body);
+  const validacao = validatorCursos.validarPeriodoCurso(req.body);
   if (!validacao.valido) {
     return res.status(400).json({
-      message: "Dados da oferta inválidos.",
-      code: "OFERTA_INVALIDA",
+      message: "Dados do período inválidos.",
+      code: "PERIODO_INVALIDO",
       details: validacao.erros,
     });
   }
 
   try {
-    const oferta = await cursoService.atualizarOfertaCurso(
+    const periodoCurso = await cursoService.atualizarPeriodoCurso(
       cursoId,
-      ofertaId,
+      periodoId,
       validacao.dados,
     );
-    if (!oferta) {
+    if (!periodoCurso) {
       return res.status(404).json({
-        message: "Oferta não encontrada para este curso.",
-        code: "OFERTA_NAO_ENCONTRADA",
+        message: "Período não encontrado para este curso.",
+        code: "PERIODO_NAO_ENCONTRADO",
       });
     }
 
     return res.json({
-      oferta: formatarOferta(oferta),
+      periodo: formatarPeriodo(periodoCurso),
     });
   } catch (error) {
-    return responderErroBanco(res, error, "Erro ao atualizar oferta:");
+    return responderErroBanco(res, error, "Erro ao atualizar período:");
   }
 };

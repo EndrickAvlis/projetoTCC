@@ -71,10 +71,10 @@ export const validarNomeCurso = (nome) => {
   };
 };
 
-export const validarOfertaCurso = (oferta = {}) => {
-  const periodo = normalizarPeriodo(oferta?.periodo);
-  const vagasTotais = normalizarVagasTotais(oferta?.vagasTotais);
-  const matriculaAtiva = oferta?.matriculaAtiva;
+export const validarPeriodoCurso = (periodoCurso = {}) => {
+  const periodo = normalizarPeriodo(periodoCurso?.periodo);
+  const vagasTotais = normalizarVagasTotais(periodoCurso?.vagasTotais);
+  const matriculaAtiva = periodoCurso?.matriculaAtiva;
 
   const erros = {};
 
@@ -104,54 +104,54 @@ export const validarOfertaCurso = (oferta = {}) => {
 export const validarDadosCurso = (curso = {}) => {
   const dadosCurso = curso ?? {};
   const validacaoNome = validarNomeCurso(dadosCurso.nome);
-  const ofertasEnviadas =
-    dadosCurso.ofertas === undefined ? [] : dadosCurso.ofertas;
+  const periodosEnviados =
+    dadosCurso.periodos === undefined ? [] : dadosCurso.periodos;
 
   const erros = {
     ...validacaoNome.erros,
   };
 
-  if (!Array.isArray(ofertasEnviadas)) {
-    erros.ofertas = "As ofertas devem ser uma lista.";
+  if (!Array.isArray(periodosEnviados)) {
+    erros.periodos = "Os períodos devem ser uma lista.";
   }
 
-  const ofertasNormalizadas = [];
-  const errosOfertas = [];
+  const periodosNormalizados = [];
+  const errosPeriodos = [];
   const periodosInformados = new Set();
 
-  if (Array.isArray(ofertasEnviadas)) {
-    ofertasEnviadas.forEach((oferta, indice) => {
-      const validacaoOferta = validarOfertaCurso(oferta);
-      const errosOferta = {
-        ...validacaoOferta.erros,
+  if (Array.isArray(periodosEnviados)) {
+    periodosEnviados.forEach((periodoCurso, indice) => {
+      const validacaoPeriodo = validarPeriodoCurso(periodoCurso);
+      const errosPeriodo = {
+        ...validacaoPeriodo.erros,
       };
 
       if (
-        validacaoOferta.dados.periodo &&
-        periodosInformados.has(validacaoOferta.dados.periodo)
+        validacaoPeriodo.dados.periodo &&
+        periodosInformados.has(validacaoPeriodo.dados.periodo)
       ) {
-        errosOferta.periodo = "Este período já foi informado para o curso.";
+        errosPeriodo.periodo = "Este período já foi informado para o curso.";
       }
 
-      periodosInformados.add(validacaoOferta.dados.periodo);
+      periodosInformados.add(validacaoPeriodo.dados.periodo);
 
-      ofertasNormalizadas.push(validacaoOferta.dados);
+      periodosNormalizados.push(validacaoPeriodo.dados);
 
-      if (Object.keys(errosOferta).length > 0) {
-        errosOfertas[indice] = errosOferta;
+      if (Object.keys(errosPeriodo).length > 0) {
+        errosPeriodos[indice] = errosPeriodo;
       }
     });
   }
 
-  if (errosOfertas.length > 0) {
-    erros.ofertas = errosOfertas;
+  if (errosPeriodos.length > 0) {
+    erros.periodos = errosPeriodos;
   }
 
   return {
     valido: Object.keys(erros).length === 0,
     dados: {
       nome: validacaoNome.dados.nome,
-      ofertas: ofertasNormalizadas,
+      periodos: periodosNormalizados,
     },
     erros,
   };
