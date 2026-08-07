@@ -5,6 +5,7 @@ import "dotenv/config";
 import filaRoutes from "./routes/filaRoutes.js";
 import senhaRouter from "./routes/senhaRoutes.js";
 import cursoRoutes from "./routes/cursoRoutes.js";
+import voluntarioRoutes from "./routes/voluntarioRoutes.js";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use("/filas", filaRoutes);
 app.use("/senhas", senhaRouter);
 app.use("/admin/cursos", cursoRoutes);
+app.use("/voluntarios", voluntarioRoutes);
 
 // Confirma que a API está disponível.
 app.get("/", (req, res) => {

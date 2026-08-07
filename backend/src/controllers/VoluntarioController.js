@@ -6,3 +6,11 @@ export const listarVoluntarios = async (req, res) => {
         mensagem: await voluntarioService.listar()
     })
 }
+
+export const criarVoluntario = async (req, res) => {
+    const dados = req.body;
+
+    res.status(201).json({
+        mensagem: await voluntarioService.criar(dados)
+    })
+}

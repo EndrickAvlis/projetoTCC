@@ -5,8 +5,11 @@ export default class BaseService {
         this.model = model;
     }
 
-    async listar(){
-        return await this.model.findMany();
+    async listar(where = {}, options = {}){
+        return await this.model.findMany({
+            where,
+            ...options
+        });
     }
 
     async buscarPorId(id) {

@@ -5,4 +5,14 @@ export default class VoluntarioService extends BaseService {
     constructor(){
         super(prisma.voluntario);
     }
+
+    async listar(){
+        return await prisma.voluntario.findMany({
+            select: {
+                nomeVoluntario: true,
+                tipoVoluntario: true,
+                statusVoluntario: true
+            }
+        });
+    }
 }
