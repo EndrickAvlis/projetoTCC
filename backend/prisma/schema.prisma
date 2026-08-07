@@ -47,8 +47,8 @@ model Compra {
 }
 
 model ItemCompra {
-  codProduto              Int
-  codCompra               Int
+  codProduto             Int
+  codCompra              Int
   precoUnitario          Decimal @db.Decimal(5, 2)
   quantidadeItem         Int
   quantidadeRetiradaItem Int
@@ -83,20 +83,20 @@ model Curso {
   nomeCurso String  @db.VarChar(100)
   arquivado Boolean @default(false)
 
-ofertas OfertaCurso[]
+  ofertas OfertaCurso[]
   cursosAluno CursoAluno[]
 }
 
 model OfertaCurso {
   idOferta         Int          @id @default(autoincrement())
-  idCurso          Int
+  codCurso         Int
   periodo          PeriodoCurso
   vagasTotais      Int
   matriculaAtiva   Boolean      @default(true)
 
-  curso            Curso        @relation(fields: [idCurso], references: [idCurso])
+  curso            Curso        @relation(fields: [codCurso], references: [idCurso])
 
-  @@unique([idCurso, periodo])
+  @@unique([codCurso, periodo])
 }
 
 model Aluno {
