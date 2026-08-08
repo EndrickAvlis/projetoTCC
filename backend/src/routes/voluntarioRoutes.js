@@ -7,5 +7,6 @@ const voluntarioRoutes = Router();
 //* Entrega as senhas aguardando da etapa informada em ?etapa=.
 voluntarioRoutes.get("/", VoluntarioController.listarVoluntarios);
 voluntarioRoutes.post("/", VoluntarioController.criarVoluntario);
+voluntarioRoutes.patch("/:idVoluntario", VoluntarioController.atualizarVoluntario);
 
 export default voluntarioRoutes;
