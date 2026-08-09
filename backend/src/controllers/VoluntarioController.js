@@ -1,47 +1,31 @@
-import { TipoVoluntario } from "@prisma/client";
 import VoluntarioService from "../services/VoluntarioService.js";
-import * as ValidadorVoluntario from "../validators/ValidatorVoluntario.js";
+
 const voluntarioService = new VoluntarioService();
 
-
 export const listarVoluntarios = async (req, res) => {
-    const requisicao = {
-            idVoluntario: req.query.idVoluntario,
-            nomeVoluntario: req.query.nomeVoluntario,
-            tipoVoluntario: req.query.tipoVoluntario,
-            statusVoluntario: req.query.statusVoluntario,
-    }
+  const voluntarios = await voluntarioService.listar(req.validado.query);
 
-    const busca = ValidadorVoluntario.buscarVoluntarioSchema.safeParse(requisicao);
-
-    if(!busca.success){
-        return res.status(400).json(busca.error.issues);
-    }
-    
-    res.status(200).json({
-        mensagem: await voluntarioService.listar(busca.data)
-    })
-}
+  return res.status(200).json({
+    mensagem: voluntarios,
+  });
+};
 
 export const criarVoluntario = async (req, res) => {
-    const dados = ValidadorVoluntario.criarVoluntarioSchema.safeParse(req.body);
-    if(!dados.success){
-        return res.status(400).json(dados.error.issues);
-    }
+  const voluntario = await voluntarioService.criar(req.validado.body);
 
-        res.status(201).json({
-        mensagem: await voluntarioService.criar(dados.data)
-    })
-}
+  return res.status(201).json({
+    mensagem: voluntario,
+  });
+};
 
 export const atualizarVoluntario = async (req, res) => {
-    const atualizacao = ValidadorVoluntario.atualizarVoluntarioSchema.safeParse(req.body);
-    if(!atualizacao.success){
-        return res.status(400).json(atualizacao.error.issues);
-    }
-    const id = Number(req.params.idVoluntario);
+  const { idVoluntario } = req.validado.params;
+  const voluntario = await voluntarioService.atualizar(
+    idVoluntario,
+    req.validado.body,
+  );
 
-    res.status(202).json({
-        mensagem: await voluntarioService.atualizar(id, atualizacao.data)
-    })
-}
+  return res.status(202).json({
+    mensagem: voluntario,
+  });
+};
