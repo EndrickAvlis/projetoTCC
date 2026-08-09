@@ -7,7 +7,7 @@ export default class BaseService {
     this.primaryKey = primaryKey;
   }
 
-// Eu coloquei o options para poder aceitar outras informações como o select ou orderBy
+  // Eu coloquei o options para poder aceitar outras informações como o select ou orderBy
   async listar(where = {}, options = {}) {
     return await this.model.findMany({
       where,
@@ -18,12 +18,10 @@ export default class BaseService {
   //Aqui a mesma coisa, e coloque o [this.primaryKey] para dizer a qual id quero referenciar.
   // No super do service alem do model eu passo o id
   async buscarPorId(id, options = {}) {
-    return await this.model.findUnique(
-      {
-        where: { [this.primaryKey]: id },
-      },
+    return this.model.findUnique({
+      where: { [this.primaryKey]: id },
       ...options,
-    );
+    });
   }
 
   async criar(dados = {}, options = {}) {
@@ -37,16 +35,17 @@ export default class BaseService {
     ele primeiro verifica se existe algum dado com o id enviado, depois atualiza ele.
    Porque se eu tento atualizar uma informação que não existe no banco ele retorna um erro do prisma
    e o tratamento de erro só funciona se ele retornar null*/
-  async atualizar(id, dados) {
+  async atualizar(id, dados, options = {}) {
     const dado = await this.buscarPorId(id);
 
     if (!dado) {
       return null;
     }
 
-    return await this.model.update({
+    return this.model.update({
       where: { [this.primaryKey]: id },
       data: dados,
+      ...options,
     });
   }
 

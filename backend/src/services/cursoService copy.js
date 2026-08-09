@@ -1,4 +1,3 @@
-import { PeriodoCurso } from "@prisma/client";
 import prisma from "../config/prisma.js";
 import BaseService from "./BaseService.js";
 
@@ -16,7 +15,7 @@ const cursoSelect = {
   periodos: {
     select: periodoSelect,
     orderBy: {
-      periodo: "asc",
+      vagasTotais: "desc",
     },
   },
 };
@@ -27,8 +26,7 @@ export default class CursoService extends BaseService {
     this.periodoCurso = prisma.periodoCurso;
   }
 
-  async listarCursos({ busca = "", filtro = "false" } = {}) {
-    const arquivado = filtro === "true";
+  async listarCursos({ busca = "", arquivado = false } = {}) {
     const buscaLimpa = busca.trim();
 
     return super.listar(
@@ -57,7 +55,7 @@ export default class CursoService extends BaseService {
         periodos: {
           create: periodos.map((periodoCurso) => ({
             periodo: periodoCurso.periodo,
-            totalVagas: periodoCurso.totalVagas,
+            vagasTotais: periodoCurso.vagasTotais,
             matriculaAtiva: periodoCurso.matriculaAtiva,
           })),
         },
@@ -82,7 +80,7 @@ export default class CursoService extends BaseService {
 
   async arquivarCurso(cursoId, arquivado) {
     return prisma.$transaction(async (transacao) => {
-      const { count } = await prisma.transacao.curso.updateMany({
+      const { count } = await transacao.curso.updateMany({
         where: {
           idCurso: cursoId,
         },
@@ -90,21 +88,21 @@ export default class CursoService extends BaseService {
           arquivado,
         },
       });
-    });
 
-    if (count === 0) {
-      return null;
-    }
+      if (count === 0) {
+        return null;
+      }
 
-    if (arquivado) {
-      await prisma.transacao.periodoCurso.updateMany({
-        where: {
-          codCurso: cursoId,
-        },
-        data: {
-          matriculaAtiva: false,
-        },
-      });
+      if (arquivado) {
+        await transacao.periodoCurso.updateMany({
+          where: {
+            codCurso: cursoId,
+          },
+          data: {
+            matriculaAtiva: false,
+          },
+        });
+      }
 
       return transacao.curso.findUnique({
         where: {
@@ -112,7 +110,7 @@ export default class CursoService extends BaseService {
         },
         select: cursoSelect,
       });
-    }
+    });
   }
 
   async adicionarPeriodoCurso(cursoId, periodoCurso) {
@@ -136,12 +134,37 @@ export default class CursoService extends BaseService {
       throw erro;
     }
 
-    return this.periodoModel.create({
+    return this.periodoCurso.create({
       data: {
         codCurso: cursoId,
         periodo: periodoCurso.periodo,
         vagasTotais: periodoCurso.vagasTotais,
         matriculaAtiva: periodoCurso.matriculaAtiva,
+      },
+      select: periodoSelect,
+    });
+  }
+
+  async atualizarPeriodoCurso(cursoId, periodoId, periodoCurso) {
+    const { count } = await this.periodoCurso.updateMany({
+      where: {
+        idPeriodo: periodoId,
+        codCurso: cursoId,
+      },
+      data: {
+        periodo: periodoCurso.periodo,
+        vagasTotais: periodoCurso.vagasTotais,
+        matriculaAtiva: periodoCurso.matriculaAtiva,
+      },
+    });
+
+    if (count === 0) {
+      return null;
+    }
+
+    return this.periodo.findUnique({
+      where: {
+        idPeriodo: periodoId,
       },
       select: periodoSelect,
     });

@@ -1,5 +1,7 @@
-import * as cursoService from "../services/cursoService.js";
+import CursoService from "../services/cursoService copy.js";
 import * as validatorCursos from "../validators/ValidatorCursos.js";
+
+const cursoService = new CursoService();
 
 //Formatações e validações
 const formatarPeriodo = (periodoCurso) => ({
@@ -87,7 +89,7 @@ export const listarCursosAdmin = async (req, res) => {
   }
 
   try {
-    const cursos = await cursoService.pesquisarCursosAdmin({
+    const cursos = await cursoService.listarCursos({
       busca: req.query.busca ?? "",
       arquivado: filtroArquivado.arquivado,
     });
