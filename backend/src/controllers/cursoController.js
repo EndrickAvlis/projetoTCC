@@ -1,4 +1,4 @@
-import CursoService from "../services/cursoService copy.js";
+import CursoService from "../services/cursoService.js";
 import * as validatorCursos from "../validators/ValidatorCursos.js";
 
 const cursoService = new CursoService();
@@ -48,35 +48,6 @@ const normalizarFiltroArquivado = (valor) => {
   };
 };
 
-const responderErroBanco = (res, erro, mensagem) => {
-  if (erro.code === "CURSO_NAO_ENCONTRADO") {
-    return res.status(404).json({
-      message: "Curso não encontrado.",
-      code: "CURSO_NAO_ENCONTRADO",
-    });
-  }
-
-  if (erro.code === "CURSO_ARQUIVADO") {
-    return res.status(409).json({
-      message: "Não é possível criar períodos em um curso arquivado.",
-      code: "CURSO_ARQUIVADO",
-    });
-  }
-
-  if (erro.code === "P2002") {
-    return res.status(409).json({
-      message: "Já existe um período deste curso para esse horário.",
-      code: "PERIODO_DUPLICADO",
-    });
-  }
-  console.error(mensagem, erro);
-
-  return res.status(500).json({
-    message: "Não foi possível concluir a operação.",
-    code: "ERRO_CURSOS",
-  });
-};
-
 // Funções para os cursos e seus períodos
 export const listarCursosAdmin = async (req, res) => {
   const filtroArquivado = normalizarFiltroArquivado(req.query.arquivado);
@@ -88,18 +59,15 @@ export const listarCursosAdmin = async (req, res) => {
     });
   }
 
-  try {
-    const cursos = await cursoService.listarCursos({
-      busca: req.query.busca ?? "",
-      arquivado: filtroArquivado.arquivado,
-    });
-    return res.json({
-      cursos: cursos.map(formatarCurso),
-      total: cursos.length,
-    });
-  } catch (error) {
-    return responderErroBanco(res, error, "Erro ao listar cursos: ");
-  }
+  const cursos = await cursoService.listarCursos({
+    busca: req.query.busca ?? "",
+    arquivado: filtroArquivado.arquivado,
+  });
+
+  return res.json({
+    cursos: cursos.map(formatarCurso),
+    total: cursos.length,
+  });
 };
 
 export const criarCursoAdmin = async (req, res) => {
@@ -113,15 +81,11 @@ export const criarCursoAdmin = async (req, res) => {
     });
   }
 
-  try {
-    const curso = await cursoService.criarCurso(validacao.dados);
+  const curso = await cursoService.criarCurso(validacao.dados);
 
-    return res.status(201).json({
-      curso: formatarCurso(curso),
-    });
-  } catch (error) {
-    return responderErroBanco(res, error, "Erro ao criar curso: ");
-  }
+  return res.status(201).json({
+    curso: formatarCurso(curso),
+  });
 };
 
 export const atualizarNomeCursoAdmin = async (req, res) => {
@@ -144,24 +108,14 @@ export const atualizarNomeCursoAdmin = async (req, res) => {
     });
   }
 
-  try {
-    const curso = await cursoService.atualizarNomeCurso(
-      cursoId,
-      validacao.dados.nome,
-    );
+  const curso = await cursoService.atualizarNomeCurso(
+    cursoId,
+    validacao.dados.nome,
+  );
 
-    if (!curso) {
-      return res.status(404).json({
-        message: "Curso não encontrado.",
-        code: "CURSO_NAO_ENCONTRADO",
-      });
-    }
-    return res.json({
-      curso: formatarCurso(curso),
-    });
-  } catch (error) {
-    return responderErroBanco(res, error, "Erro ao atualizar nome do curso:");
-  }
+  return res.json({
+    curso: formatarCurso(curso),
+  });
 };
 
 export const alterarArquivamentoCurso = async (req, res) => {
@@ -186,27 +140,14 @@ export const alterarArquivamentoCurso = async (req, res) => {
     });
   }
 
-  try {
-    const curso = await cursoService.arquivarCurso(
-      cursoId,
-      validacao.dados.arquivado,
-    );
-    if (!curso) {
-      return res.status(404).json({
-        message: "Curso não encontrado.",
-        code: "CURSO_NAO_ENCONTRADO",
-      });
-    }
-    return res.json({
-      curso: formatarCurso(curso),
-    });
-  } catch (error) {
-    return responderErroBanco(
-      res,
-      error,
-      "Erro ao alterar arquivamento do curso:",
-    );
-  }
+  const curso = await cursoService.arquivarCurso(
+    cursoId,
+    validacao.dados.arquivado,
+  );
+
+  return res.json({
+    curso: formatarCurso(curso),
+  });
 };
 
 export const criarPeriodoCursoAdmin = async (req, res) => {
@@ -229,18 +170,14 @@ export const criarPeriodoCursoAdmin = async (req, res) => {
     });
   }
 
-  try {
-    const periodoCurso = await cursoService.adicionarPeriodoCurso(
-      cursoId,
-      validacao.dados,
-    );
+  const periodoCurso = await cursoService.adicionarPeriodoCurso(
+    cursoId,
+    validacao.dados,
+  );
 
-    return res.status(201).json({
-      periodo: formatarPeriodo(periodoCurso),
-    });
-  } catch (error) {
-    return responderErroBanco(res, error, "Erro ao criar período:");
-  }
+  return res.status(201).json({
+    periodo: formatarPeriodo(periodoCurso),
+  });
 };
 
 export const atualizarPeriodoCursoAdmin = async (req, res) => {
@@ -263,23 +200,13 @@ export const atualizarPeriodoCursoAdmin = async (req, res) => {
     });
   }
 
-  try {
-    const periodoCurso = await cursoService.atualizarPeriodoCurso(
-      cursoId,
-      periodoId,
-      validacao.dados,
-    );
-    if (!periodoCurso) {
-      return res.status(404).json({
-        message: "Período não encontrado para este curso.",
-        code: "PERIODO_NAO_ENCONTRADO",
-      });
-    }
+  const periodoCurso = await cursoService.atualizarPeriodoCurso(
+    cursoId,
+    periodoId,
+    validacao.dados,
+  );
 
-    return res.json({
-      periodo: formatarPeriodo(periodoCurso),
-    });
-  } catch (error) {
-    return responderErroBanco(res, error, "Erro ao atualizar período:");
-  }
+  return res.json({
+    periodo: formatarPeriodo(periodoCurso),
+  });
 };

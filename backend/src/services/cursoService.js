@@ -1,4 +1,6 @@
 import prisma from "../config/prisma.js";
+import BaseService from "./BaseService.js";
+import AppError from "../errors/AppError.js";
 
 const periodoSelect = {
   idPeriodo: true,
@@ -14,175 +16,192 @@ const cursoSelect = {
   periodos: {
     select: periodoSelect,
     orderBy: {
-      periodo: "asc",
+      vagasTotais: "desc",
     },
   },
 };
 
-export const pesquisarCursosAdmin = async ({
-  busca = "",
-  arquivado = false,
-} = {}) =>
-  prisma.curso.findMany({
-    where: {
-      arquivado,
-      ...(busca? {
-            nomeCurso: {
-              contains: busca,
-              mode: "insensitive",
-            },
-          } : {}),
-    },
-    select: cursoSelect,
-    orderBy: {
-      nomeCurso: "asc",
-    },
+const cursoNaoEncontrado = () =>
+  new AppError("Curso não encontrado.", {
+    status: 404,
+    code: "CURSO_NAO_ENCONTRADO",
   });
 
-export const criarCurso = async ({ nome, periodos }) =>
-  prisma.curso.create({
-    data: {
-      nomeCurso: nome,
-      periodos: {
-        create: periodos.map((periodoCurso) => ({
-          periodo: periodoCurso.periodo,
-          vagasTotais: periodoCurso.vagasTotais,
-          matriculaAtiva: periodoCurso.matriculaAtiva,
-        })),
-      },
-    },
-    select: cursoSelect,
+const periodoNaoEncontrado = () =>
+  new AppError("Período não encontrado para este curso.", {
+    status: 404,
+    code: "PERIODO_NAO_ENCONTRADO",
   });
 
-export const atualizarNomeCurso = async (cursoId, nome) => {
-  const atualizacao = await prisma.curso.updateMany({
-    where: {
-      idCurso: cursoId,
-    },
-    data: {
-      nomeCurso: nome,
-    },
-  });
-  if (atualizacao.count === 0) return null;
+export default class CursoService extends BaseService {
+  constructor() {
+    super(prisma.curso, "idCurso");
+    this.periodoCurso = prisma.periodoCurso;
+  }
 
-  return prisma.curso.findUnique({
-    where: {
-      idCurso: cursoId,
-    },
-    select: cursoSelect,
-  });
-};
+  async listarCursos({ busca = "", arquivado = false } = {}) {
+    const buscaLimpa = busca.trim();
 
-export const arquivarCurso = async (cursoId, arquivado) =>
-  prisma.$transaction(async (transacao) => {
-    const atualizacao = await transacao.curso.updateMany({
-      where: {
-        idCurso: cursoId,
-      },
-      data: {
+    return super.listar(
+      {
         arquivado,
+        ...(buscaLimpa && {
+          nomeCurso: {
+            contains: buscaLimpa,
+            mode: "insensitive",
+          },
+        }),
       },
-    });
-    if (atualizacao.count === 0) return null;
+      {
+        select: cursoSelect,
+        orderBy: {
+          nomeCurso: "asc",
+        },
+      },
+    );
+  }
 
-    if (arquivado) {
-      await transacao.periodoCurso.updateMany({
+  async criarCurso({ nome, periodos }) {
+    return super.criar(
+      {
+        nomeCurso: nome,
+        periodos: {
+          create: periodos.map((periodoCurso) => ({
+            periodo: periodoCurso.periodo,
+            vagasTotais: periodoCurso.vagasTotais,
+            matriculaAtiva: periodoCurso.matriculaAtiva,
+          })),
+        },
+      },
+      {
+        select: cursoSelect,
+      },
+    );
+  }
+
+  async atualizarNomeCurso(cursoId, nome) {
+    const curso = await super.atualizar(
+      cursoId,
+      { nomeCurso: nome },
+      { select: cursoSelect },
+    );
+
+    if (!curso) {
+      throw cursoNaoEncontrado();
+    }
+
+    return curso;
+  }
+
+  async arquivarCurso(cursoId, arquivado) {
+    const curso = await prisma.$transaction(async (transacao) => {
+      const { count } = await transacao.curso.updateMany({
         where: {
-          codCurso: cursoId,
+          idCurso: cursoId,
         },
         data: {
-          matriculaAtiva: false,
+          arquivado,
         },
+      });
+
+      if (count === 0) {
+        return null;
+      }
+
+      if (arquivado) {
+        await transacao.periodoCurso.updateMany({
+          where: {
+            codCurso: cursoId,
+          },
+          data: {
+            matriculaAtiva: false,
+          },
+        });
+      }
+
+      return transacao.curso.findUnique({
+        where: {
+          idCurso: cursoId,
+        },
+        select: cursoSelect,
+      });
+    });
+
+    if (!curso) {
+      throw cursoNaoEncontrado();
+    }
+
+    return curso;
+  }
+
+  async adicionarPeriodoCurso(cursoId, periodoCurso) {
+    const curso = await super.buscarPorId(cursoId, {
+      select: {
+        arquivado: true,
+      },
+    });
+
+    if (!curso) {
+      throw new AppError("Curso não encontrado.", {
+        status: 404,
+        code: "CURSO_NAO_ENCONTRADO",
       });
     }
 
-    return transacao.curso.findUnique({
-      where: {
-        idCurso: cursoId,
-      },
-      select: cursoSelect,
-    });
-  });
-
-export const adicionarPeriodoCurso = async (cursoId, periodoCurso) => {
-  const curso = await prisma.curso.findUnique({
-    where: {
-      idCurso: cursoId,
-    },
-    select: {
-      arquivado: true,
-    },
-  });
-
-  if (!curso) {
-    const erro = new Error("Curso não encontrado.");
-    erro.code = "CURSO_NAO_ENCONTRADO";
-    throw erro;
-  }
-
-  if (curso.arquivado) {
-    const erro = new Error(
-      "Não é possível criar períodos em um curso arquivado.",
-    );
-    erro.code = "CURSO_ARQUIVADO";
-    throw erro;
-  }
-
-  return prisma.periodoCurso.create({
-    data: {
-      codCurso: cursoId,
-      periodo: periodoCurso.periodo,
-      vagasTotais: periodoCurso.vagasTotais,
-      matriculaAtiva: periodoCurso.matriculaAtiva,
-    },
-    select: periodoSelect,
-  });
-};
-
-export const atualizarPeriodoCurso = async (cursoId, periodoId, periodoCurso) => {
-  const atualizacao = await prisma.periodoCurso.updateMany({
-    where: {
-      idPeriodo: periodoId,
-      codCurso: cursoId,
-    },
-    data: {
-      periodo: periodoCurso.periodo,
-      vagasTotais: periodoCurso.vagasTotais,
-      matriculaAtiva: periodoCurso.matriculaAtiva,
-    },
-  });
-  if (atualizacao.count === 0) return null;
-
-  return prisma.periodoCurso.findUnique({
-    where: {
-      idPeriodo: periodoId,
-    },
-    select: periodoSelect,
-  });
-};
-
-export const listarPeriodosDisponiveis = async () =>
-  prisma.periodoCurso.findMany({
-    where: {
-      matriculaAtiva: true,
-      curso: {
-        arquivado: false,
-      },
-    },
-    select: {
-      idPeriodo: true,
-      periodo: true,
-      vagasTotais: true,
-      curso: {
-        select: {
-          idCurso: true,
-          nomeCurso: true,
+    if (curso.arquivado) {
+      throw new AppError(
+        "Não é possível criar períodos em um curso arquivado.",
+        {
+          status: 409,
+          code: "CURSO_ARQUIVADO",
         },
+      );
+    }
+
+    try {
+      return await this.periodoCurso.create({
+        data: {
+          codCurso: cursoId,
+          periodo: periodoCurso.periodo,
+          vagasTotais: periodoCurso.vagasTotais,
+          matriculaAtiva: periodoCurso.matriculaAtiva,
+        },
+        select: periodoSelect,
+      });
+    } catch (error) {
+      if (error.code === "P2002") {
+        throw new AppError("Este período já existe para este curso.", {
+          status: 409,
+          code: "PERIODO_DUPLICADO",
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  async atualizarPeriodoCurso(cursoId, periodoId, periodoCurso) {
+    const { count } = await this.periodoCurso.updateMany({
+      where: {
+        idPeriodo: periodoId,
+        codCurso: cursoId,
       },
-    },
-    orderBy: {
-      curso: {
-        nomeCurso: "asc",
+      data: {
+        periodo: periodoCurso.periodo,
+        vagasTotais: periodoCurso.vagasTotais,
+        matriculaAtiva: periodoCurso.matriculaAtiva,
       },
-    },
-  });
+    });
+
+    if (count === 0) {
+      throw periodoNaoEncontrado();
+    }
+
+    return this.periodoCurso.findUnique({
+      where: {
+        idPeriodo: periodoId,
+      },
+      select: periodoSelect,
+    });
+  }
+}
