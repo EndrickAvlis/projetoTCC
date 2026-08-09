@@ -9,6 +9,7 @@ export default class BaseService {
 
   // Eu coloquei o options para poder aceitar outras informações como o select ou orderBy
   async listar(where = {}, options = {}) {
+    console.log(where)
     return await this.model.findMany({
       where,
       ...options,
@@ -31,7 +32,7 @@ export default class BaseService {
     });
   }
 
-  /* Coloquei esse "dado" para ter certeza de que alguma informaçõa vai retornar, 
+  /* Coloquei esse "dado" para ter certeza de que alguma informação vai retornar, 
     ele primeiro verifica se existe algum dado com o id enviado, depois atualiza ele.
    Porque se eu tento atualizar uma informação que não existe no banco ele retorna um erro do prisma
    e o tratamento de erro só funciona se ele retornar null*/
@@ -55,5 +56,3 @@ export default class BaseService {
     });
   }
 }
-
-//APAGA OS COMENTÁRIOS DEPOIS DE LER
