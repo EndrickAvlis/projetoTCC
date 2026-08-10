@@ -33,6 +33,18 @@ const periodoNaoEncontrado = () =>
     code: "PERIODO_NAO_ENCONTRADO",
   });
 
+const cursoArquivado = () =>
+  new AppError("Não é possível gerenciar períodos de um curso arquivado.", {
+    status: 409,
+    code: "CURSO_ARQUIVADO",
+  });
+
+const periodoDuplicado = () =>
+  new AppError("Este período já existe para este curso.", {
+    status: 409,
+    code: "PERIODO_DUPLICADO",
+  });
+
 export default class CursoService extends BaseService {
   constructor() {
     super(prisma.curso, "idCurso");
@@ -135,28 +147,7 @@ export default class CursoService extends BaseService {
   }
 
   async adicionarPeriodoCurso(cursoId, periodoCurso) {
-    const curso = await super.buscarPorId(cursoId, {
-      select: {
-        arquivado: true,
-      },
-    });
-
-    if (!curso) {
-      throw new AppError("Curso não encontrado.", {
-        status: 404,
-        code: "CURSO_NAO_ENCONTRADO",
-      });
-    }
-
-    if (curso.arquivado) {
-      throw new AppError(
-        "Não é possível criar períodos em um curso arquivado.",
-        {
-          status: 409,
-          code: "CURSO_ARQUIVADO",
-        },
-      );
-    }
+    await this.obterCursoAtivo(cursoId);
 
     try {
       return await this.periodoCurso.create({
@@ -170,10 +161,7 @@ export default class CursoService extends BaseService {
       });
     } catch (error) {
       if (error.code === "P2002") {
-        throw new AppError("Este período já existe para este curso.", {
-          status: 409,
-          code: "PERIODO_DUPLICADO",
-        });
+        throw periodoDuplicado();
       }
 
       throw error;
@@ -181,27 +169,55 @@ export default class CursoService extends BaseService {
   }
 
   async atualizarPeriodoCurso(cursoId, periodoId, periodoCurso) {
-    const { count } = await this.periodoCurso.updateMany({
-      where: {
-        idPeriodo: periodoId,
-        codCurso: cursoId,
-      },
-      data: {
-        periodo: periodoCurso.periodo,
-        vagasTotais: periodoCurso.vagasTotais,
-        matriculaAtiva: periodoCurso.matriculaAtiva,
+    await this.obterCursoAtivo(cursoId);
+
+    try {
+      const { count } = await this.periodoCurso.updateMany({
+        where: {
+          idPeriodo: periodoId,
+          codCurso: cursoId,
+        },
+        data: {
+          periodo: periodoCurso.periodo,
+          vagasTotais: periodoCurso.vagasTotais,
+          matriculaAtiva: periodoCurso.matriculaAtiva,
+        },
+      });
+
+      if (count === 0) {
+        throw periodoNaoEncontrado();
+      }
+
+      return this.periodoCurso.findUnique({
+        where: {
+          idPeriodo: periodoId,
+        },
+        select: periodoSelect,
+      });
+    } catch (error) {
+      if (error.code === "P2002") {
+        throw periodoDuplicado();
+      }
+
+      throw error;
+    }
+  }
+
+  async obterCursoAtivo(cursoId) {
+    const curso = await super.buscarPorId(cursoId, {
+      select: {
+        arquivado: true,
       },
     });
 
-    if (count === 0) {
-      throw periodoNaoEncontrado();
+    if (!curso) {
+      throw cursoNaoEncontrado();
     }
 
-    return this.periodoCurso.findUnique({
-      where: {
-        idPeriodo: periodoId,
-      },
-      select: periodoSelect,
-    });
+    if (curso.arquivado) {
+      throw cursoArquivado();
+    }
+
+    return curso;
   }
 }

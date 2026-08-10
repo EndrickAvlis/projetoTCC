@@ -1,16 +1,14 @@
-// Serviço da fila: adapta senhas e chama os contratos de fila, histórico e prioridade.
 import { requisitarApi } from "./apiClient";
 
-// Normaliza os nomes do contrato para a interface sem alterar os dados originais da API.
 export const normalizarSenha = (senha) => {
   if (!senha) return null;
 
   return {
     ...senha,
-    id: senha.idSenha,
-    numero: senha.codigo,
-    etapa: senha.etapaAtual,
-    prioritaria: senha.tipoSenha,
+    id: senha.id ?? senha.idSenha,
+    numero: senha.codigo ?? senha.senhaCodigo ?? "",
+    etapa: senha.etapaAtual ?? senha.etapaSenha,
+    prioritaria: Boolean(senha.tipoSenha),
   };
 };
 // Busca as senhas aguardando da etapa que está aberta no posto.

@@ -1,6 +1,6 @@
 // Seleção das formas de pagamento e divisão do valor total entre elas.
-import InputMoeda from "../../ui/InputMoeda";
-import { formatarMoeda } from "../../../utils/formatters";
+import InputMoeda from "../ui/InputMoeda";
+import { formatarMoeda } from "../../utils/formatters";
 
 const nomePagamentos = { pix: "Pix", dinheiro: "Dinheiro", debito: "Débito", credito: "Crédito" };
 

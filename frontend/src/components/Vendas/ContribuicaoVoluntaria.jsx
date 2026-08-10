@@ -1,5 +1,5 @@
 // Campo opcional para registrar a contribuição voluntária do aluno.
-import InputMoeda from "../../ui/InputMoeda";
+import InputMoeda from "../ui/InputMoeda";
 
 const ContribuicaoVoluntaria = ({ valorContribuicao, onChange, disabled = false }) => (
   <section className="bg-surface border border-border rounded-lg p-5 flex flex-col gap-4">

@@ -1,58 +1,71 @@
-// Consulta as senhas aguardando de uma etapa do atendimento.
+// Serviço de fila: concentra consultas e regras específicas das senhas em espera.
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
+import BaseService from "./BaseService.js";
 
-export const listarSenhasAguardando = async (etapa) =>
-  prisma.senha.findMany({
-    where: {
-      etapaSenha: etapa,
-      statusSenha: "aguardando",
-    },
-    select: {
-      idSenha: true,
-      senhaCodigo: true,
-      etapaSenha: true,
-      statusSenha: true,
-      tipoSenha: true,
-    },
-    orderBy: {
-      dataHoraInicioSenha: "asc",
-    },
-  });
+const senhaFilaSelect = {
+  idSenha: true,
+  senhaCodigo: true,
+  etapaSenha: true,
+  statusSenha: true,
+  tipoSenha: true,
+};
 
+export default class FilaService extends BaseService {
+  constructor() {
+    super(prisma.senha, "idSenha");
+  }
 
-export const chamarSenhaSelecionada = async (senhaId, etapa) => {
-  const atualizacao = await prisma.senha.updateMany({
-    where: {
-      idSenha: senhaId,
-      etapaSenha: etapa,
-      statusSenha: "aguardando",
-    },
-    data: {
-      statusSenha: "em_atendimento",
-    },
-  });
-
-  if (atualizacao.count === 0) {
-    throw new AppError(
-      "Esta senha não está mais disponível para atendimento.",
+  async listarSenhasAguardando(etapa) {
+    return super.listar(
       {
-        status: 409,
-        code: "SENHA_INDISPONIVEL",
+        etapaSenha: etapa,
+        statusSenha: "aguardando",
+      },
+      {
+        select: senhaFilaSelect,
+        orderBy: {
+          dataHoraInicioSenha: "asc",
+        },
       },
     );
   }
 
-  return prisma.senha.findUnique({
-    where: {
-      idSenha: senhaId,
-    },
-    select: {
-      idSenha: true,
-      senhaCodigo: true,
-      etapaSenha: true,
-      statusSenha: true,
-      tipoSenha: true,
-    },
-  });
-};
+  async chamarSenhaSelecionada(senhaId, etapa) {
+    const senha = await prisma.$transaction(async (transacao) => {
+      const { count } = await transacao.senha.updateMany({
+        where: {
+          idSenha: senhaId,
+          etapaSenha: etapa,
+          statusSenha: "aguardando",
+        },
+        data: {
+          statusSenha: "em_atendimento",
+        },
+      });
+
+      if (count === 0) {
+        return null;
+      }
+
+      return transacao.senha.findUnique({
+        where: {
+          idSenha: senhaId,
+        },
+        select: senhaFilaSelect,
+      });
+    });
+
+    if (!senha) {
+      throw new AppError(
+        "Esta senha não está mais disponível para atendimento.",
+        {
+          status: 409,
+          code: "SENHA_INDISPONIVEL",
+        },
+      );
+    }
+
+    return senha;
+  }
+}

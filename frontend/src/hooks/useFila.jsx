@@ -1,65 +1,47 @@
-// Hook da fila: carrega a fila e o histórico diário, e reserva a senha escolhida.
+// Hook de leitura da fila: busca e atualiza somente as senhas aguardando da etapa.
 import { useCallback, useEffect, useState } from "react";
-import { chamarSenhaSelecionada /*, listarChamadasHoje*/, listarFila } from "../services/filaService";
+import { listarFila } from "../services/filaService";
+
+const INTERVALO_ATUALIZACAO_MS = 5000;
 
 export const useFila = (etapa) => {
   const [senhasAguardando, setSenhasAguardando] = useState([]);
-  const [senhasChamadasHoje, setSenhasChamadasHoje] = useState([]);
   const [carregandoFila, setCarregandoFila] = useState(true);
   const [erroFila, setErroFila] = useState(null);
 
-  // Atualiza as duas listas da lateral para refletir a fonte de verdade da API.
+  // Consulta a fonte de verdade da API e substitui a lista local pela resposta recebida.
   const carregarFila = useCallback(async ({ silencioso = false } = {}) => {
     try {
-      if (!silencioso) {
-        setCarregandoFila(true);
-      }
-        //! const [aguardando, historico] = await Promise.all([listarFila(etapa), listarChamadasHoje(etapa)]);
-        const aguardando = await listarFila(etapa);
-        setSenhasAguardando(aguardando);
-        setSenhasChamadasHoje([]);
-        setErroFila(null);
-      
+      if (!silencioso) setCarregandoFila(true);
 
+      setSenhasAguardando(await listarFila(etapa));
+      setErroFila(null);
     } catch (erro) {
       setErroFila(erro.message);
     } finally {
-      if (!silencioso) {
-        setCarregandoFila(false);
-      }
+      if (!silencioso) setCarregandoFila(false);
     }
   }, [etapa]);
 
-  // Carrega dados novamente sempre que o posto exibido mudar.
+  // Carrega a fila ao abrir o posto e a sincroniza periodicamente para outros atendentes.
   useEffect(() => {
-    void carregarFila();
+    void Promise.resolve().then(carregarFila);
+    const intervalo = window.setInterval(
+      () => void carregarFila({ silencioso: true }),
+      INTERVALO_ATUALIZACAO_MS,
+    );
 
-    const intervalo = window.setInterval(() => {
-      void carregarFila({ silencioso: true });
-    }, 1000);
-
-    return () => {
-      window.clearInterval(intervalo);
-    };
+    return () => window.clearInterval(intervalo);
   }, [carregarFila]);
 
-  // Reserva a senha clicada e a remove da fila somente após confirmação do backend.
-  const chamar = async (senhaId) => {
-    const senha = await chamarSenhaSelecionada(senhaId, etapa);
-    setSenhasAguardando((atuais) => atuais.filter((item) => item.id !== senha?.id));
-    setSenhasChamadasHoje((atuais) =>
-      atuais.some((item) => item.id === senha?.id) ? atuais : [senha, ...atuais],
-    );
-    return senha;
-  };
+  // Remove a mensagem de erro depois que ela é apresentada ao atendente.
+  const limparErroFila = () => setErroFila(null);
 
   return {
     senhasAguardando,
-    senhasChamadasHoje,
     carregandoFila,
     erroFila,
-    limparErroFila: () => setErroFila(null),
+    limparErroFila,
     carregarFila,
-    chamar,
   };
 };

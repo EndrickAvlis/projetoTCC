@@ -9,7 +9,6 @@ export default class BaseService {
 
   // Eu coloquei o options para poder aceitar outras informações como o select ou orderBy
   async listar(where = {}, options = {}) {
-    console.log(where)
     return await this.model.findMany({
       where,
       ...options,

@@ -1,9 +1,8 @@
-import {
-  listarSenhasAguardando,
-  chamarSenhaSelecionada,
-} from "../services/FilaService.js";
+import FilaService from "../services/FilaService.js";
 
-const mapearSenhaResposta = (senha) => ({
+const filaService = new FilaService();
+
+const senhaResposta = (senha) => ({
   id: senha.idSenha,
   codigo: senha.senhaCodigo,
   etapaAtual: senha.etapaSenha,
@@ -13,19 +12,19 @@ const mapearSenhaResposta = (senha) => ({
 
 export const listarFila = async (req, res) => {
   const { etapa } = req.validado.query;
-  const senhas = await listarSenhasAguardando(etapa);
+  const senhas = await filaService.listarSenhasAguardando(etapa);
 
   return res.json({
-    senhas: senhas.map(mapearSenhaResposta),
+    senhas: senhas.map(senhaResposta),
     total: senhas.length,
   });
 };
 
 export const chamarSenha = async (req, res) => {
   const { senhaId, etapa } = req.validado.body;
-  const senha = await chamarSenhaSelecionada(senhaId, etapa);
+  const senha = await filaService.chamarSenhaSelecionada(senhaId, etapa);
 
   return res.json({
-    senha: mapearSenhaResposta(senha),
+    senha: senhaResposta(senha),
   });
 };
