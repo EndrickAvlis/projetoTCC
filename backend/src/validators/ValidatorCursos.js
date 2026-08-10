@@ -1,174 +1,118 @@
-const periodosValidos = new Set(["manha", "tarde", "noite", "integral"]);
+import { z } from "zod";
 
+const periodosValidos = ["manha", "tarde", "noite", "integral"];
 const palavrasMinusculas = new Set([
-  "a",
-  "as",
-  "o",
-  "os",
-  "de",
-  "da",
-  "das",
-  "do",
-  "dos",
-  "e",
-  "em",
-  "na",
-  "nas",
-  "no",
-  "nos",
-  "para",
-  "por",
+  "a", "as", "o", "os", "de", "da", "das", "do", "dos", "e", "em",
+  "na", "nas", "no", "nos", "para", "por",
 ]);
 
-const normalizarNome = (nome) => {
-  if (typeof nome !== "string") {
-    return "";
-  }
-
-  return nome
+const normalizarNome = (nome) =>
+  nome
     .trim()
     .toLocaleLowerCase("pt-BR")
     .split(/\s+/)
     .map((palavra, indice) => {
-      if (indice > 0 && palavrasMinusculas.has(palavra)) {
-        return palavra;
-      }
-
+      if (indice > 0 && palavrasMinusculas.has(palavra)) return palavra;
       return palavra.charAt(0).toLocaleUpperCase("pt-BR") + palavra.slice(1);
     })
     .join(" ");
-};
 
-const normalizarPeriodo = (periodo) =>
-  typeof periodo === "string" ? periodo.trim().toLowerCase() : "";
+const nomeCursoSchema = z
+  .string({ error: "Informe o nome do curso." })
+  .transform(normalizarNome)
+  .pipe(
+    z.string()
+      .min(1, "Informe o nome do curso.")
+      .max(100, "O nome deve ter no máximo 100 caracteres."),
+  );
 
-const normalizarVagasTotais = (vagasTotais) => {
-  if (typeof vagasTotais === "string" && vagasTotais.trim() !== "") {
-    return Number(vagasTotais);
-  }
+const periodoSchema = z
+  .string({ error: "Informe um período válido." })
+  .transform((periodo) => periodo.trim().toLowerCase())
+  .pipe(z.enum(periodosValidos, { error: "Informe um período válido." }));
 
-  return vagasTotais;
-};
+const vagasTotaisSchema = z.preprocess(
+  (valor) =>
+    typeof valor === "string" && valor.trim() !== "" ? Number(valor) : valor,
+  z
+    .number({ error: "Informe uma quantidade de vagas válida." })
+    .int("Informe um número inteiro maior ou igual a zero.")
+    .nonnegative("Informe um número inteiro maior ou igual a zero."),
+);
 
-export const validarNomeCurso = (nome) => {
-  const nomeNormalizado = normalizarNome(nome);
-  const erros = {};
+const dadosPeriodoSchema = z.object({
+  periodo: periodoSchema,
+  vagasTotais: vagasTotaisSchema,
+  matriculaAtiva: z.boolean({
+    error: "Informe verdadeiro ou falso para a matrícula.",
+  }),
+});
 
-  if (!nomeNormalizado) {
-    erros.nome = "Informe o nome do curso.";
-  }
+const periodosCursoSchema = z
+  .array(dadosPeriodoSchema)
+  .superRefine((periodos, contexto) => {
+    const indicesPorPeriodo = new Map();
 
-  if (nomeNormalizado.length > 100) {
-    erros.nome = "O nome deve ter no máximo 100 caracteres.";
-  }
-
-  return {
-    valido: Object.keys(erros).length === 0,
-    dados: {
-      nome: nomeNormalizado,
-    },
-    erros,
-  };
-};
-
-export const validarOfertaCurso = (oferta = {}) => {
-  const periodo = normalizarPeriodo(oferta?.periodo);
-  const vagasTotais = normalizarVagasTotais(oferta?.vagasTotais);
-  const matriculaAtiva = oferta?.matriculaAtiva;
-
-  const erros = {};
-
-  if (!periodosValidos.has(periodo)) {
-    erros.periodo = "Informe um período válido.";
-  }
-
-  if (!Number.isInteger(vagasTotais) || vagasTotais < 0) {
-    erros.vagasTotais = "Informe um número inteiro maior ou igual a zero.";
-  }
-
-  if (typeof matriculaAtiva !== "boolean") {
-    erros.matriculaAtiva = "Informe verdadeiro ou falso para a matrícula.";
-  }
-
-  return {
-    valido: Object.keys(erros).length === 0,
-    dados: {
-      periodo,
-      vagasTotais,
-      matriculaAtiva,
-    },
-    erros,
-  };
-};
-
-export const validarDadosCurso = (curso = {}) => {
-  const dadosCurso = curso ?? {};
-  const validacaoNome = validarNomeCurso(dadosCurso.nome);
-  const ofertasEnviadas =
-    dadosCurso.ofertas === undefined ? [] : dadosCurso.ofertas;
-
-  const erros = {
-    ...validacaoNome.erros,
-  };
-
-  if (!Array.isArray(ofertasEnviadas)) {
-    erros.ofertas = "As ofertas devem ser uma lista.";
-  }
-
-  const ofertasNormalizadas = [];
-  const errosOfertas = [];
-  const periodosInformados = new Set();
-
-  if (Array.isArray(ofertasEnviadas)) {
-    ofertasEnviadas.forEach((oferta, indice) => {
-      const validacaoOferta = validarOfertaCurso(oferta);
-      const errosOferta = {
-        ...validacaoOferta.erros,
-      };
-
-      if (
-        validacaoOferta.dados.periodo &&
-        periodosInformados.has(validacaoOferta.dados.periodo)
-      ) {
-        errosOferta.periodo = "Este período já foi informado para o curso.";
+    periodos.forEach((periodo, indice) => {
+      if (indicesPorPeriodo.has(periodo.periodo)) {
+        contexto.addIssue({
+          code: "custom",
+          path: [indice, "periodo"],
+          message: "Este período já foi informado para o curso.",
+        });
       }
 
-      periodosInformados.add(validacaoOferta.dados.periodo);
-
-      ofertasNormalizadas.push(validacaoOferta.dados);
-
-      if (Object.keys(errosOferta).length > 0) {
-        errosOfertas[indice] = errosOferta;
-      }
+      indicesPorPeriodo.set(periodo.periodo, indice);
     });
-  }
+  });
 
-  if (errosOfertas.length > 0) {
-    erros.ofertas = errosOfertas;
-  }
+const idSchema = z.coerce
+  .number()
+  .int("O ID deve ser um número inteiro.")
+  .positive("O ID deve ser maior que zero.");
 
-  return {
-    valido: Object.keys(erros).length === 0,
-    dados: {
-      nome: validacaoNome.dados.nome,
-      ofertas: ofertasNormalizadas,
-    },
-    erros,
-  };
-};
+export const listarCursosSchema = z.object({
+  query: z.object({
+    busca: z.string().trim().optional().default(""),
+    arquivado: z
+      .enum(["true", "false"], {
+        error: "O filtro arquivado deve ser true ou false.",
+      })
+      .optional()
+      .transform((valor) => valor === "true"),
+  }),
+});
 
-export const validarArquivamentoCurso = (arquivado) => {
-  const erros = {};
+export const criarCursoSchema = z.object({
+  body: z.object({
+    nome: nomeCursoSchema,
+    periodos: periodosCursoSchema.optional().default([]),
+  }),
+});
 
-  if (typeof arquivado !== "boolean") {
-    erros.arquivado = "Informe verdadeiro ou falso para o arquivamento.";
-  }
+export const atualizarNomeCursoSchema = z.object({
+  params: z.object({ cursoId: idSchema }),
+  body: z.object({ nome: nomeCursoSchema }),
+});
 
-  return {
-    valido: Object.keys(erros).length === 0,
-    dados: {
-      arquivado,
-    },
-    erros,
-  };
-};
+export const alterarArquivamentoCursoSchema = z.object({
+  params: z.object({ cursoId: idSchema }),
+  body: z.object({
+    arquivado: z.boolean({
+      error: "Informe verdadeiro ou falso para o arquivamento.",
+    }),
+  }),
+});
+
+export const criarPeriodoCursoSchema = z.object({
+  params: z.object({ cursoId: idSchema }),
+  body: dadosPeriodoSchema,
+});
+
+export const atualizarPeriodoCursoSchema = z.object({
+  params: z.object({
+    cursoId: idSchema,
+    periodoId: idSchema,
+  }),
+  body: dadosPeriodoSchema,
+});

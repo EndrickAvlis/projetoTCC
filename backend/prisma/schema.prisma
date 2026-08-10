@@ -138,7 +138,7 @@ model Voluntario {
   idVoluntario     Int            @id @default(autoincrement())
   nomeVoluntario   String         @db.VarChar(100)
   senhaVoluntario  String         @db.VarChar(50)
-  tipoVoluntario   TipoVoluntario @default(atendente)
+  tipoVoluntario   TipoVoluntario @default(admin)
   statusVoluntario String         @db.VarChar(20)
 
   compras    Compra[]

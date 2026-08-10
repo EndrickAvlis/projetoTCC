@@ -2,8 +2,8 @@ import { requisitarApi } from "../../../services/apiClient";
 
 const criarUrlCurso = (cursoId) =>
   `/admin/cursos/${encodeURIComponent(cursoId)}`;
-const criarUrlOferta = (cursoId, ofertaId) =>
-  `${criarUrlCurso(cursoId)}/ofertas/${encodeURIComponent(ofertaId)}`;
+const criarUrlPeriodo = (cursoId, periodoId) =>
+  `${criarUrlCurso(cursoId)}/periodos/${encodeURIComponent(periodoId)}`;
 
 export const listarCursosAdmin = ({ busca = "", arquivado = false } = {}) => {
   const params = new URLSearchParams({ arquivado: String(arquivado) });
@@ -35,14 +35,14 @@ export const alterarArquivamentoCurso = (cursoId, arquivado) =>
     body: JSON.stringify({ arquivado }),
   });
 
-export const criarOfertaCurso = (cursoId, dados) =>
-  requisitarApi(`${criarUrlCurso(cursoId)}/ofertas`, {
+export const criarPeriodoCurso = (cursoId, dados) =>
+  requisitarApi(`${criarUrlCurso(cursoId)}/periodos`, {
     method: "POST",
     body: JSON.stringify(dados),
   });
 
-export const atualizarOfertaCurso = (cursoId, ofertaId, dados) =>
-  requisitarApi(criarUrlOferta(cursoId, ofertaId), {
+export const atualizarPeriodoCurso = (cursoId, periodoId, dados) =>
+  requisitarApi(criarUrlPeriodo(cursoId, periodoId), {
     method: "PATCH",
     body: JSON.stringify(dados),
   });

@@ -17,19 +17,19 @@ const nomesPeriodos = {
 
 const formatarPeriodo = (periodo) => nomesPeriodos[periodo] ?? periodo;
 
-const OfertaResumo = ({ oferta }) => (
+const PeriodoResumo = ({ periodoCurso }) => (
   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
     <span className="font-medium text-text-primary">
-      {formatarPeriodo(oferta.periodo)}
+      {formatarPeriodo(periodoCurso.periodo)}
     </span>
-    <span className="text-text-secondary">{oferta.vagasTotais} vagas</span>
+    <span className="text-text-secondary">{periodoCurso.vagasTotais} vagas</span>
     <span
-      className={`rounded-full px-2.5 py-1 text-xs font-medium ${oferta.matriculaAtiva
+      className={`rounded-full px-2.5 py-1 text-xs font-medium ${periodoCurso.matriculaAtiva
           ? "bg-status-success-bg text-status-success"
           : "bg-disabled-bg text-text-secondary"
         }`}
     >
-      Matrícula {oferta.matriculaAtiva ? "aberta" : "fechada"}
+      Matrícula {periodoCurso.matriculaAtiva ? "aberta" : "fechada"}
     </span>
   </div>
 );
@@ -67,7 +67,7 @@ const CursosPage = () => {
     setModalAberto(true);
   };
 
-  const alternarOfertas = (cursoId) => {
+  const alternarPeriodos = (cursoId) => {
     setCursoExpandido((cursoAtual) =>
       cursoAtual === cursoId ? null : cursoId,
     );
@@ -81,40 +81,39 @@ const CursosPage = () => {
         <div>
           <p className="font-semibold text-text-primary">{curso.nome}</p>
           <p className="mt-1 text-xs text-text-secondary">
-            {curso.ofertas.length} período{curso.ofertas.length === 1 ? "" : "s"} ofertado
-            {curso.ofertas.length === 1 ? "" : "s"}
+            {curso.periodos.length} período{curso.periodos.length === 1 ? "" : "s"}
           </p>
         </div>
       ),
     },
     {
-      key: "ofertas",
-      label: "Ofertas",
+      key: "periodos",
+      label: "Períodos",
       render: (curso) => {
-        const primeiraOferta = curso.ofertas[0];
-        const ofertasRestantes = curso.ofertas.slice(1);
+        const primeiroPeriodo = curso.periodos[0];
+        const periodosRestantes = curso.periodos.slice(1);
         const expandido = cursoExpandido === curso.id;
 
-        return primeiraOferta ? (
+        return primeiroPeriodo ? (
           <div className="space-y-2">
-            <OfertaResumo oferta={primeiraOferta} />
+            <PeriodoResumo periodoCurso={primeiroPeriodo} />
 
             {expandido &&
-              ofertasRestantes.map((oferta) => (
-                <div key={oferta.id} className="animate-offer-expand">
-                  <OfertaResumo oferta={oferta} />
+              periodosRestantes.map((periodoCurso) => (
+                <div key={periodoCurso.id} className="animate-offer-expand">
+                  <PeriodoResumo periodoCurso={periodoCurso} />
                 </div>
               ))}
 
-            {ofertasRestantes.length > 0 && (
+            {periodosRestantes.length > 0 && (
               <button
                 type="button"
-                onClick={() => alternarOfertas(curso.id)}
+                onClick={() => alternarPeriodos(curso.id)}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text-secondary shadow-sm transition-[background-color,border-color,color,transform] duration-200 ease-out hover:border-primary hover:bg-primary hover:text-text-inverse active:scale-[0.97]"
               >
                 {expandido
-                  ? "Ocultar ofertas"
-                  : `Ver mais ${ofertasRestantes.length} oferta${ofertasRestantes.length === 1 ? "" : "s"
+                  ? "Ocultar períodos"
+                  : `Ver mais ${periodosRestantes.length} período${periodosRestantes.length === 1 ? "" : "s"
                   }`}
                 <FiChevronDown
                   size={16}

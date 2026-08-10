@@ -1,4 +1,5 @@
 import prisma from "../config/prisma.js";
+import AppError from "../errors/AppError.js";
 
 //Define o fuso para o de São Paulo
 const FusoHorario = "America/Sao_Paulo";
@@ -52,7 +53,6 @@ export const criarSenha = async () => {
     },
   });
 
-
   const proximoCodigo = (ultimaSenha?.senhaCodigo ?? 0) + 1;
 
   return prisma.senha.create({
@@ -73,25 +73,30 @@ export const criarSenha = async () => {
     },
   });
 };
+
 export const alterarPrioridadeSenha = async (id, tipoSenha) => {
   const senha = await prisma.senha.findUnique({
     where: { idSenha: id },
-  })
+  });
 
-  if(!senha) {
-    throw new Error("SENHA_NAO_ENCONTRADA")
+  if (!senha) {
+    throw new AppError("Senha não encontrada.", {
+      status: 404,
+      code: "SENHA_NAO_ENCONTRADA",
+    });
   }
 
   if (senha.statusSenha === "finalizada") {
-    throw new Error("SENHA_FINALIZADA");
+    throw new AppError("Não é possível alterar uma senha finalizada.", {
+      status: 409,
+      code: "SENHA_FINALIZADA",
+    });
   }
 
   const senhaAtualizada = await prisma.senha.update({
     where: { idSenha: id },
     data: { tipoSenha },
-  })
+  });
 
   return senhaAtualizada;
-}
-
-
+};
