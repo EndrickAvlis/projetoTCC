@@ -1,7 +1,7 @@
 // Consulta as senhas aguardando de uma etapa do atendimento.
 import prisma from "../config/prisma.js";
+import AppError from "../errors/AppError.js";
 
-//*Vamos selecionar todas as senhas do banco na qual a etapa é a enviada com o status aguardando
 export const listarSenhasAguardando = async (etapa) =>
   prisma.senha.findMany({
     where: {
@@ -20,7 +20,7 @@ export const listarSenhasAguardando = async (etapa) =>
     },
   });
 
-// Reserva a senha escolhida apenas se ela ainda estiver aguardando na etapa informada.
+
 export const chamarSenhaSelecionada = async (senhaId, etapa) => {
   const atualizacao = await prisma.senha.updateMany({
     where: {
@@ -34,7 +34,13 @@ export const chamarSenhaSelecionada = async (senhaId, etapa) => {
   });
 
   if (atualizacao.count === 0) {
-    return null;
+    throw new AppError(
+      "Esta senha não está mais disponível para atendimento.",
+      {
+        status: 409,
+        code: "SENHA_INDISPONIVEL",
+      },
+    );
   }
 
   return prisma.senha.findUnique({

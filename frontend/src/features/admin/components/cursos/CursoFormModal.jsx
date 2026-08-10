@@ -6,7 +6,7 @@ import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
 import Select from "../../../../components/ui/Select";
 
-const criarOfertaVazia = () => ({
+const criarPeriodoVazio = () => ({
     periodo: "",
     vagasTotais: "",
     matriculaAtiva: true,
@@ -19,7 +19,7 @@ const opcoesPeriodo = [
     { value: "integral", label: "Integral" },
 ];
 
-const LIMITE_OFERTAS = 4;
+const LIMITE_PERIODOS = 4;
 
 const CursoFormModal = ({
     aberto,
@@ -29,12 +29,12 @@ const CursoFormModal = ({
     erro = null,
 }) => {
     const [nome, setNome] = useState("");
-    const [ofertas, setOfertas] = useState([criarOfertaVazia()]);
+    const [periodos, setPeriodos] = useState([criarPeriodoVazio()]);
     const [erros, setErros] = useState({});
 
     const limparFormulario = () => {
         setNome("");
-        setOfertas([criarOfertaVazia()]);
+        setPeriodos([criarPeriodoVazio()]);
         setErros({});
     };
 
@@ -44,67 +44,67 @@ const CursoFormModal = ({
         }
     }, [aberto]);
 
-    const adicionarOferta = () => {
-        if (ofertas.length >= LIMITE_OFERTAS) {
+    const adicionarPeriodo = () => {
+        if (periodos.length >= LIMITE_PERIODOS) {
             return;
         }
 
-        setOfertas((ofertasAtuais) => [...ofertasAtuais, criarOfertaVazia()]);
+        setPeriodos((periodosAtuais) => [...periodosAtuais, criarPeriodoVazio()]);
     };
 
-    const removerOferta = (indice) => {
-        setOfertas((ofertasAtuais) =>
-            ofertasAtuais.filter((_, indiceOferta) => indiceOferta !== indice),
+    const removerPeriodo = (indice) => {
+        setPeriodos((periodosAtuais) =>
+            periodosAtuais.filter((_, indicePeriodo) => indicePeriodo !== indice),
         );
     };
 
-    const atualizarOferta = (indice, campo, valor) => {
-        setOfertas((ofertasAtuais) =>
-            ofertasAtuais.map((oferta, indiceOferta) =>
-                indiceOferta === indice ? { ...oferta, [campo]: valor } : oferta,
+    const atualizarPeriodo = (indice, campo, valor) => {
+        setPeriodos((periodosAtuais) =>
+            periodosAtuais.map((periodoCurso, indicePeriodo) =>
+                indicePeriodo === indice ? { ...periodoCurso, [campo]: valor } : periodoCurso,
             ),
         );
     };
 
     const validarFormulario = () => {
-        const novosErros = { ofertasPorIndice: {} };
+        const novosErros = { periodosPorIndice: {} };
 
         if (!nome.trim()) {
             novosErros.nome = "Informe o nome do curso.";
         }
 
-        if (ofertas.length === 0) {
-            novosErros.ofertas = "Adicione pelo menos um período.";
+        if (periodos.length === 0) {
+            novosErros.periodos = "Adicione pelo menos um período.";
         }
 
         const periodosInformados = new Set();
 
-        ofertas.forEach((oferta, indice) => {
-            const errosOferta = {};
+        periodos.forEach((periodoCurso, indice) => {
+            const errosPeriodo = {};
 
-            if (!oferta.periodo) {
-                errosOferta.periodo = "Selecione um período.";
-            } else if (periodosInformados.has(oferta.periodo)) {
-                errosOferta.periodo = "Este período já foi adicionado.";
+            if (!periodoCurso.periodo) {
+                errosPeriodo.periodo = "Selecione um período.";
+            } else if (periodosInformados.has(periodoCurso.periodo)) {
+                errosPeriodo.periodo = "Este período já foi adicionado.";
             }
 
-            periodosInformados.add(oferta.periodo);
+            periodosInformados.add(periodoCurso.periodo);
 
-            const vagas = Number(oferta.vagasTotais);
-            if (oferta.vagasTotais === "" || !Number.isInteger(vagas) || vagas < 0) {
-                errosOferta.vagasTotais =
+            const vagas = Number(periodoCurso.vagasTotais);
+            if (periodoCurso.vagasTotais === "" || !Number.isInteger(vagas) || vagas < 0) {
+                errosPeriodo.vagasTotais =
                     "Informe um número inteiro maior ou igual a zero.";
             }
 
-            if (Object.keys(errosOferta).length > 0) {
-                novosErros.ofertasPorIndice[indice] = errosOferta;
+            if (Object.keys(errosPeriodo).length > 0) {
+                novosErros.periodosPorIndice[indice] = errosPeriodo;
             }
         });
 
         const possuiErros =
             novosErros.nome ||
-            novosErros.ofertas ||
-            Object.keys(novosErros.ofertasPorIndice).length > 0;
+            novosErros.periodos ||
+            Object.keys(novosErros.periodosPorIndice).length > 0;
 
         setErros(novosErros);
         return !possuiErros;
@@ -119,9 +119,9 @@ const CursoFormModal = ({
 
         onSalvar({
             nome: nome.trim(),
-            ofertas: ofertas.map((oferta) => ({
-                ...oferta,
-                vagasTotais: Number(oferta.vagasTotais),
+            periodos: periodos.map((periodoCurso) => ({
+                ...periodoCurso,
+                vagasTotais: Number(periodoCurso.vagasTotais),
             })),
         });
     };
@@ -154,27 +154,27 @@ const CursoFormModal = ({
                             type="button"
                             variant="secondary"
                             size="sm"
-                            onClick={adicionarOferta}
+                            onClick={adicionarPeriodo}
                             leftIcon={<FiPlus />}
-                            disabled={ofertas.length >= LIMITE_OFERTAS}
+                            disabled={periodos.length >= LIMITE_PERIODOS}
                         >
                             Adicionar período
                         </Button>
                     </div>
 
-                    {erros.ofertas && <p className="text-sm text-status-danger">{erros.ofertas}</p>}
+                    {erros.periodos && <p className="text-sm text-status-danger">{erros.periodos}</p>}
 
                     <div className="max-h-50 space-y-3 overflow-y-auto pr-2">
-                        {ofertas.map((oferta, indice) => (
+                        {periodos.map((periodoCurso, indice) => (
                             <div key={indice} className="rounded-card border border-border bg-surface-muted p-4">
                                 <div className="mb-3 flex items-center justify-between">
                                     <h4 className="font-medium text-text-primary">Período {indice + 1}</h4>
-                                    {ofertas.length > 1 && (
+                                    {periodos.length > 1 && (
                                         <Button
                                             type="button"
                                             variant="danger"
                                             size="sm"
-                                            onClick={() => removerOferta(indice)}
+                                            onClick={() => removerPeriodo(indice)}
                                             leftIcon={<FiTrash2 />}
                                         >
                                             Remover
@@ -187,9 +187,9 @@ const CursoFormModal = ({
                                         label="Período"
                                         placeholder="Selecione o período"
                                         options={opcoesPeriodo}
-                                        value={oferta.periodo}
-                                        onChange={(evento) => atualizarOferta(indice, "periodo", evento.target.value)}
-                                        error={erros.ofertasPorIndice?.[indice]?.periodo}
+                                        value={periodoCurso.periodo}
+                                        onChange={(evento) => atualizarPeriodo(indice, "periodo", evento.target.value)}
+                                        error={erros.periodosPorIndice?.[indice]?.periodo}
                                         required
                                     />
                                     <Input
@@ -197,9 +197,9 @@ const CursoFormModal = ({
                                         type="number"
                                         min="0"
                                         step="5"
-                                        value={oferta.vagasTotais}
-                                        onChange={(evento) => atualizarOferta(indice, "vagasTotais", evento.target.value)}
-                                        error={erros.ofertasPorIndice?.[indice]?.vagasTotais}
+                                        value={periodoCurso.vagasTotais}
+                                        onChange={(evento) => atualizarPeriodo(indice, "vagasTotais", evento.target.value)}
+                                        error={erros.periodosPorIndice?.[indice]?.vagasTotais}
                                         required
                                     />
                                 </div>
@@ -207,8 +207,8 @@ const CursoFormModal = ({
                                 <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm text-text-primary">
                                     <input
                                         type="checkbox"
-                                        checked={oferta.matriculaAtiva}
-                                        onChange={(evento) => atualizarOferta(indice, "matriculaAtiva", evento.target.checked)}
+                                        checked={periodoCurso.matriculaAtiva}
+                                        onChange={(evento) => atualizarPeriodo(indice, "matriculaAtiva", evento.target.checked)}
                                     />
                                     Matrícula aberta para este período
                                 </label>

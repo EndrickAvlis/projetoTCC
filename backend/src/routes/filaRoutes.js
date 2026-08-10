@@ -1,13 +1,16 @@
 // Rotas HTTP relacionadas à fila de atendimento.
 import { Router } from "express";
-import { listarFila, chamarSenha } from "../controllers/filaController.js";
+import { listarFila, chamarSenha } from "../controllers/FilaController.js";
+import { validarRequisicao } from "../middlewares/validarRequisicao.js";
+import {
+  listarFilaSchema,
+  chamarSenhaSchema,
+} from "../validators/ValidatorFila.js";
 
 const filaRoutes = Router();
 
-//* Entrega as senhas aguardando da etapa informada em ?etapa=.
-filaRoutes.get("/", listarFila);
+filaRoutes.get("/", validarRequisicao(listarFilaSchema), listarFila);
 
-//* Reserva a senha selecionada pelo atendente.
-filaRoutes.post("/chamadas", chamarSenha);
+filaRoutes.post("/chamadas", validarRequisicao(chamarSenhaSchema), chamarSenha);
 
 export default filaRoutes;

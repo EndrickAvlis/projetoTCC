@@ -18,8 +18,6 @@
   - Added the required column `codProduto` to the `ItemCompra` table without a default value. This is not possible if the table is not empty.
 
 */
--- CreateEnum
-CREATE TYPE "TipoVoluntario" AS ENUM ('admin', 'supervisor', 'atendente');
 
 -- DropForeignKey
 ALTER TABLE "Compra" DROP CONSTRAINT "Compra_cpfAluno_fkey";
