@@ -1,7 +1,7 @@
 // Tabela dos uniformes selecionados e controles de quantidade e retirada.
-import Button from "../../ui/Button";
+import Button from "../ui/Button";
 import { IoMdAdd, IoMdRemove, IoMdTrash } from "react-icons/io";
-import { formatarMoeda } from "../../../utils/formatters";
+import { formatarMoeda } from "../../utils/formatters";
 
 const ListaUniformes = ({ itens, onAlterarComprada, onAlterarRetirada, onExcluir, disabled = false }) => {
   if (!itens.length) return null;

@@ -1,9 +1,9 @@
 // Seletor usado para adicionar uniformes disponíveis no catálogo à venda.
 import { useState } from "react";
 import { IoMdAdd } from "react-icons/io";
-import Select from "../../ui/Select";
-import Button from "../../ui/Button";
-import { formatarMoeda } from "../../../utils/formatters";
+import Select from "../ui/Select";
+import Button from "../ui/Button";
+import { formatarMoeda } from "../../utils/formatters";
 
 const SelectUniformes = ({ uniformes = [], onAdicionar, disabled = false }) => {
   const [uniformeSelecionado, setUniformeSelecionado] = useState("");

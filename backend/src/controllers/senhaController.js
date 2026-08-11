@@ -1,7 +1,9 @@
-import * as senhaService from "../services/SenhaService.js";
+import SenhaService from "../services/SenhaService.js";
 
-const mapearSenhaResposta = (senha) => ({
-  idSenha: senha.idSenha,
+const senhaService = new SenhaService();
+
+const senhaResposta = (senha) => ({
+  id: senha.idSenha,
   codigo: senha.senhaCodigo,
   emitidaEm: senha.dataHoraInicioSenha,
   etapaAtual: senha.etapaSenha,
@@ -13,7 +15,7 @@ export const emitirSenha = async (_req, res) => {
   const senha = await senhaService.criarSenha();
 
   return res.status(201).json({
-    senha: mapearSenhaResposta(senha),
+    senha: senhaResposta(senha),
   });
 };
 
@@ -26,6 +28,6 @@ export const alterarPrioridadeSenha = async (req, res) => {
     message: tipoSenha
       ? "Prioridade ativada com sucesso."
       : "Prioridade desativada com sucesso.",
-    senha: mapearSenhaResposta(senha),
+    senha: senhaResposta(senha),
   });
 };

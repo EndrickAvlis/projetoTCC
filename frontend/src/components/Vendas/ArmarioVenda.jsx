@@ -1,5 +1,5 @@
 // Opção de incluir um armário na venda quando o catálogo permitir.
-import { formatarMoeda } from "../../../utils/formatters";
+import { formatarMoeda } from "../../utils/formatters";
 
 const ArmarioVenda = ({ armario, permitido = false, onChange, disabled = false }) => {
   if (!permitido) return null;

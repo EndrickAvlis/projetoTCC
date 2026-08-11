@@ -2,8 +2,23 @@ import { z } from "zod";
 
 const periodosValidos = ["manha", "tarde", "noite", "integral"];
 const palavrasMinusculas = new Set([
-  "a", "as", "o", "os", "de", "da", "das", "do", "dos", "e", "em",
-  "na", "nas", "no", "nos", "para", "por",
+  "a",
+  "as",
+  "o",
+  "os",
+  "de",
+  "da",
+  "das",
+  "do",
+  "dos",
+  "e",
+  "em",
+  "na",
+  "nas",
+  "no",
+  "nos",
+  "para",
+  "por",
 ]);
 
 const normalizarNome = (nome) =>
@@ -21,7 +36,8 @@ const nomeCursoSchema = z
   .string({ error: "Informe o nome do curso." })
   .transform(normalizarNome)
   .pipe(
-    z.string()
+    z
+      .string()
       .min(1, "Informe o nome do curso.")
       .max(100, "O nome deve ter no máximo 100 caracteres."),
   );
@@ -48,9 +64,7 @@ const dadosPeriodoSchema = z.object({
   }),
 });
 
-const periodosCursoSchema = z
-  .array(dadosPeriodoSchema)
-  .superRefine((periodos, contexto) => {
+const periodosCursoSchema = z.array(dadosPeriodoSchema).superRefine((periodos, contexto) => {
     const indicesPorPeriodo = new Map();
 
     periodos.forEach((periodo, indice) => {
@@ -86,7 +100,7 @@ export const listarCursosSchema = z.object({
 export const criarCursoSchema = z.object({
   body: z.object({
     nome: nomeCursoSchema,
-    periodos: periodosCursoSchema.optional().default([]),
+    periodos: periodosCursoSchema.min(1, "É necessário ao menos um período"),
   }),
 });
 

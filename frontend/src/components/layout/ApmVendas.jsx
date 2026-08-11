@@ -1,13 +1,13 @@
 // Tela de vendas APM: monta a compra e envia a finalização ao apmService.
-import ResumoCompra from "../layout/ResumoCompra";
+import ResumoCompra from "../Vendas/ResumoCompra";
 import AtendimentoActions from "../common/AtendimentoActions";
 import Alert from "../ui/Alert";
-import ArmarioVenda from "./Vendas/ArmarioVenda";
-import ContribuicaoVoluntaria from "./Vendas/ContribuicaoVoluntaria";
-import FormasPagamento from "./Vendas/FormasPagamento";
-import InfoAluno from "./Vendas/InfoAluno";
-import ListaUniformes from "./Vendas/ListaUniformes";
-import SelectUniformes from "./Vendas/SelectUniformes";
+import ArmarioVenda from "../Vendas/ArmarioVenda";
+import ContribuicaoVoluntaria from "../Vendas/ContribuicaoVoluntaria";
+import FormasPagamento from "../Vendas/FormasPagamento";
+import InfoAluno from "../Vendas/InfoAluno";
+import ListaUniformes from "../Vendas/ListaUniformes";
+import SelectUniformes from "../Vendas/SelectUniformes";
 import { useAtendimento } from "../../hooks/useAtendimento";
 import { useVendaApm } from "../../hooks/useVendaApm";
 import {
