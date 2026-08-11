@@ -30,7 +30,7 @@ export const criarVoluntarioSchema = z.object({
         .default("ativo")
 });
 
-export const buscarVoluntarioSchema = z.object({
+export const listarVoluntarioSchema = z.object({
     idVoluntario: z
         .coerce
         .number()
@@ -62,21 +62,3 @@ export const buscarVoluntarioSchema = z.object({
 })
 
 export const atualizarVoluntarioSchema = criarVoluntarioSchema.partial();
-
-export const listarVoluntariosSchema = z.object({
-    query: buscarVoluntarioSchema,
-});
-
-export const criarVoluntarioRequisicaoSchema = z.object({
-    body: criarVoluntarioSchema,
-});
-
-export const atualizarVoluntarioRequisicaoSchema = z.object({
-    params: z.object({
-        idVoluntario: z.coerce
-            .number()
-            .int("O ID deve ser um número inteiro.")
-            .positive("O ID deve ser maior que zero."),
-    }),
-    body: atualizarVoluntarioSchema,
-});
