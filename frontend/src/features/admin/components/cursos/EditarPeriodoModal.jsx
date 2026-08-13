@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import * as React from "react";
 import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
@@ -14,14 +14,14 @@ const EditarPeriodoModal = ({
   salvando = false,
   erro = null,
 }) => {
-  const [dados, setDados] = useState({
+  const [dados, setDados] = React.useState({
     periodo: "",
     vagasTotais: "",
     matriculaAtiva: true,
   });
-  const [erros, setErros] = useState({});
+  const [erros, setErros] = React.useState({});
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!aberto || !periodo) {
       return;
     }

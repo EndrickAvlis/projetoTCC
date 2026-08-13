@@ -1,10 +1,7 @@
 // Botões reutilizados para iniciar e finalizar um atendimento.
 import Button from "../ui/Button";
 import { useAtendimento } from "../../hooks/useAtendimento";
-import {
-  finalizarAtendimento,
-  iniciarAtendimento,
-} from "../../services/atendimentoService";
+import * as AtendimentoService from "../../services/atendimentoService";
 
 const AtendimentoActions = ({
   podeFinalizar = true,
@@ -28,7 +25,7 @@ const AtendimentoActions = ({
 
     try {
       setCarregando(true);
-      const resposta = await iniciarAtendimento(senhaAtual.id);
+      const resposta = await AtendimentoService.iniciarAtendimento(senhaAtual.id);
       if (!resposta?.atendimento?.id) {
         throw new Error("A API não retornou o atendimento iniciado.");
       }
@@ -49,7 +46,7 @@ const AtendimentoActions = ({
       setCarregando(true);
       const resultado = onFinalizar
         ? await onFinalizar(atendimentoAtual.id)
-        : await finalizarAtendimento(atendimentoAtual.id);
+        : await AtendimentoService.finalizarAtendimento(atendimentoAtual.id);
 
       if (resultado === false) return;
       limparAtendimentoExibido();

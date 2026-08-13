@@ -3,7 +3,7 @@ import Input from "../../../../components/ui/Input"
 import Modal from "../../../../components/ui/Modal"
 import Select from "../../../../components/ui/Select"
 import Alert from "../../../../components/ui/Alert"
-import { useEffect, useState } from "react";
+import * as React from "react";
 import { PERIODOS_CURSO } from "../../../../constants/cursoOptions"
 
 const dadosIniciais = {
@@ -12,10 +12,10 @@ const dadosIniciais = {
     matriculaAtiva: true,
 }
 const AdicionarPeriodoModal = ({ aberto, onFechar, onSalvar, salvando = false, erro = null }) => {
-    const [dados, setDados] = useState(dadosIniciais)
-    const [erros, setErros] = useState({});
+    const [dados, setDados] = React.useState(dadosIniciais)
+    const [erros, setErros] = React.useState({});
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (aberto) {
             setDados(dadosIniciais);
             setErros({});

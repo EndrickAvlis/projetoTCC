@@ -1,5 +1,5 @@
 // Contexto visual compartilhado entre a fila e o formulário do posto.
-import { useEffect, useState } from "react";
+import * as React from "react";
 import { AtendimentoContext } from "./atendimentoContextBase";
 
 
@@ -28,18 +28,18 @@ const normalizarDetalheSenha = (detalhe) => {
 
 export const AtendimentoProvider = ({ children }) => {
   // Exibe a senha retornada por POST /filas/chamadas e pelo endpoint de detalhe.
-  const [senhaAtual, setSenhaAtual] = useState(null);
+  const [senhaAtual, setSenhaAtual] = React.useState(null);
 
   // Guarda apenas a referência do atendimento criado pelo backend.
-  const [atendendo, setAtendendo] = useState(false);
-  const [atendimentoAtual, setAtendimentoAtual] = useState(null);
+  const [atendendo, setAtendendo] = React.useState(false);
+  const [atendimentoAtual, setAtendimentoAtual] = React.useState(null);
 
   // Mantém os dados recebidos da API e as edições temporárias do formulário.
-  const [dados, setDados] = useState(dadosAlunoIniciais);
+  const [dados, setDados] = React.useState(dadosAlunoIniciais);
 
   // Estados exclusivos de apresentação para carregamento e mensagens da API.
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState(null);
+  const [carregando, setCarregando] = React.useState(false);
+  const [erro, setErro] = React.useState(null);
 
   // Adapta o detalhe retornado pela API para os campos usados pelas telas.
   const exibirDetalheSenha = (detalhe) => {
@@ -56,7 +56,7 @@ export const AtendimentoProvider = ({ children }) => {
     setAtendimentoAtual(null);
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const limparSessaoInvalida = () => {
       setSenhaAtual(null);
       setDados(dadosAlunoIniciais);

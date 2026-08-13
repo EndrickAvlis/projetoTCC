@@ -1,6 +1,6 @@
 // Tela de login: envia credenciais e registra a sessão retornada pela API.
 import { useState } from "react";
-import { FaLock, FaUser } from "react-icons/fa";
+import * as FaIcons from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -73,7 +73,7 @@ const LoginPage = () => {
             placeholder="Digite seu usuário"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
-            icon={<FaUser className="text-primary" />}
+            icon={<FaIcons.FaUser className="text-primary" />}
             iconPosition="left"
           />
 
@@ -84,7 +84,7 @@ const LoginPage = () => {
             placeholder="Digite sua senha"
             value={senha}
             onChange={(event) => setSenha(event.target.value)}
-            icon={<FaLock className="text-primary" />}
+            icon={<FaIcons.FaLock className="text-primary" />}
             iconPosition="left"
           />
 

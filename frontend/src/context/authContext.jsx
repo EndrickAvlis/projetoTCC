@@ -1,5 +1,5 @@
 // Contexto da sessão: persiste o usuário autenticado e suas permissões.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import * as React from "react";
 import { obterSessaoAtual } from "../services/authService";
 import { AuthContext } from "./authContextBase";
 
@@ -54,13 +54,13 @@ const montarSessao = (
 };
 
 export const AuthProvider = ({ children }) => {
-  const [sessaoInicial] = useState(recuperarSessao);
-  const [usuario, setUsuario] = useState(sessaoInicial);
-  const [validandoSessao, setValidandoSessao] = useState(
+  const [sessaoInicial] = React.useState(recuperarSessao);
+  const [usuario, setUsuario] = React.useState(sessaoInicial);
+  const [validandoSessao, setValidandoSessao] = React.useState(
     Boolean(sessaoInicial),
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (usuario) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(usuario));
       return;
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
   }, [usuario]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const removerSessaoInvalida = () => {
       setUsuario(null);
       setValidandoSessao(false);
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener("auth:unauthorized", removerSessaoInvalida);
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!sessaoInicial) return;
 
     let ativo = true;
@@ -103,25 +103,25 @@ export const AuthProvider = ({ children }) => {
   }, [sessaoInicial]);
 
   // Registra somente a sessão que o POST /auth/login devolveu após validar acesso.
-  const registrarSessao = useCallback((resposta) => {
+  const registrarSessao = React.useCallback((resposta) => {
     const sessao = montarSessao(resposta);
 
     setUsuario(sessao);
     return sessao;
   }, []);
 
-  const temAcessoATela = useCallback(
+  const temAcessoATela = React.useCallback(
     (tela) => Boolean(usuario?.telasPermitidas?.includes(tela)),
     [usuario],
   );
 
   // Limpa a sessão local depois da tentativa de encerrar a sessão no servidor.
-  const logout = useCallback(() => {
+  const logout = React.useCallback(() => {
     setUsuario(null);
     setValidandoSessao(false);
   }, []);
 
-  const value = useMemo(
+  const value = React.useMemo(
     () => ({
       usuario,
       estaAutenticado: Boolean(usuario),

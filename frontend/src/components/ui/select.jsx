@@ -1,7 +1,7 @@
 // Campo de seleção reutilizável com rótulo e mensagem de erro.
-import { forwardRef, useId } from "react";
+import * as React from "react";
 
-const Select = forwardRef(
+const Select = React.forwardRef(
   (
     {
       // LABEL
@@ -36,7 +36,7 @@ const Select = forwardRef(
     ref,
   ) => {
     // ID automático estável para ligar o rótulo ao campo.
-    const idAutomatico = useId();
+    const idAutomatico = React.useId();
     const selectId = id || `select-${idAutomatico}`;
     const sizes = {
       sm: "px-3 py-1.5 text-sm",

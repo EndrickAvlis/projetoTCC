@@ -1,14 +1,14 @@
 // Carrega os cursos da API e combina com os anos e períodos fixos do sistema.
-import { useEffect, useState } from "react";
-import { ANOS_CURSO, PERIODOS_CURSO } from "../constants/cursoOptions";
+import * as React from "react";
+import * as CursoOptions from "../constants/cursoOptions";
 import { listarCursos } from "../services/triagemService";
 
 export const useSelectsTriagem = () => {
-  const [cursos, setCursos] = useState([]);
-  const [carregandoCursos, setCarregandoCursos] = useState(true);
-  const [erroCursos, setErroCursos] = useState(null);
+  const [cursos, setCursos] = React.useState([]);
+  const [carregandoCursos, setCarregandoCursos] = React.useState(true);
+  const [erroCursos, setErroCursos] = React.useState(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     let ativo = true;
 
     const carregarCursos = async () => {
@@ -28,8 +28,8 @@ export const useSelectsTriagem = () => {
 
   return {
     cursos,
-    anos: ANOS_CURSO,
-    periodos: PERIODOS_CURSO,
+    anos: CursoOptions.ANOS_CURSO,
+    periodos: CursoOptions.PERIODOS_CURSO,
     carregandoCursos,
     catalogoDisponivel: cursos.length > 0,
     erroCursos,

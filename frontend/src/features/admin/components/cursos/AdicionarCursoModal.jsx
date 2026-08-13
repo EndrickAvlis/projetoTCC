@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import * as React from "react";
+import * as FiIcons from "react-icons/fi";
 import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
@@ -22,9 +22,9 @@ const CursoFormModal = ({
     salvando = false,
     erro = null,
 }) => {
-    const [nome, setNome] = useState("");
-    const [periodos, setPeriodos] = useState([criarPeriodoVazio()]);
-    const [erros, setErros] = useState({});
+    const [nome, setNome] = React.useState("");
+    const [periodos, setPeriodos] = React.useState([criarPeriodoVazio()]);
+    const [erros, setErros] = React.useState({});
 
     const limparFormulario = () => {
         setNome("");
@@ -32,7 +32,7 @@ const CursoFormModal = ({
         setErros({});
     };
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (aberto) {
             limparFormulario();
         }
@@ -149,7 +149,7 @@ const CursoFormModal = ({
                             variant="secondary"
                             size="sm"
                             onClick={adicionarPeriodo}
-                            leftIcon={<FiPlus />}
+                            leftIcon={<FiIcons.FiPlus />}
                             disabled={periodos.length >= LIMITE_PERIODOS}
                         >
                             Adicionar período
@@ -169,7 +169,7 @@ const CursoFormModal = ({
                                             variant="danger"
                                             size="sm"
                                             onClick={() => removerPeriodo(indice)}
-                                            leftIcon={<FiTrash2 />}
+                                            leftIcon={<FiIcons.FiTrash2 />}
                                         >
                                             Remover
                                         </Button>
