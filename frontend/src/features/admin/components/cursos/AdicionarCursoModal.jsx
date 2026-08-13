@@ -5,19 +5,13 @@ import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
 import Select from "../../../../components/ui/Select";
+import { PERIODOS_CURSO } from "../../../../constants/cursoOptions";
 
 const criarPeriodoVazio = () => ({
     periodo: "",
     vagasTotais: "",
     matriculaAtiva: true,
 });
-
-const opcoesPeriodo = [
-    { value: "manha", label: "Manhã" },
-    { value: "tarde", label: "Tarde" },
-    { value: "noite", label: "Noite" },
-    { value: "integral", label: "Integral" },
-];
 
 const LIMITE_PERIODOS = 4;
 
@@ -186,7 +180,7 @@ const CursoFormModal = ({
                                     <Select
                                         label="Período"
                                         placeholder="Selecione o período"
-                                        options={opcoesPeriodo}
+                                        options={PERIODOS_CURSO}
                                         value={periodoCurso.periodo}
                                         onChange={(evento) => atualizarPeriodo(indice, "periodo", evento.target.value)}
                                         error={erros.periodosPorIndice?.[indice]?.periodo}

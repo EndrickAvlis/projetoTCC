@@ -17,7 +17,7 @@
   --color-disabled-bg: #e9eef5;
   --color-border: #d7dfea;
   --color-border-strong: #b7c4d4;
-  --color-table-head: #EBEDF0;
+  --color-table-head: #ebedf0;
 
   /* Texto */
   --color-text-primary: #172033;
@@ -29,6 +29,7 @@
   --color-status-success: #1f7a1f;
   --color-status-success-bg: #dcfce7;
   --color-status-warning: #9a6700;
+  --color-status-warning-hover: #785101;
   --color-status-warning-bg: #fff2cc;
   --color-status-info: #175cd3;
   --color-status-info-bg: #e8f1ff;

@@ -19,6 +19,7 @@ import RelatoriosPage from "./features/admin/pages/relatoriosPage";
 import UsuariosPage from "./features/admin/pages/usuariosPage";
 import ConfiguracoesPage from "./features/admin/pages/configuracoesPage";
 
+
 function App() {
   return (
     <BrowserRouter>
