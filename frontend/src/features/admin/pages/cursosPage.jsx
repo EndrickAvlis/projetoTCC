@@ -13,7 +13,7 @@ import AdicionarPeriodoModal from "../components/cursos/AdicionarPeriodoModal";
 import EditarPeriodoModal from "../components/cursos/EditarPeriodoModal";
 
 import { useCursos } from "../hooks/useCursos";
-import * as cursoService from "../services/cursosService";
+import * as cursoService from "../services/CursosService";
 
 const nomesPeriodos = {
   manha: "Manhã",
@@ -417,6 +417,7 @@ const CursosPage = () => {
               : "text-text-secondary hover:bg-surface-muted"
               }`}
           >
+
             Ativos
           </button>
 
