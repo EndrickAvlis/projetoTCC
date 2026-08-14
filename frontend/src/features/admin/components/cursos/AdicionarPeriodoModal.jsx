@@ -1,0 +1,119 @@
+import Button from "../../../../components/ui/Button"
+import Input from "../../../../components/ui/Input"
+import Modal from "../../../../components/ui/Modal"
+import Select from "../../../../components/ui/Select"
+import Alert from "../../../../components/ui/Alert"
+import * as React from "react";
+import { PERIODOS_CURSO } from "../../../../constants/cursoOptions"
+
+const dadosIniciais = {
+    periodo: "",
+    vagasTotais: "",
+    matriculaAtiva: true,
+}
+const AdicionarPeriodoModal = ({ aberto, onFechar, onSalvar, salvando = false, erro = null }) => {
+    const [dados, setDados] = React.useState(dadosIniciais)
+    const [erros, setErros] = React.useState({});
+
+    React.useEffect(() => {
+        if (aberto) {
+            setDados(dadosIniciais);
+            setErros({});
+        }
+    }, [aberto]);
+
+    const atualizarCampo = (campo, valor) => {
+        setDados((dadosAtuais) => ({
+            ...dadosAtuais,
+            [campo]: valor
+        }))
+    }
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const vagasTotais = Number(dados.vagasTotais)
+        const novosErros = {};
+
+        if (!dados.periodo) {
+            novosErros.periodo = "Selecione um período.";
+        }
+
+        if (
+            dados.vagasTotais === "" ||
+            !Number.isInteger(vagasTotais) ||
+            vagasTotais < 0
+        ) {
+            novosErros.vagasTotais =
+                "Informe um número inteiro maior ou igual a zero.";
+        }
+
+        setErros(novosErros);
+
+        if (Object.keys(novosErros).length > 0) {
+            return;
+        }
+
+        onSalvar({
+            ...dados,
+            vagasTotais,
+        })
+    }
+    return (
+        <Modal
+            aberto={aberto}
+            onFechar={() => !salvando && onFechar()}
+            titulo="Adicionar Período"
+            largura="max-w-lg"
+        >
+            <form onSubmit={handleSubmit} className="space-y-5">
+                {erro && <Alert type="error" message={erro} />}
+                <Select
+                    label="Período"
+                    placeholder="Selecione o período"
+                    options={PERIODOS_CURSO}
+                    value={dados.periodo}
+                    onChange={(e) => atualizarCampo("periodo", e.target.value)}
+                    error={erros.periodo}
+                    required
+                />
+                <Input
+                    label="Vagas Totais"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={dados.vagasTotais}
+                    onChange={(e) => atualizarCampo("vagasTotais", e.target.value)}
+                    error={erros.vagasTotais}
+                    required
+                />
+                <label className="flex cursor-pointer items-center gap-3 text-sm text-text-primary">
+                    <input
+                        type="checkbox"
+                        checked={dados.matriculaAtiva}
+                        onChange={(e) => atualizarCampo("matriculaAtiva", e.target.checked)}
+                    ></input>
+                    Matrícula aberta para este período
+                </label>
+
+                <footer className="flex justify-end gap-3 border-t border-border pt-5">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={onFechar}
+                        disabled={salvando}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        type='submit'
+                        loading={salvando}
+                    >
+                        Adicionar Período
+                    </Button>
+                </footer>
+            </form>
+        </Modal>
+    )
+}
+export default AdicionarPeriodoModal;

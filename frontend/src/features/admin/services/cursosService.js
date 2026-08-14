@@ -1,17 +1,15 @@
 import { requisitarApi } from "../../../services/apiClient";
 
-const criarUrlCurso = (cursoId) =>
-  `/admin/cursos/${encodeURIComponent(cursoId)}`;
-const criarUrlPeriodo = (cursoId, periodoId) =>
-  `${criarUrlCurso(cursoId)}/periodos/${encodeURIComponent(periodoId)}`;
+const criarUrlCurso = (cursoId) => `/admin/cursos/${encodeURIComponent(cursoId)}`;
+const criarUrlPeriodo = (cursoId, periodoId) => `${criarUrlCurso(cursoId)}/periodos/${encodeURIComponent(periodoId)}`;
 
 export const listarCursosAdmin = ({ busca = "", arquivado = false } = {}) => {
   const params = new URLSearchParams({ arquivado: String(arquivado) });
 
-  const buscaNormalizada = busca.trim();
+  const buscaLimpa = busca.trim();
 
-  if (buscaNormalizada) {
-    params.set("busca", buscaNormalizada);
+  if (buscaLimpa) {
+    params.set("busca", buscaLimpa);
   }
 
   return requisitarApi(`/admin/cursos?${params.toString()}`);

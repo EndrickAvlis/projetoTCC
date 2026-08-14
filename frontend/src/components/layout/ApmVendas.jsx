@@ -10,10 +10,7 @@ import ListaUniformes from "../Vendas/ListaUniformes";
 import SelectUniformes from "../Vendas/SelectUniformes";
 import { useAtendimento } from "../../hooks/useAtendimento";
 import { useVendaApm } from "../../hooks/useVendaApm";
-import {
-  finalizarSemVenda,
-  registrarVenda,
-} from "../../services/apmService";
+import * as ApmService from "../../services/apmService";
 
 const ApmVendas = () => {
   const atendimento = useAtendimento();
@@ -33,7 +30,7 @@ const ApmVendasAtual = ({ dados, atendendo }) => {
   const possuiVenda = venda.total > 0;
 
   const finalizar = (atendimentoId) =>
-    registrarVenda(atendimentoId, venda.gerarPayload());
+    ApmService.registrarVenda(atendimentoId, venda.gerarPayload());
 
   const pularVenda = async (atendimentoId) => {
     const confirmou = window.confirm(
@@ -41,7 +38,7 @@ const ApmVendasAtual = ({ dados, atendendo }) => {
     );
     if (!confirmou) return false;
 
-    await finalizarSemVenda(atendimentoId);
+    await ApmService.finalizarSemVenda(atendimentoId);
     return true;
   };
 

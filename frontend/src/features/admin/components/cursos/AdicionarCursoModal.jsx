@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import * as React from "react";
+import * as FiIcons from "react-icons/fi";
 import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
 import Select from "../../../../components/ui/Select";
+import { PERIODOS_CURSO } from "../../../../constants/cursoOptions";
 
 const criarPeriodoVazio = () => ({
     periodo: "",
     vagasTotais: "",
     matriculaAtiva: true,
 });
-
-const opcoesPeriodo = [
-    { value: "manha", label: "Manhã" },
-    { value: "tarde", label: "Tarde" },
-    { value: "noite", label: "Noite" },
-    { value: "integral", label: "Integral" },
-];
 
 const LIMITE_PERIODOS = 4;
 
@@ -28,9 +22,9 @@ const CursoFormModal = ({
     salvando = false,
     erro = null,
 }) => {
-    const [nome, setNome] = useState("");
-    const [periodos, setPeriodos] = useState([criarPeriodoVazio()]);
-    const [erros, setErros] = useState({});
+    const [nome, setNome] = React.useState("");
+    const [periodos, setPeriodos] = React.useState([criarPeriodoVazio()]);
+    const [erros, setErros] = React.useState({});
 
     const limparFormulario = () => {
         setNome("");
@@ -38,7 +32,7 @@ const CursoFormModal = ({
         setErros({});
     };
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (aberto) {
             limparFormulario();
         }
@@ -155,7 +149,7 @@ const CursoFormModal = ({
                             variant="secondary"
                             size="sm"
                             onClick={adicionarPeriodo}
-                            leftIcon={<FiPlus />}
+                            leftIcon={<FiIcons.FiPlus />}
                             disabled={periodos.length >= LIMITE_PERIODOS}
                         >
                             Adicionar período
@@ -175,7 +169,7 @@ const CursoFormModal = ({
                                             variant="danger"
                                             size="sm"
                                             onClick={() => removerPeriodo(indice)}
-                                            leftIcon={<FiTrash2 />}
+                                            leftIcon={<FiIcons.FiTrash2 />}
                                         >
                                             Remover
                                         </Button>
@@ -186,7 +180,7 @@ const CursoFormModal = ({
                                     <Select
                                         label="Período"
                                         placeholder="Selecione o período"
-                                        options={opcoesPeriodo}
+                                        options={PERIODOS_CURSO}
                                         value={periodoCurso.periodo}
                                         onChange={(evento) => atualizarPeriodo(indice, "periodo", evento.target.value)}
                                         error={erros.periodosPorIndice?.[indice]?.periodo}

@@ -1,14 +1,11 @@
 import { useLocation } from "react-router-dom";
 import { FiGrid } from "react-icons/fi";
-import {
-  adminNavigation,
-  adminFooterNavigation,
-} from "../constants/adminNavigation";
+import * as AdminNavigation from "../constants/adminNavigation";
 import { useAuth } from "../../../hooks/useAuth";
 
 const adminRoutes = [
-  ...adminNavigation,
-  ...adminFooterNavigation,
+  ...AdminNavigation.adminNavigation,
+  ...AdminNavigation.adminFooterNavigation,
 ];
 
 const AdminHeader = () => {

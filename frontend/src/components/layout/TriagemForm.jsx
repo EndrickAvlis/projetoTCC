@@ -9,10 +9,7 @@ import Select from "../ui/Select";
 import { useAtendimento } from "../../hooks/useAtendimento";
 import { useSelectsTriagem } from "../../hooks/useSelectsTriagem";
 import { finalizarAtendimento } from "../../services/atendimentoService";
-import {
-  buscarAlunoPorCpf,
-  salvarDadosDaTriagem,
-} from "../../services/triagemService";
+import * as TriagemService from "../../services/triagemService";
 import FormaterCpf from "../../utils/formatters";
 
 const TriagemForm = () => {
@@ -41,7 +38,7 @@ const TriagemForm = () => {
   const buscarAluno = async () => {
     try {
       setBuscandoAluno(true);
-      const resultado = await buscarAlunoPorCpf(dados.cpf);
+      const resultado = await TriagemService.buscarAlunoPorCpf(dados.cpf);
 
       if (!resultado) {
         setErro("Nenhum aluno foi encontrado para o CPF informado.");
@@ -75,7 +72,7 @@ const TriagemForm = () => {
   const salvarTriagem = async (atendimentoId) => {
     if (!senhaAtual || !dadosObrigatoriosPreenchidos) return false;
 
-    await salvarDadosDaTriagem(senhaAtual.id, dados);
+    await TriagemService.salvarDadosDaTriagem(senhaAtual.id, dados);
     await finalizarAtendimento(atendimentoId);
     return true;
   };

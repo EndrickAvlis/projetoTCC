@@ -21,7 +21,7 @@ const palavrasMinusculas = new Set([
   "por",
 ]);
 
-const normalizarNome = (nome) =>
+const nome = (nome) =>
   nome
     .trim()
     .toLocaleLowerCase("pt-BR")
@@ -32,22 +32,16 @@ const normalizarNome = (nome) =>
     })
     .join(" ");
 
-const nomeCursoSchema = z
-  .string({ error: "Informe o nome do curso." })
-  .transform(normalizarNome)
-  .pipe(
+const nomeCurso = z.string({ error: "Informe o nome do curso." }).transform(nome).pipe(
     z
       .string()
       .min(1, "Informe o nome do curso.")
       .max(100, "O nome deve ter no máximo 100 caracteres."),
   );
 
-const periodoSchema = z
-  .string({ error: "Informe um período válido." })
-  .transform((periodo) => periodo.trim().toLowerCase())
-  .pipe(z.enum(periodosValidos, { error: "Informe um período válido." }));
+const periodo = z.string({ error: "Informe um período válido." }).transform((periodo) => periodo.trim().toLowerCase()).pipe(z.enum(periodosValidos, { error: "Informe um período válido." }));
 
-const vagasTotaisSchema = z.preprocess(
+const vagasTotais = z.preprocess(
   (valor) =>
     typeof valor === "string" && valor.trim() !== "" ? Number(valor) : valor,
   z
@@ -56,15 +50,15 @@ const vagasTotaisSchema = z.preprocess(
     .nonnegative("Informe um número inteiro maior ou igual a zero."),
 );
 
-const dadosPeriodoSchema = z.object({
-  periodo: periodoSchema,
-  vagasTotais: vagasTotaisSchema,
+const dadosPeriodo = z.object({
+  periodo: periodo,
+  vagasTotais: vagasTotais,
   matriculaAtiva: z.boolean({
     error: "Informe verdadeiro ou falso para a matrícula.",
   }),
 });
 
-const periodosCursoSchema = z.array(dadosPeriodoSchema).superRefine((periodos, contexto) => {
+const periodosCurso = z.array(dadosPeriodo).superRefine((periodos, contexto) => {
     const indicesPorPeriodo = new Map();
 
     periodos.forEach((periodo, indice) => {
@@ -80,37 +74,36 @@ const periodosCursoSchema = z.array(dadosPeriodoSchema).superRefine((periodos, c
     });
   });
 
-const idSchema = z.coerce
-  .number()
-  .int("O ID deve ser um número inteiro.")
-  .positive("O ID deve ser maior que zero.");
+const id = z.coerce.number().int("O ID deve ser um número inteiro.").positive("O ID deve ser maior que zero.");
 
 export const listarCursosSchema = z.object({
   query: z.object({
     busca: z.string().trim().optional().default(""),
-    arquivado: z
-      .enum(["true", "false"], {
-        error: "O filtro arquivado deve ser true ou false.",
-      })
-      .optional()
-      .transform((valor) => valor === "true"),
+arquivado: z
+  .enum(["true", "false"], {
+    error: "O filtro arquivado deve ser true ou false.",
+  })
+  .optional()
+  .transform((valor) =>
+    valor === undefined ? undefined : valor === "true",
+  ),
   }),
 });
 
 export const criarCursoSchema = z.object({
   body: z.object({
-    nome: nomeCursoSchema,
-    periodos: periodosCursoSchema.min(1, "É necessário ao menos um período"),
+    nome: nomeCurso,
+    periodos: periodosCurso.min(1, "É necessário ao menos um período"),
   }),
 });
 
 export const atualizarNomeCursoSchema = z.object({
-  params: z.object({ cursoId: idSchema }),
-  body: z.object({ nome: nomeCursoSchema }),
+  params: z.object({ cursoId: id }),
+  body: z.object({ nome: nomeCurso }),
 });
 
 export const alterarArquivamentoCursoSchema = z.object({
-  params: z.object({ cursoId: idSchema }),
+  params: z.object({ cursoId: id }),
   body: z.object({
     arquivado: z.boolean({
       error: "Informe verdadeiro ou falso para o arquivamento.",
@@ -119,14 +112,14 @@ export const alterarArquivamentoCursoSchema = z.object({
 });
 
 export const criarPeriodoCursoSchema = z.object({
-  params: z.object({ cursoId: idSchema }),
-  body: dadosPeriodoSchema,
+  params: z.object({ cursoId: id }),
+  body: dadosPeriodo,
 });
 
 export const atualizarPeriodoCursoSchema = z.object({
   params: z.object({
-    cursoId: idSchema,
-    periodoId: idSchema,
+    cursoId: id,
+    periodoId: id,
   }),
-  body: dadosPeriodoSchema,
+  body: dadosPeriodo,
 });

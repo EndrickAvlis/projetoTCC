@@ -1,13 +1,7 @@
-import {
-    adminNavigation,
-    adminFooterNavigation,
-} from "../constants/adminNavigation";
+import * as AdminNavigation from "../constants/adminNavigation";
 import AdminLogoutButton from "../components/admin/adminLogoutButton";
 import AdminNavItem from "../components/admin/AdminNavItem";
-import {
-    FiChevronLeft,
-    FiChevronRight,
-} from "react-icons/fi";
+import * as FiIcons from "react-icons/fi";
 
 const AdminSideBar = ({ collapsed, onToggle }) => {
     return (
@@ -28,12 +22,12 @@ const AdminSideBar = ({ collapsed, onToggle }) => {
                         aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
                         className="rounded-lg p-2 text-admin-sidebar-text transition-colors hover:bg-admin-sidebar-hover"
                     >
-                        {collapsed ? <FiChevronRight size={20} /> : <FiChevronLeft size={20} />}
+                        {collapsed ? <FiIcons.FiChevronRight size={20} /> : <FiIcons.FiChevronLeft size={20} />}
                     </button>
                 </div>
             </div>
             <nav className="mt-5 flex-1 space-y-1">
-                {adminNavigation.map((item) => (
+                {AdminNavigation.adminNavigation.map((item) => (
                     <AdminNavItem
                         key={item.path}
                         item={item}
@@ -44,7 +38,7 @@ const AdminSideBar = ({ collapsed, onToggle }) => {
 
             <div className="border-t border-admin-sidebar-divider pt-4">
                 <nav className="space-y-1">
-                    {adminFooterNavigation.map((item) => (
+                    {AdminNavigation.adminFooterNavigation.map((item) => (
                         <AdminNavItem
                             key={item.path}
                             item={item}

@@ -2,7 +2,6 @@
 import { formatarSenha } from "../../utils/formatters";
 
 const HistoricoGrid = ({ senhas }) => {
-  // Renderiza uma senha histórica sem ação de clique para evitar uma chamada indevida.
   const renderizarSenha = (senha) => (
     <div
       key={senha.id}

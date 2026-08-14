@@ -1,9 +1,6 @@
 // Hook da venda APM: controla o formulário e carrega o catálogo pela API.
-import { useEffect, useMemo, useState } from "react";
-import {
-  carregarCatalogoVenda,
-  reaisParaCentavos,
-} from "../services/apmService";
+import * as React from "react";
+import * as ApmService from "../services/apmService";
 
 const FORMAS_PAGAMENTO = ["pix", "dinheiro", "debito", "credito"];
 const PRODUTOS_VAZIOS = {
@@ -13,21 +10,21 @@ const PRODUTOS_VAZIOS = {
 const arredondarValor = (valor) => Math.round(valor * 100) / 100;
 
 export const useVendaApm = () => {
-  const [produtos, setProdutos] = useState(PRODUTOS_VAZIOS);
-  const [carregandoCatalogo, setCarregandoCatalogo] = useState(true);
-  const [erroCatalogo, setErroCatalogo] = useState(null);
-  const [itens, setItens] = useState([]);
-  const [valorContribuicao, setValorContribuicao] = useState(0);
-  const [armarioIncluido, setArmarioIncluido] = useState(false);
-  const [pagamentosSelecionados, setPagamentosSelecionados] = useState([]);
-  const [valoresPagamento, setValoresPagamento] = useState({});
+  const [produtos, setProdutos] = React.useState(PRODUTOS_VAZIOS);
+  const [carregandoCatalogo, setCarregandoCatalogo] = React.useState(true);
+  const [erroCatalogo, setErroCatalogo] = React.useState(null);
+  const [itens, setItens] = React.useState([]);
+  const [valorContribuicao, setValorContribuicao] = React.useState(0);
+  const [armarioIncluido, setArmarioIncluido] = React.useState(false);
+  const [pagamentosSelecionados, setPagamentosSelecionados] = React.useState([]);
+  const [valoresPagamento, setValoresPagamento] = React.useState({});
 
-  useEffect(() => {
+  React.useEffect(() => {
     let ativo = true;
 
     const carregar = async () => {
       try {
-        const catalogo = await carregarCatalogoVenda();
+        const catalogo = await ApmService.carregarCatalogoVenda();
         if (ativo) setProdutos(catalogo);
       } catch (erro) {
         if (ativo) setErroCatalogo(erro.message);
@@ -48,7 +45,7 @@ export const useVendaApm = () => {
     ...produtos.armario,
     incluido: armarioDisponivel && armarioIncluido,
   };
-  const totalUniformes = useMemo(
+  const totalUniformes = React.useMemo(
     () =>
       arredondarValor(
         itens.reduce(
@@ -156,13 +153,13 @@ export const useVendaApm = () => {
       quantidadeComprada,
       quantidadeRetirada,
     })),
-    contribuicaoCentavos: reaisParaCentavos(valorContribuicao),
+    contribuicaoCentavos: ApmService.reaisParaCentavos(valorContribuicao),
     armario: armario.incluido
       ? { quantidadeComprada: 1, quantidadeRetirada: 1 }
       : null,
     pagamentos: pagamentosSelecionados.map((forma) => ({
       forma,
-      valorCentavos: reaisParaCentavos(valoresPagamento[forma] || 0),
+      valorCentavos: ApmService.reaisParaCentavos(valoresPagamento[forma] || 0),
     })),
   });
 

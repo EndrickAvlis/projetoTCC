@@ -1,5 +1,5 @@
 // Configura os contextos globais e as rotas principais do frontend.
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import * as ReactRouter from "react-router-dom";
 import { AtendimentoProvider } from "./context/atendimentoContext";
 import { AuthProvider } from "./context/authContext";
 import RotaProtegida from "./components/routing/RotaProtegida";
@@ -19,30 +19,31 @@ import RelatoriosPage from "./features/admin/pages/relatoriosPage";
 import UsuariosPage from "./features/admin/pages/usuariosPage";
 import ConfiguracoesPage from "./features/admin/pages/configuracoesPage";
 
+
 function App() {
   return (
-    <BrowserRouter>
+    <ReactRouter.BrowserRouter>
       <AuthProvider>
         <AtendimentoProvider>
-          <Routes>
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/triagem" element={<TriagemPage />} />
-            <Route path="/apm" element={<ApmPage />} />
-            <Route path="/docs" element={<DocsPage />} />
-            <Route path="/emitir-senha" element={<EmitirSenhaPage />} />
-            <Route path="/acesso-negado" element={<AcessoNegadoPage />} />
-            <Route path="admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="filas" element={<FilasPage />} />
-              <Route path="alunos" element={<AlunosPage />} />
-              <Route path="cursos" element={<CursosPage />} />
-              <Route path="produtos" element={<ProdutosPage />} />
-              <Route path="relatorios" element={<RelatoriosPage />} />
-              <Route path="usuarios" element={<UsuariosPage />} />
-              <Route path="configuracoes" element={<ConfiguracoesPage />} />
-            </Route>
-            <Route
+          <ReactRouter.Routes>
+            <ReactRouter.Route path="/" element={<LoginPage />} />
+            <ReactRouter.Route path="/triagem" element={<TriagemPage />} />
+            <ReactRouter.Route path="/apm" element={<ApmPage />} />
+            <ReactRouter.Route path="/docs" element={<DocsPage />} />
+            <ReactRouter.Route path="/emitir-senha" element={<EmitirSenhaPage />} />
+            <ReactRouter.Route path="/acesso-negado" element={<AcessoNegadoPage />} />
+            <ReactRouter.Route path="admin" element={<AdminLayout />}>
+              <ReactRouter.Route index element={<ReactRouter.Navigate to="dashboard" replace />} />
+              <ReactRouter.Route path="dashboard" element={<DashboardPage />} />
+              <ReactRouter.Route path="filas" element={<FilasPage />} />
+              <ReactRouter.Route path="alunos" element={<AlunosPage />} />
+              <ReactRouter.Route path="cursos" element={<CursosPage />} />
+              <ReactRouter.Route path="produtos" element={<ProdutosPage />} />
+              <ReactRouter.Route path="relatorios" element={<RelatoriosPage />} />
+              <ReactRouter.Route path="usuarios" element={<UsuariosPage />} />
+              <ReactRouter.Route path="configuracoes" element={<ConfiguracoesPage />} />
+            </ReactRouter.Route>
+            <ReactRouter.Route
               path="*"
               element={
                 <div
@@ -52,10 +53,10 @@ function App() {
                 </div>
               }
             />
-          </Routes>
+          </ReactRouter.Routes>
         </AtendimentoProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </ReactRouter.BrowserRouter>
   );
 }
 

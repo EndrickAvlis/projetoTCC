@@ -1,6 +1,6 @@
-import CursoService from "../services/CursoService.js";
+import CursosService from "../services/CursoService.js";
 
-const cursoService = new CursoService();
+const cursoService = new CursosService();
 
 const mapearPeriodoResposta = (periodo) => ({
   id: periodo.idPeriodo,

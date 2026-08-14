@@ -1,23 +1,19 @@
 // Campo monetário que mantém a digitação amigável e entrega um número ao formulário.
 import { useState } from "react";
 import Input from "./Input";
-import {
-  ehValorMonetarioEmDigitacao,
-  formatarDecimalParaCampo,
-  valorTextoParaDecimal,
-} from "../../utils/formatters";
+import * as Formatters from "../../utils/formatters";
 
 const InputMoeda = ({ valor = 0, onChange, ...props }) => {
   const [campo, setCampo] = useState(() => ({
     valorRecebido: valor,
-    texto: valor ? formatarDecimalParaCampo(valor) : "",
+    texto: valor ? Formatters.formatarDecimalParaCampo(valor) : "",
   }));
 
   // Sincroniza o texto quando o formulário limpa ou altera o valor externamente.
   if (campo.valorRecebido !== valor) {
     setCampo({
       valorRecebido: valor,
-      texto: valor ? formatarDecimalParaCampo(valor) : "",
+      texto: valor ? Formatters.formatarDecimalParaCampo(valor) : "",
     });
   }
 
@@ -30,13 +26,13 @@ const InputMoeda = ({ valor = 0, onChange, ...props }) => {
       onBlur={() =>
         setCampo({
           valorRecebido: valor,
-          texto: valor ? formatarDecimalParaCampo(valor) : "",
+          texto: valor ? Formatters.formatarDecimalParaCampo(valor) : "",
         })
       }
       onChange={(event) => {
         const proximoTexto = event.target.value;
-        if (!ehValorMonetarioEmDigitacao(proximoTexto)) return;
-        const proximoValor = valorTextoParaDecimal(proximoTexto);
+        if (!Formatters.ehValorMonetarioEmDigitacao(proximoTexto)) return;
+        const proximoValor = Formatters.valorTextoParaDecimal(proximoTexto);
         setCampo({
           valorRecebido: proximoValor,
           texto: proximoTexto,

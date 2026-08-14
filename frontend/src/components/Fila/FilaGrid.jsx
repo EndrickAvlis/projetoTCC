@@ -1,15 +1,13 @@
-// Grade visual de senhas aguardando: recebe dados e eventos sem conhecer serviços ou hooks.
 import { formatarSenha } from "../../utils/formatters";
 
 const FilaGrid = ({ senhas, onSelecionarSenha, desabilitada = false }) => {
-  // Renderiza uma senha clicável que delega a reserva ao componente responsável pelo fluxo.
   const renderizarSenha = (senha) => (
     <button
       key={senha.id}
       type="button"
       className={[
         "min-h-16 rounded-btn border px-2 py-2 text-center font-bold text-primary transition-colors",
-        senha.prioritaria ? "border-status-warning border-2" : "border-border",
+        senha.prioritaria ? "border-status-warning border-2 hover:border-status-warning-hover" : "border-border",
         "bg-page hover:bg-status-info-bg hover:border-primary cursor-pointer",
         "focus:outline-none focus:ring-2 focus:ring-focus-ring",
         desabilitada ? "opacity-60 cursor-not-allowed" : "",

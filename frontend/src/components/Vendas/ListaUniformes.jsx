@@ -1,6 +1,6 @@
 // Tabela dos uniformes selecionados e controles de quantidade e retirada.
 import Button from "../ui/Button";
-import { IoMdAdd, IoMdRemove, IoMdTrash } from "react-icons/io";
+import * as IoIcons from "react-icons/io";
 import { formatarMoeda } from "../../utils/formatters";
 
 const ListaUniformes = ({ itens, onAlterarComprada, onAlterarRetirada, onExcluir, disabled = false }) => {
@@ -34,7 +34,7 @@ const ListaUniformes = ({ itens, onAlterarComprada, onAlterarRetirada, onExcluir
                     {pendente > 0 && <p className="mt-1 text-xs text-status-warning">{pendente} pendente(s)</p>}
                   </td>
                   <td className="p-3 font-semibold">{formatarMoeda(item.preco * item.quantidadeComprada)}</td>
-                  <td className="p-3 text-right"><Button variant="danger" size="sm" disabled={disabled} onClick={() => onExcluir(item.id)} aria-label={`Excluir uniforme tamanho ${item.tamanho}`}><IoMdTrash size={18} /></Button></td>
+                  <td className="p-3 text-right"><Button variant="danger" size="sm" disabled={disabled} onClick={() => onExcluir(item.id)} aria-label={`Excluir uniforme tamanho ${item.tamanho}`}><IoIcons.IoMdTrash size={18} /></Button></td>
                 </tr>
               );
             })}
@@ -47,9 +47,9 @@ const ListaUniformes = ({ itens, onAlterarComprada, onAlterarRetirada, onExcluir
 
 const ControleQuantidade = ({ valor, onDiminuir, onAumentar, desabilitarDiminuir, desabilitarAumentar, disabled }) => (
   <div className="flex items-center gap-2">
-    <Button size="sm" variant="secondary" disabled={disabled || desabilitarDiminuir} onClick={onDiminuir} aria-label="Diminuir quantidade"><IoMdRemove /></Button>
+    <Button size="sm" variant="secondary" disabled={disabled || desabilitarDiminuir} onClick={onDiminuir} aria-label="Diminuir quantidade"><IoIcons.IoMdRemove /></Button>
     <span className="min-w-5 text-center">{valor}</span>
-    <Button size="sm" variant="secondary" disabled={disabled || desabilitarAumentar} onClick={onAumentar} aria-label="Aumentar quantidade"><IoMdAdd /></Button>
+    <Button size="sm" variant="secondary" disabled={disabled || desabilitarAumentar} onClick={onAumentar} aria-label="Aumentar quantidade"><IoIcons.IoMdAdd /></Button>
   </div>
 );
 

@@ -1,10 +1,7 @@
 // Hook da senha atual: concentra as ações que alteram o atendimento ativo do posto.
 import { useCallback } from "react";
 import { useAtendimento } from "./useAtendimento";
-import {
-  atualizarPrioridadeSenha,
-  chamarSenhaSelecionada,
-} from "../services/filaService";
+import * as FilaService from "../services/filaService";
 
 export const useSenhaAtual = (etapa) => {
   const { senhaAtual, setSenhaAtual, setCarregando, setErro } = useAtendimento();
@@ -13,7 +10,7 @@ export const useSenhaAtual = (etapa) => {
   const chamarSenha = useCallback(async (senhaId) => {
     try {
       setCarregando(true);
-      const senha = await chamarSenhaSelecionada(senhaId, etapa);
+      const senha = await FilaService.chamarSenhaSelecionada(senhaId, etapa);
       setSenhaAtual(senha);
       setErro(null);
       return senha;
@@ -31,7 +28,7 @@ export const useSenhaAtual = (etapa) => {
 
     try {
       setCarregando(true);
-      const senha = await atualizarPrioridadeSenha(
+      const senha = await FilaService.atualizarPrioridadeSenha(
         senhaAtual.id,
         !senhaAtual.prioritaria,
       );

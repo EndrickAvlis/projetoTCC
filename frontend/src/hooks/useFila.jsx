@@ -1,16 +1,16 @@
 // Hook de leitura da fila: busca e atualiza somente as senhas aguardando da etapa.
-import { useCallback, useEffect, useState } from "react";
+import * as React from "react";
 import { listarFila } from "../services/filaService";
 
 const INTERVALO_ATUALIZACAO_MS = 5000;
 
 export const useFila = (etapa) => {
-  const [senhasAguardando, setSenhasAguardando] = useState([]);
-  const [carregandoFila, setCarregandoFila] = useState(true);
-  const [erroFila, setErroFila] = useState(null);
+  const [senhasAguardando, setSenhasAguardando] = React.useState([]);
+  const [carregandoFila, setCarregandoFila] = React.useState(true);
+  const [erroFila, setErroFila] = React.useState(null);
 
   // Consulta a fonte de verdade da API e substitui a lista local pela resposta recebida.
-  const carregarFila = useCallback(async ({ silencioso = false } = {}) => {
+  const carregarFila = React.useCallback(async ({ silencioso = false } = {}) => {
     try {
       if (!silencioso) setCarregandoFila(true);
 
@@ -24,7 +24,7 @@ export const useFila = (etapa) => {
   }, [etapa]);
 
   // Carrega a fila ao abrir o posto e a sincroniza periodicamente para outros atendentes.
-  useEffect(() => {
+  React.useEffect(() => {
     void Promise.resolve().then(carregarFila);
     const intervalo = window.setInterval(
       () => void carregarFila({ silencioso: true }),

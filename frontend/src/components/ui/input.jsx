@@ -1,7 +1,7 @@
 // Campo de entrada reutilizável com rótulo, ícone e mensagem de erro.
-import { forwardRef, useId } from "react";
+import * as React from "react";
 
-const Input = forwardRef(
+const Input = React.forwardRef(
   (
     {
       // TIPO
@@ -42,7 +42,7 @@ const Input = forwardRef(
     ref,
   ) => {
     // ID automático estável para ligar o rótulo ao campo.
-    const idAutomatico = useId();
+    const idAutomatico = React.useId();
     const inputId = id || `input-${idAutomatico}`;
 
     // ESTILOS POR TAMANHO

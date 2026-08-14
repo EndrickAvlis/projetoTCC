@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
-import { listarCursosAdmin } from "../services/cursosService";
+import * as React from "react";
+import { listarCursosAdmin } from "../services/CursosService";
 
 export const useCursos = ({ busca = "", arquivado = false } = {}) => {
-  const [cursos, setCursos] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState(null);
+  const [cursos, setCursos] = React.useState([]);
+  const [total, setTotal] = React.useState(0);
+  const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
-  const carregarCursos = useCallback(async () => {
+  const carregarCursos = React.useCallback(async () => {
     setCarregando(true);
     setErro(null);
 
@@ -27,7 +27,7 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
     }
   }, [busca, arquivado]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     carregarCursos();
   }, [carregarCursos]);
 
