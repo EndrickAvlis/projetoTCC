@@ -87,6 +87,7 @@ const CursosPage = () => {
     setPosicaoMenuAcoes(null);
   };
 
+<<<<<<< Updated upstream
   const alternarMenuAcoes = (evento, cursoId) => {
     if (cursoComMenuAberto === cursoId) {
       fecharMenuAcoes();
@@ -123,6 +124,12 @@ const CursosPage = () => {
     };
   }, []);
 
+=======
+  const abrirModalCriacaoCurso = () => {
+    setErroOperacao(null);
+    setModalAberto(true);
+  };
+>>>>>>> Stashed changes
   const handleSalvarCurso = async (dadosCurso) => {
     setSalvando(true);
     setErroOperacao(null);
@@ -140,35 +147,22 @@ const CursosPage = () => {
     }
   };
 
-  const abrirModalCriacaoCurso = () => {
-    setErroOperacao(null);
-    setModalAberto(true);
-  };
-
-  const abrirCriacaoPeriodo = (curso) => {
-    setErroOperacao(null);
-    fecharMenuAcoes();
-    setCursoParaAdicionarPeriodo(curso);
-  };
-
-  const alternarPeriodos = (cursoId) => {
-    setCursoExpandido((cursoAtual) =>
-      cursoAtual === cursoId ? null : cursoId,
-    );
-  };
-
-  const abrirEdicao = (curso) => {
+  const abrirEdicaoCurso = (curso) => {
     setErroOperacao(null);
     fecharMenuAcoes();
     setCursoEmEdicao(curso);
     setNomeEmEdicao(curso.nome);
   };
+<<<<<<< Updated upstream
 
   const salvarNomeCurso = async (evento) => {
     evento.preventDefault();
 
     const nome = nomeEmEdicao.trim();
 
+=======
+  const salvarNomeCurso = async (nome) => {
+>>>>>>> Stashed changes
     if (!nome || !cursoEmEdicao) {
       setErroOperacao("Informe o nome do curso.");
       return;
@@ -181,28 +175,6 @@ const CursosPage = () => {
       await cursoService.atualizarNomeCurso(cursoEmEdicao.id, nome);
 
       setCursoEmEdicao(null);
-
-      await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
-    } finally {
-      setSalvandoAcao(false);
-    }
-  };
-
-  const salvarNovoPeriodo = async (dadosPeriodo) => {
-    if (!cursoParaAdicionarPeriodo) return;
-
-    setSalvandoAcao(true);
-    setErroOperacao(null);
-
-    try {
-      await cursoService.criarPeriodoCurso(
-        cursoParaAdicionarPeriodo.id,
-        dadosPeriodo,
-      );
-
-      setCursoParaAdicionarPeriodo(null);
 
       await recarregar();
     } catch (error) {
@@ -236,15 +208,11 @@ const CursosPage = () => {
     }
   };
 
-  const abrirEdicaoPeriodo = (curso, periodo) => {
+  const abrirCriacaoPeriodo = (curso) => {
     setErroOperacao(null);
-
-    setPeriodoEmEdicao({
-      cursoId: curso.id,
-      periodo,
-    });
+    fecharMenuAcoes();
+    setCursoParaAdicionarPeriodo(curso);
   };
-
   const salvarPeriodo = async (dadosPeriodo) => {
     if (!periodoEmEdicao) {
       return;
@@ -269,12 +237,52 @@ const CursosPage = () => {
       setSalvandoAcao(false);
     }
   };
+  const salvarNovoPeriodo = async (dadosPeriodo) => {
+    if (!cursoParaAdicionarPeriodo) return;
 
+    setSalvandoAcao(true);
+    setErroOperacao(null);
+
+    try {
+      await cursoService.criarPeriodoCurso(
+        cursoParaAdicionarPeriodo.id,
+        dadosPeriodo,
+      );
+
+      setCursoParaAdicionarPeriodo(null);
+
+      await recarregar();
+    } catch (error) {
+      setErroOperacao(error.message);
+    } finally {
+      setSalvandoAcao(false);
+    }
+  };
+
+  const alternarPeriodos = (cursoId) => {
+    setCursoExpandido((cursoAtual) =>
+      cursoAtual === cursoId ? null : cursoId,
+    );
+  };
+  const abrirEdicaoPeriodo = (curso, periodo) => {
+    setErroOperacao(null);
+
+    setPeriodoEmEdicao({
+      cursoId: curso.id,
+      periodo,
+    });
+  };
+
+<<<<<<< Updated upstream
   const cursoDoMenu = cursos.find(
     (curso) => curso.id === cursoComMenuAberto,
   );
 
   const columns = [
+=======
+  const columnsCurso = [
+    //*nome
+>>>>>>> Stashed changes
     {
       key: "nome",
       label: "Curso",
@@ -359,6 +367,7 @@ const CursosPage = () => {
         const menuAberto = cursoComMenuAberto === curso.id;
 
         return (
+<<<<<<< Updated upstream
           <div className="flex justify-end">
             <button
               type="button"
@@ -372,6 +381,20 @@ const CursosPage = () => {
             </button>
 
           </div>
+=======
+          <MenuAcoesCurso
+            curso={curso}
+            aberto={cursoComMenuAberto === curso.id}
+            onAbrir={() => setCursoComMenuAberto(curso.id)}
+            onFechar={fecharMenuAcoes}
+            onAdicionarPeriodo={abrirCriacaoPeriodo}
+            onEditarNome={abrirEdicaoCurso}
+            onAlterarArquivamento={(cursoSelecionado) => {
+              setErroOperacao(null);
+              setCursoParaArquivamento(cursoSelecionado);
+            }}
+          />
+>>>>>>> Stashed changes
         );
       },
     },
@@ -526,6 +549,7 @@ const CursosPage = () => {
         erro={erroOperacao}
       />
 
+<<<<<<< Updated upstream
       <Modal
         aberto={Boolean(cursoEmEdicao)}
         onFechar={() => !salvandoAcao && setCursoEmEdicao(null)}
@@ -536,6 +560,15 @@ const CursosPage = () => {
           {erroOperacao && (
             <Alert type="error" message={erroOperacao} />
           )}
+=======
+      <EditarCursoModal
+        curso={cursoEmEdicao}
+        onFechar={() => setCursoEmEdicao(null)}
+        onSalvar={salvarNomeCurso}
+        salvando={salvandoAcao}
+        erro={erroOperacao}
+      />
+>>>>>>> Stashed changes
 
           <Input
             label="Nome do curso"
