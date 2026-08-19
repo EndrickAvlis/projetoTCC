@@ -42,6 +42,11 @@ const CursosPage = () => {
   const fecharMenuAcoes = () => {
     setCursoComMenuAberto(null);
   };
+    
+  const abrirModalCriacaoCurso = () => {
+    setErroOperacao(null);
+    setModalAberto(true);
+  };
 
   const handleSalvarCurso = async (dadosCurso) => {
     setSalvando(true);
@@ -60,28 +65,12 @@ const CursosPage = () => {
     }
   };
 
-  const abrirModalCriacaoCurso = () => {
-    setErroOperacao(null);
-    setModalAberto(true);
-  };
-
-  const abrirCriacaoPeriodo = (curso) => {
-    setErroOperacao(null);
-    fecharMenuAcoes();
-    setCursoParaAdicionarPeriodo(curso);
-  };
-
-  const alternarPeriodos = (cursoId) => {
-    setCursoExpandido((cursoAtual) =>
-      cursoAtual === cursoId ? null : cursoId,
-    );
-  };
-
-  const abrirEdicao = (curso) => {
+  const abrirEdicaoCurso = (curso) => {
     setErroOperacao(null);
     fecharMenuAcoes();
     setCursoEmEdicao(curso);
   };
+
 
   const salvarNomeCurso = async (nome) => {
     if (!nome || !cursoEmEdicao) {
@@ -96,28 +85,6 @@ const CursosPage = () => {
       await cursoService.atualizarNomeCurso(cursoEmEdicao.id, nome);
 
       setCursoEmEdicao(null);
-
-      await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
-    } finally {
-      setSalvandoAcao(false);
-    }
-  };
-
-  const salvarNovoPeriodo = async (dadosPeriodo) => {
-    if (!cursoParaAdicionarPeriodo) return;
-
-    setSalvandoAcao(true);
-    setErroOperacao(null);
-
-    try {
-      await cursoService.criarPeriodoCurso(
-        cursoParaAdicionarPeriodo.id,
-        dadosPeriodo,
-      );
-
-      setCursoParaAdicionarPeriodo(null);
 
       await recarregar();
     } catch (error) {
@@ -151,15 +118,11 @@ const CursosPage = () => {
     }
   };
 
-  const abrirEdicaoPeriodo = (curso, periodo) => {
+  const abrirCriacaoPeriodo = (curso) => {
     setErroOperacao(null);
-
-    setPeriodoEmEdicao({
-      cursoId: curso.id,
-      periodo,
-    });
+    fecharMenuAcoes();
+    setCursoParaAdicionarPeriodo(curso);
   };
-
   const salvarPeriodo = async (dadosPeriodo) => {
     if (!periodoEmEdicao) {
       return;
@@ -184,9 +147,43 @@ const CursosPage = () => {
       setSalvandoAcao(false);
     }
   };
+  const salvarNovoPeriodo = async (dadosPeriodo) => {
+    if (!cursoParaAdicionarPeriodo) return;
+
+    setSalvandoAcao(true);
+    setErroOperacao(null);
+
+    try {
+      await cursoService.criarPeriodoCurso(
+        cursoParaAdicionarPeriodo.id,
+        dadosPeriodo,
+      );
+
+      setCursoParaAdicionarPeriodo(null);
+
+      await recarregar();
+    } catch (error) {
+      setErroOperacao(error.message);
+    } finally {
+      setSalvandoAcao(false);
+    }
+  };
+
+  const alternarPeriodos = (cursoId) => {
+    setCursoExpandido((cursoAtual) =>
+      cursoAtual === cursoId ? null : cursoId,
+    );
+  };
+  const abrirEdicaoPeriodo = (curso, periodo) => {
+    setErroOperacao(null);
+    
+    setPeriodoEmEdicao({
+      cursoId: curso.id,
+      periodo,
+    });
+  };
 
   const columnsCurso = [
-  //*nome
     {
       key: "nome",
       label: "Curso",
@@ -277,7 +274,7 @@ const CursosPage = () => {
             onAbrir={() => setCursoComMenuAberto(curso.id)}
             onFechar={fecharMenuAcoes}
             onAdicionarPeriodo={abrirCriacaoPeriodo}
-            onEditarNome={abrirEdicao}
+            onEditarNome={abrirEdicaoCurso}
             onAlterarArquivamento={(cursoSelecionado) => {
               setErroOperacao(null);
               setCursoParaArquivamento(cursoSelecionado);

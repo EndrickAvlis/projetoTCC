@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarUniformesAdmin } from "../services/produtosService";
+import { listarUniformesAdmin } from "../services/ProdutosService";
 
 export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
   const [uniformes, setUniformes] = React.useState([]);
