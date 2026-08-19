@@ -2,7 +2,7 @@ import ProdutoService from "../services/ProdutoService.js";
 
 const produtoService = new ProdutoService();
 
-const mapearProdutoResposta = (produto) => ({
+const mapearProdutosResposta = (produto) => ({
   id: produto.idProduto,
   nome: produto.nomeProduto,
   preco: Number(produto.precoProduto),
@@ -16,6 +16,15 @@ export const criarProdutoAdmin = async (req, res) => {
     
 
     return res.status(201).json({
-        produto: mapearProdutoResposta(produto),
+        produto: mapearProdutosResposta(produto),
+    })
+}
+
+export const listarProdutosAdmin = async( req, res)=>{
+    const produtos = await produtoService.listarProdutos(req.validado.query);
+
+    return res.json({
+        produtos: produtos.map(mapearProdutosResposta),
+        total: produtos.length,
     })
 }

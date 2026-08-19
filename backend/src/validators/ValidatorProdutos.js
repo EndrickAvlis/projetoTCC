@@ -8,28 +8,28 @@ const id = z.coerce
   .positive("O ID deve ser maior que zero.");
 
 const nomeProduto = z
-  .string({ error: "Informe o nome do produto." })
+  .string({ invalid_type_error: "Informe o nome do produto." })
   .trim()
   .min(1, "Informe o nome do produto.")
   .max(50, "O nome deve ter no máximo 50 caracteres.");
 
 const preco = z.coerce
-  .number({ error: "Informe um preço válido." })
+  .number({ invalid_type_error: "Informe um preço válido." })
   .positive("O preço deve ser maior que zero.");
 
 const quantidade = z.coerce
-  .number({ error: "Informe uma quantidade válida." })
+  .number({ invalid_type_error: "Informe uma quantidade válida." })
   .int("A quantidade deve ser um número inteiro.")
   .nonnegative("A quantidade não pode ser negativa.");
 
 const tipoProduto = z
-  .string({ error: "Informe o tipo do produto." })
+  .string({ invalid_type_error: "Informe o tipo do produto." })
   .trim()
   .toLowerCase()
   .pipe(
     z.enum(tiposProdutoValidos, {
-      error: "O tipo deve ser uniforme ou armario.",
-    }),
+      message: "O tipo deve ser uniforme ou armario.",
+    })
   );
 
 const dadosProduto = z.object({
@@ -54,4 +54,20 @@ export const atualizarProdutoSchema = z.object({
     produtoId: id,
   }),
   body: dadosProduto,
+});
+
+export const listarProdutoSchema = z.object({
+  query: z.object({
+    busca: z.string().trim().optional().default(""),
+    tipo: z
+      .enum(tiposProdutoValidos, {
+        message: "O tipo precisa ser uniforme ou armario",
+      })
+      .default("uniforme"),
+    arquivado: z
+      .enum(["true", "false"], {
+        message: "O filtro arquivado deve ser true ou false",
+      })
+      .optional(),
+  }),
 });
