@@ -1,65 +1,26 @@
 import * as React from "react";
-import { createPortal } from "react-dom";
 import * as FiIcons from "react-icons/fi";
 
 import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
-import Modal from "../../../components/ui/Modal";
 
 import AdicionarCursoModal from "../components/cursos/AdicionarCursoModal";
 import AdicionarPeriodoModal from "../components/cursos/AdicionarPeriodoModal";
+import ConfirmarArquivamentoCursoModal from "../components/cursos/ConfirmarArquivamentoCursoModal";
+import EditarCursoModal from "../components/cursos/EditarCursoModal";
 import EditarPeriodoModal from "../components/cursos/EditarPeriodoModal";
+import MenuAcoesCurso from "../components/cursos/MenuAcoesCurso";
+import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
 import { useCursos } from "../hooks/useCursos";
 import * as cursoService from "../services/CursosService";
 
-const nomesPeriodos = {
-  manha: "Manhã",
-  tarde: "Tarde",
-  noite: "Noite",
-  integral: "Integral",
-};
-
-const formatarPeriodo = (periodo) => nomesPeriodos[periodo] ?? periodo;
-
-const PeriodoResumo = ({ periodoCurso, onEditar }) => (
-  <div className="grid grid-cols-[5rem_4.5rem_6.75rem_2.25rem] items-center gap-x-3 text-sm">
-    <span className="font-medium text-text-primary">
-      {formatarPeriodo(periodoCurso.periodo)}
-    </span>
-
-    <span className="whitespace-nowrap text-text-secondary">
-      {periodoCurso.vagasTotais} vagas
-    </span>
-
-    <span
-      className={`w-fit whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${periodoCurso.matriculaAtiva
-        ? "bg-status-success-bg text-status-success"
-        : "bg-disabled-bg text-text-secondary"
-        }`}
-    >
-      Matrícula {periodoCurso.matriculaAtiva ? "aberta" : "fechada"}
-    </span>
-
-    {onEditar && (
-      <button
-        type="button"
-        onClick={onEditar}
-        className="justify-self-end rounded-md border border-border p-1 text-text-secondary transition-colors hover:bg-surface-muted hover:text-primary"
-        title={`Editar período ${formatarPeriodo(periodoCurso.periodo)}`}
-        aria-label={`Editar período ${formatarPeriodo(periodoCurso.periodo)}`}
-      >
-        <FiIcons.FiEdit2 size={16} />
-      </button>
-    )}
-  </div>
-);
-
 const CursosPage = () => {
   const [busca, setBusca] = React.useState("");
   const [arquivado, setArquivado] = React.useState(false);
+
   const [modalAberto, setModalAberto] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
   const [salvandoAcao, setSalvandoAcao] = React.useState(false);
@@ -67,15 +28,11 @@ const CursosPage = () => {
 
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
   const [cursoEmEdicao, setCursoEmEdicao] = React.useState(null);
-  const [nomeEmEdicao, setNomeEmEdicao] = React.useState("");
 
   const [cursoParaArquivamento, setCursoParaArquivamento] = React.useState(null);
   const [periodoEmEdicao, setPeriodoEmEdicao] = React.useState(null);
-  const [cursoParaAdicionarPeriodo, setCursoParaAdicionarPeriodo] =
-    React.useState(null);
+  const [cursoParaAdicionarPeriodo, setCursoParaAdicionarPeriodo] = React.useState(null);
   const [cursoComMenuAberto, setCursoComMenuAberto] = React.useState(null);
-  const [posicaoMenuAcoes, setPosicaoMenuAcoes] = React.useState(null);
-  const menuAcoesRef = React.useRef(null);
 
   const { cursos, total, carregando, erro, recarregar } = useCursos({
     busca,
@@ -84,52 +41,13 @@ const CursosPage = () => {
 
   const fecharMenuAcoes = () => {
     setCursoComMenuAberto(null);
-    setPosicaoMenuAcoes(null);
   };
-
-<<<<<<< Updated upstream
-  const alternarMenuAcoes = (evento, cursoId) => {
-    if (cursoComMenuAberto === cursoId) {
-      fecharMenuAcoes();
-      return;
-    }
-
-    const botao = evento.currentTarget.getBoundingClientRect();
-    const abrirParaCima = window.innerHeight - botao.bottom < 144;
-
-    setPosicaoMenuAcoes({
-      top: abrirParaCima ? botao.top - 8 : botao.bottom + 8,
-      right: window.innerWidth - botao.right,
-      abrirParaCima,
-    });
-    setCursoComMenuAberto(cursoId);
-  };
-
-  React.useEffect(() => {
-    const fecharMenuAoClicarFora = (evento) => {
-      if (
-        menuAcoesRef.current &&
-        !menuAcoesRef.current.contains(evento.target)
-      ) {
-        fecharMenuAcoes();
-      }
-    };
-
-    document.addEventListener("mousedown", fecharMenuAoClicarFora);
-    document.addEventListener("scroll", fecharMenuAcoes, true);
-
-    return () => {
-      document.removeEventListener("mousedown", fecharMenuAoClicarFora);
-      document.removeEventListener("scroll", fecharMenuAcoes, true);
-    };
-  }, []);
-
-=======
+    
   const abrirModalCriacaoCurso = () => {
     setErroOperacao(null);
     setModalAberto(true);
   };
->>>>>>> Stashed changes
+
   const handleSalvarCurso = async (dadosCurso) => {
     setSalvando(true);
     setErroOperacao(null);
@@ -151,18 +69,10 @@ const CursosPage = () => {
     setErroOperacao(null);
     fecharMenuAcoes();
     setCursoEmEdicao(curso);
-    setNomeEmEdicao(curso.nome);
   };
-<<<<<<< Updated upstream
 
-  const salvarNomeCurso = async (evento) => {
-    evento.preventDefault();
 
-    const nome = nomeEmEdicao.trim();
-
-=======
   const salvarNomeCurso = async (nome) => {
->>>>>>> Stashed changes
     if (!nome || !cursoEmEdicao) {
       setErroOperacao("Informe o nome do curso.");
       return;
@@ -266,23 +176,14 @@ const CursosPage = () => {
   };
   const abrirEdicaoPeriodo = (curso, periodo) => {
     setErroOperacao(null);
-
+    
     setPeriodoEmEdicao({
       cursoId: curso.id,
       periodo,
     });
   };
 
-<<<<<<< Updated upstream
-  const cursoDoMenu = cursos.find(
-    (curso) => curso.id === cursoComMenuAberto,
-  );
-
-  const columns = [
-=======
   const columnsCurso = [
-    //*nome
->>>>>>> Stashed changes
     {
       key: "nome",
       label: "Curso",
@@ -297,6 +198,7 @@ const CursosPage = () => {
       ),
     },
 
+    //*periodo
     {
       key: "periodos",
       label: "Períodos",
@@ -357,6 +259,7 @@ const CursosPage = () => {
       },
     },
 
+    //*ações
     {
       key: "acoes",
       label: "Ações",
@@ -364,24 +267,7 @@ const CursosPage = () => {
       cellClassName: "text-right",
 
       render: (curso) => {
-        const menuAberto = cursoComMenuAberto === curso.id;
-
         return (
-<<<<<<< Updated upstream
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={(evento) => alternarMenuAcoes(evento, curso.id)}
-              className="rounded-md p-2 text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary"
-              aria-label={`Abrir ações do curso ${curso.nome}`}
-              aria-expanded={menuAberto}
-              title="Ações"
-            >
-              <FiIcons.FiMoreVertical size={18} />
-            </button>
-
-          </div>
-=======
           <MenuAcoesCurso
             curso={curso}
             aberto={cursoComMenuAberto === curso.id}
@@ -394,7 +280,6 @@ const CursosPage = () => {
               setCursoParaArquivamento(cursoSelecionado);
             }}
           />
->>>>>>> Stashed changes
         );
       },
     },
@@ -465,7 +350,7 @@ const CursosPage = () => {
         </div>
       ) : (
         <DataTable
-          columns={columns}
+          columns={columnsCurso}
           data={cursos}
           getRowKey={(curso) => curso.id}
           emptyMessage={
@@ -475,63 +360,6 @@ const CursosPage = () => {
           }
         />
       )}
-
-      {cursoDoMenu &&
-        posicaoMenuAcoes &&
-        createPortal(
-          <div
-            ref={menuAcoesRef}
-            className="fixed z-[60] w-52 rounded-lg border border-border bg-surface py-1 text-left shadow-lg"
-            style={{
-              top: posicaoMenuAcoes.top,
-              right: posicaoMenuAcoes.right,
-              transform: posicaoMenuAcoes.abrirParaCima
-                ? "translateY(-100%)"
-                : undefined,
-            }}
-          >
-            {!cursoDoMenu.arquivado && (
-              <button
-                type="button"
-                onClick={() => abrirCriacaoPeriodo(cursoDoMenu)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-primary transition-colors hover:bg-surface-muted"
-              >
-                <FiIcons.FiPlus size={16} />
-                Adicionar período
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => abrirEdicao(cursoDoMenu)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-primary transition-colors hover:bg-surface-muted"
-            >
-              <FiIcons.FiEdit2 size={16} />
-              Editar nome
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setErroOperacao(null);
-                fecharMenuAcoes();
-                setCursoParaArquivamento(cursoDoMenu);
-              }}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-surface-muted ${cursoDoMenu.arquivado
-                ? "text-status-success"
-                : "text-status-danger"
-                }`}
-            >
-              {cursoDoMenu.arquivado ? (
-                <FiIcons.FiRotateCcw size={16} />
-              ) : (
-                <FiIcons.FiArchive size={16} />
-              )}
-              {cursoDoMenu.arquivado ? "Desarquivar" : "Arquivar"}
-            </button>
-          </div>,
-          document.body,
-        )}
 
       <AdicionarCursoModal
         aberto={modalAberto}
@@ -549,102 +377,22 @@ const CursosPage = () => {
         erro={erroOperacao}
       />
 
-<<<<<<< Updated upstream
-      <Modal
-        aberto={Boolean(cursoEmEdicao)}
-        onFechar={() => !salvandoAcao && setCursoEmEdicao(null)}
-        titulo="Editar curso"
-        largura="max-w-lg"
-      >
-        <form onSubmit={salvarNomeCurso} className="space-y-5">
-          {erroOperacao && (
-            <Alert type="error" message={erroOperacao} />
-          )}
-=======
       <EditarCursoModal
+        key={cursoEmEdicao?.id ?? "sem-curso"}
         curso={cursoEmEdicao}
         onFechar={() => setCursoEmEdicao(null)}
         onSalvar={salvarNomeCurso}
         salvando={salvandoAcao}
         erro={erroOperacao}
       />
->>>>>>> Stashed changes
 
-          <Input
-            label="Nome do curso"
-            value={nomeEmEdicao}
-            onChange={(evento) => setNomeEmEdicao(evento.target.value)}
-            required
-            autoFocus
-          />
-
-          <footer className="flex justify-end gap-3 border-t border-border pt-5">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setCursoEmEdicao(null)}
-              disabled={salvandoAcao}
-            >
-              Cancelar
-            </Button>
-
-            <Button type="submit" loading={salvandoAcao}>
-              Salvar alterações
-            </Button>
-          </footer>
-        </form>
-      </Modal>
-
-      <Modal
-        aberto={Boolean(cursoParaArquivamento)}
-        onFechar={() =>
-          !salvandoAcao && setCursoParaArquivamento(null)
-        }
-        titulo={
-          cursoParaArquivamento?.arquivado
-            ? "Desarquivar curso"
-            : "Arquivar curso"
-        }
-        largura="max-w-lg"
-      >
-        <div className="space-y-5">
-          {erroOperacao && (
-            <Alert type="error" message={erroOperacao} />
-          )}
-
-          <p className="text-text-secondary">
-            {cursoParaArquivamento?.arquivado
-              ? `Deseja desarquivar o curso ${cursoParaArquivamento.nome}?`
-              : `Deseja arquivar o curso ${cursoParaArquivamento?.nome}? As matrículas dos períodos serão fechadas.`}
-          </p>
-
-          <footer className="flex justify-end gap-3 border-t border-border pt-5">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setCursoParaArquivamento(null)}
-              disabled={salvandoAcao}
-            >
-              Cancelar
-            </Button>
-
-            <Button
-              type="button"
-              variant={
-                cursoParaArquivamento?.arquivado
-                  ? "success"
-                  : "danger"
-              }
-              onClick={confirmarArquivamento}
-              loading={salvandoAcao}
-            >
-              {cursoParaArquivamento?.arquivado
-                ? "Desarquivar"
-                : "Arquivar"}
-            </Button>
-          </footer>
-        </div>
-      </Modal>
+      <ConfirmarArquivamentoCursoModal
+        curso={cursoParaArquivamento}
+        onFechar={() => setCursoParaArquivamento(null)}
+        onConfirmar={confirmarArquivamento}
+        salvando={salvandoAcao}
+        erro={erroOperacao}
+      />
 
       <EditarPeriodoModal
         aberto={Boolean(periodoEmEdicao)}

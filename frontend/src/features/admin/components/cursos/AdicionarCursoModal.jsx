@@ -7,7 +7,7 @@ import Modal from "../../../../components/ui/Modal";
 import Select from "../../../../components/ui/Select";
 import { PERIODOS_CURSO } from "../../../../constants/cursoOptions";
 
-const criarPeriodoVazio = () => ({
+const dadosIniciais = () => ({
     periodo: "",
     vagasTotais: "",
     matriculaAtiva: true,
@@ -23,12 +23,12 @@ const CursoFormModal = ({
     erro = null,
 }) => {
     const [nome, setNome] = React.useState("");
-    const [periodos, setPeriodos] = React.useState([criarPeriodoVazio()]);
+    const [periodos, setPeriodos] = React.useState([dadosIniciais()]);
     const [erros, setErros] = React.useState({});
 
     const limparFormulario = () => {
         setNome("");
-        setPeriodos([criarPeriodoVazio()]);
+        setPeriodos([dadosIniciais()]);
         setErros({});
     };
 
@@ -43,7 +43,7 @@ const CursoFormModal = ({
             return;
         }
 
-        setPeriodos((periodosAtuais) => [...periodosAtuais, criarPeriodoVazio()]);
+        setPeriodos((periodosAtuais) => [...periodosAtuais, dadosIniciais()]);
     };
 
     const removerPeriodo = (indice) => {
@@ -104,8 +104,8 @@ const CursoFormModal = ({
         return !possuiErros;
     };
 
-    const handleSubmit = (evento) => {
-        evento.preventDefault();
+    const handleSubmit = (e) => {
+        e.preventDefault();
 
         if (!validarFormulario()) {
             return;
