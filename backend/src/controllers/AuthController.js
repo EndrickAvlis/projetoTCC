@@ -1,12 +1,14 @@
 import AuthService from "../services/AuthService.js";
 
-const authServiceVoluntario = new AuthService(voluntario, "idVoluntario");
+const authService = new AuthService();
 
-export const realizarLogin = async (req, res) => {
+export const realizarLogin = async (req, res, next) => {
     try{
-        const token = await authServiceVoluntario.realizarLogin(req.body);    
+        const token = await authService.realizarLogin(req.validado.body);
+
+        return res.status(200).json(token);
     } catch (erro){
-        res.status(400).json({"mensagem": erro});
+        return next(erro);
     }
 
 

@@ -6,6 +6,7 @@ import senhaRouter from "./routes/senhaRoutes.js";
 import cursoRoutes from "./routes/cursoRoutes.js";
 import voluntarioRoutes from "./routes/voluntarioRoutes.js";
 import produtosRoutes from "./routes/produtosRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
@@ -18,6 +19,7 @@ app.use("/senhas", senhaRouter);
 app.use("/admin/cursos", cursoRoutes);
 app.use("/voluntarios", voluntarioRoutes);
 app.use("/produtos", produtosRoutes);
+app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.json({

@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import BaseService from "./BaseService.js";
+import bcrypt from "bcrypt";
 
 export default class VoluntarioService extends BaseService {
     constructor(){
@@ -24,5 +25,17 @@ export default class VoluntarioService extends BaseService {
                 statusVoluntario: busca.statusVoluntario,
             }
         });
+    }
+
+    async criar(dados){
+        const senhaHash = await bcrypt.hash(dados.senhaVoluntario, 12);
+        return await prisma.voluntario.create({
+            data: {
+                nomeVoluntario: dados.nomeVoluntario,
+                senhaVoluntario: senhaHash,
+                tipoVoluntario: dados.tipoVoluntario,
+                statusVoluntario: dados.statusVoluntario,
+            },
+        })
     }
 }
