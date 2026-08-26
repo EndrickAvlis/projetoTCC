@@ -137,7 +137,7 @@ model Senha {
 model Voluntario {
   idVoluntario     Int            @id @default(autoincrement())
   nomeVoluntario   String         @db.VarChar(100)
-  senhaVoluntario  String         @db.VarChar(50)
+  senhaVoluntario  String         @db.VarChar(255)
   tipoVoluntario   TipoVoluntario @default(admin)
   statusVoluntario String         @db.VarChar(20)
 

@@ -4,13 +4,18 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import AppError from "../errors/AppError.js";
 
+const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+const ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN;
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN;
+
 export default class AuthClass extends BaseService {
     constructor(){
         super(prisma.voluntario, "idVoluntario");
     }
 
 
-    async realizarLogin(dados){
+    async login(dados){
         const usuario = await prisma.voluntario.findFirst({
             where: {
                 nomeVoluntario: dados.nomeVoluntario,
@@ -36,14 +41,52 @@ export default class AuthClass extends BaseService {
             });
         }
 
-        const payload = {
+        const refreshPayload = {
+            "id": usuario.idVoluntario
+        }
+
+        const accessPayload = {
             "id": usuario.idVoluntario,
             "nome": usuario.nomeVoluntario,
             "tipo": usuario.tipoVoluntario
         }
 
-        const token = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN});
+        const refreshToken = jwt.sign(refreshPayload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+        const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
+        return { refreshToken, accessToken };
+    }
 
-        return token;
+    async renovarAccessToken(refreshToken) {
+        const decoded = jwt.decode(refreshToken, REFRESH_SECRET);
+        const usuario = await prisma.voluntario.findFirst({
+            where: {
+                idVoluntario: decoded.id,
+            },
+        });
+
+        const accessPayload = {
+            "id": usuario.idVoluntario,
+            "nome": usuario.nomeVoluntario,
+            "tipo": usuario.tipoVoluntario
+        }
+
+        const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
+        return { accessToken };
+    }
+
+    async renovarRefreshToken(refreshToken) {
+        const decoded = jwt.decode(refreshToken, REFRESH_SECRET);
+        const usuario = await prisma.voluntario.findFirst({
+            where: {
+                idVoluntario: decoded.id,
+            },
+        });
+
+        const refreshPayload = {
+            "id": usuario.idVoluntario
+        }
+        
+        const refreshToken = jwt.sign(refreshPayload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+        return { refreshToken };
     }
 }
