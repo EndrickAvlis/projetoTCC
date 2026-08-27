@@ -12,19 +12,67 @@ const mapearProdutosResposta = (produto) => ({
 });
 
 export const criarProdutoAdmin = async (req, res) => {
-    const produto = await produtoService.criarProduto(req.validado.body);
-    
+  const produto = await produtoService.criarProduto(req.validado.body);
 
-    return res.status(201).json({
-        produto: mapearProdutosResposta(produto),
-    })
-}
+  return res.status(201).json({
+    produto: mapearProdutosResposta(produto),
+  });
+};
 
-export const listarProdutosAdmin = async( req, res)=>{
-    const produtos = await produtoService.listarProdutos(req.validado.query);
+export const listarProdutosAdmin = async (req, res) => {
+  const produtos = await produtoService.listarProdutos(req.validado.query);
 
-    return res.json({
-        produtos: produtos.map(mapearProdutosResposta),
-        total: produtos.length,
-    })
-}
+  return res.json({
+    produtos: produtos.map(mapearProdutosResposta),
+    total: produtos.length,
+  });
+};
+
+export const atualizarProdutosAdmin = async (req, res) => {
+  const { produtoId } = req.validado.params;
+  const produto = await produtoService.atualizarProduto(
+    produtoId,
+    req.validado.body,
+  );
+
+  return res.json({
+    produto: mapearProdutosResposta(produto),
+  });
+};
+
+export const alterarStatusProdutoAdmin = async (req, res) => {
+  const { produtoId } = req.validado.params;
+  const { status } = req.validado.body;
+
+  const produto = await produtoService.alterarStatusProduto(
+    produtoId,
+    status,
+  );
+
+  return res.json({
+    produto: mapearProdutosResposta(produto),
+  });
+};
+
+export const alterarEstoqueProdutoAdmin = async (req, res) => {
+  const { produtoId } = req.validado.params;
+  const { operacao, quantidade } = req.validado.body;
+
+  const produto = await produtoService.alterarEstoque(
+    produtoId,
+    operacao,
+    quantidade,
+  );
+
+  return res.json({
+    produto: mapearProdutosResposta(produto),
+  });
+};
+
+export const buscarConfiguracaoArmario = async (req, res) => {
+  const produto = await produtoService.buscarConfiguracaoArmario();
+
+  return res.json({
+    produto: mapearProdutosResposta(produto),
+  });
+};

@@ -8,28 +8,28 @@ const id = z.coerce
   .positive("O ID deve ser maior que zero.");
 
 const nomeProduto = z
-  .string({ invalid_type_error: "Informe o nome do produto." })
+  .string({ error: "Informe o nome do produto." })
   .trim()
   .min(1, "Informe o nome do produto.")
   .max(50, "O nome deve ter no máximo 50 caracteres.");
 
 const preco = z.coerce
-  .number({ invalid_type_error: "Informe um preço válido." })
+  .number({ error: "Informe um preço válido." })
   .positive("O preço deve ser maior que zero.");
 
 const quantidade = z.coerce
-  .number({ invalid_type_error: "Informe uma quantidade válida." })
+  .number({ error: "Informe uma quantidade válida." })
   .int("A quantidade deve ser um número inteiro.")
   .nonnegative("A quantidade não pode ser negativa.");
 
 const tipoProduto = z
-  .string({ invalid_type_error: "Informe o tipo do produto." })
+  .string({ error: "Informe o tipo do produto." })
   .trim()
   .toLowerCase()
   .pipe(
     z.enum(tiposProdutoValidos, {
-      message: "O tipo deve ser uniforme ou armario.",
-    })
+      error: "O tipo deve ser uniforme ou armario.",
+    }),
   );
 
 const dadosProduto = z.object({
@@ -53,20 +53,47 @@ export const atualizarProdutoSchema = z.object({
   params: z.object({
     produtoId: id,
   }),
-  body: dadosProduto,
+  body: z.object({
+    nome: nomeProduto.optional(),
+    preco: preco.optional(),
+    quantidade: quantidade.optional(),
+  }),
 });
+
+export const alterarStatusSchema = z.object({
+  params: z.object({
+    produtoId: id,
+  }),
+  body: z.object({
+    status: z.string().trim().toLowerCase(),
+  }),
+});
+
+export const alterarEstoqueSchema = z.object({
+  params: z.object({
+    produtoId: id,
+  }),
+  body: z.object({
+    operacao: z.enum(["adicionar", "diminuir", "corrigir"], {
+      error: "A operação deve ser adicionar, diminuir ou corrigir.",
+    }),
+    quantidade,
+  }),
+});
+
+export const buscarArmarioSchema = z.object({});
 
 export const listarProdutoSchema = z.object({
   query: z.object({
     busca: z.string().trim().optional().default(""),
     tipo: z
-      .enum(tiposProdutoValidos, {
-        message: "O tipo precisa ser uniforme ou armario",
+      .enum(["uniforme"], {
+        error: "O tipo precisa ser uniforme.",
       })
       .default("uniforme"),
     arquivado: z
       .enum(["true", "false"], {
-        message: "O filtro arquivado deve ser true ou false",
+        error: "O filtro arquivado deve ser true ou false.",
       })
       .optional(),
   }),
