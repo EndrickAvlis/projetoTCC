@@ -6,11 +6,16 @@ import * as auth from "../middlewares/authValidator.js";
 
 const authRoutes = Router();
 
-authRoutes.use(auth.accessValidator);
+//authRoutes.use(auth.accessValidator);
 
 authRoutes.post("/login",
     validarRequisicao(ValidatorAuth.realizarLoginRequisicaoSchema),
     AuthController.login,
+);
+
+authRoutes.post("/refresh",
+    validarRequisicao(ValidatorAuth.refreshTokenSchema),
+    AuthController.renovarAccessToken,
 );
 
 export default authRoutes;

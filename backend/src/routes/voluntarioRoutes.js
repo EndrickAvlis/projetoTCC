@@ -7,7 +7,7 @@ import * as auth from "../middlewares/authValidator.js";
 
 const voluntarioRoutes = Router();
 
-voluntarioRoutes.use(auth.validarAdmin);
+//voluntarioRoutes.use(auth.validarAdmin);
 
 //* Entrega as senhas aguardando da etapa informada em ?etapa=.
 voluntarioRoutes.get(

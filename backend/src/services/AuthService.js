@@ -86,7 +86,7 @@ export default class AuthClass extends BaseService {
             "id": usuario.idVoluntario
         }
         
-        const refreshToken = jwt.sign(refreshPayload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
-        return { refreshToken };
+        const refreshTokenNovo = jwt.sign(refreshPayload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+        return { refreshTokenNovo };
     }
 }
