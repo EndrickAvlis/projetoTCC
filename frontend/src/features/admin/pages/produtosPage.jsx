@@ -437,6 +437,7 @@ const ProdutosPage = () => {
       />
 
       <EditarUniformeModal
+        key={uniformeEmEdicao?.id ?? "sem-uniforme"}
         uniforme={uniformeEmEdicao}
         onFechar={() => setUniformeEmEdicao(null)}
         onSalvar={salvarUniformeEditado}
