@@ -2,7 +2,7 @@
 import { Router } from "express";
 import * as FilaController from "../controllers/FilaController.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
-import * as ValidatorFila from "../validators/ValidatorFila.js";
+import * as ValidatorFila from "../schemas/SchemaFila.js";
 
 const filaRoutes = Router();
 

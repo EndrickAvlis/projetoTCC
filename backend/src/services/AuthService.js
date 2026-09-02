@@ -57,12 +57,27 @@ export default class AuthClass extends BaseService {
     }
 
     async renovarAccessToken(refreshToken) {
-        const decoded = jwt.decode(refreshToken, REFRESH_SECRET);
+        const payload = jwt.verify(refreshToken, REFRESH_SECRET);
+
+        if(!payload){
+            throw new AppError("Token de acesso inválido.", {
+                        status: 401,
+                        code: "TOKEN_INVALIDO",
+                    });
+        }
+
         const usuario = await prisma.voluntario.findFirst({
             where: {
-                idVoluntario: decoded.id,
+                idVoluntario: payload.id,
             },
         });
+
+        if(!usuario){
+            throw new AppError("Usuario inexistente.", {
+                        status: 401,
+                        code: "TOKEN_INVALIDO",
+                    });
+        }
 
         const accessPayload = {
             "id": usuario.idVoluntario,
@@ -72,21 +87,5 @@ export default class AuthClass extends BaseService {
 
         const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
         return { accessToken };
-    }
-
-    async renovarRefreshToken(refreshToken) {
-        const decoded = jwt.decode(refreshToken, REFRESH_SECRET);
-        const usuario = await prisma.voluntario.findFirst({
-            where: {
-                idVoluntario: decoded.id,
-            },
-        });
-
-        const refreshPayload = {
-            "id": usuario.idVoluntario
-        }
-        
-        const refreshTokenNovo = jwt.sign(refreshPayload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
-        return { refreshTokenNovo };
     }
 }

@@ -8,8 +8,11 @@ import voluntarioRoutes from "./routes/voluntarioRoutes.js";
 import produtosRoutes from "./routes/produtosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
+
+app.use(cookieParser());
 
 app.use(cors());
 app.use(express.json());
