@@ -427,6 +427,7 @@ const ProdutosPage = () => {
       />
 
       <MovimentarEstoqueModal
+        key={uniformeParaEstoque?.id ?? "sem-uniforme"}
         uniforme={uniformeParaEstoque}
         onFechar={() =>
           setUniformeParaEstoque(null)
