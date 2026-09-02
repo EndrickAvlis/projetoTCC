@@ -6,7 +6,7 @@ export const login = async (req, res, next) => {
     try{
         const token = await authService.login(req.validado.body);
 
-        res.cookie('accessToken', token.accessToken, {
+        res.cookies('accessToken', token.accessToken, {
                 path: "/",
                 httpOnly: true,     // Impede acesso via JavaScript (document.cookie)
                 secure: true,       // Exige HTTPS (mantenha como true em produção)
@@ -14,7 +14,7 @@ export const login = async (req, res, next) => {
                 maxAge: 15 * 60 * 1000     // Tempo de vida: 15 minutos (em milissegundos)
             });
 
-        res.cookie('refreshToken', token.refreshToken, {
+        res.cookies('refreshToken', token.refreshToken, {
                 path: "/",
                 httpOnly: true,     // Impede acesso via JavaScript (document.cookie)
                 secure: true,       // Exige HTTPS (mantenha como true em produção)
@@ -32,7 +32,7 @@ export const renovarAccessToken = async (req, res, next) => {
     try{
         const token = await authService.renovarAccessToken(req.cookie.refreshToken);
 
-        res.cookie('accessToken', token.accessToken, {
+        res.cookies('accessToken', token.accessToken, {
                 path: "/",
                 httpOnly: true,     // Impede acesso via JavaScript (document.cookie)
                 secure: true,       // Exige HTTPS (mantenha como true em produção)

@@ -20,10 +20,3 @@ const loginSchema = z.object({
 export const realizarLoginRequisicaoSchema = z.object({
   body: loginSchema,
 })
-
-export const refreshTokenSchema = z.object({
-    body: {
-        token: z
-        .string(),   
-    }
-})

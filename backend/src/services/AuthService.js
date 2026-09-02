@@ -57,7 +57,8 @@ export default class AuthClass extends BaseService {
     }
 
     async renovarAccessToken(refreshToken) {
-        const payload = jwt.verify(refreshToken, REFRESH_SECRET);
+        try{
+            const payload = jwt.verify(refreshToken, REFRESH_SECRET);
 
         if(!payload){
             throw new AppError("Token de acesso inválido.", {
@@ -72,7 +73,7 @@ export default class AuthClass extends BaseService {
             },
         });
 
-        if(!usuario){
+        if(!usuario || usuario.statusVoluntario !== "ativo"){
             throw new AppError("Usuario inexistente.", {
                         status: 401,
                         code: "TOKEN_INVALIDO",
@@ -87,5 +88,9 @@ export default class AuthClass extends BaseService {
 
         const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
         return { accessToken };
+        } catch (error) {
+
+        }
+        
     }
 }
