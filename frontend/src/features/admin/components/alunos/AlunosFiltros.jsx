@@ -57,7 +57,7 @@ const AlunosFiltros = ({
                             key={opcao.valor}
                             size="sm"
                             variant={ativo ? "primary" : "secondary"}
-                            onClick={() => onAlterarStatus(item.valor)}
+                            onClick={() => onAlterarStatus(opcao.valor)}
                             aria-pressed={ativo}
                             className={!ativo ? "bg-transparent text-text-secondary hover:bg-surface-muted" : ""}
                         >
