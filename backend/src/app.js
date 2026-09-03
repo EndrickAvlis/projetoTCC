@@ -17,7 +17,7 @@ app.use("/filas", filaRoutes);
 app.use("/senhas", senhaRouter);
 app.use("/admin/cursos", cursoRoutes);
 app.use("/voluntarios", voluntarioRoutes);
-app.use("/produtos", produtosRoutes);
+app.use("/admin/produtos", produtosRoutes);
 
 app.get("/", (req, res) => {
   res.json({

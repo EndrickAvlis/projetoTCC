@@ -73,7 +73,7 @@ export const alterarEstoqueUniforme = (produtoId, alteracao) =>
 //     },
 //   });
 export const buscarConfiguracaoArmario = () =>
-requisitarApi("/admin/produtos/armario");
+  requisitarApi("/admin/produtos/armario");
 
 export const atualizarConfiguracaoArmario = (produtoId, dados) =>
   requisitarApi(criarUrlProduto(produtoId), {

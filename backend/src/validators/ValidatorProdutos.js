@@ -53,5 +53,48 @@ export const atualizarProdutoSchema = z.object({
   params: z.object({
     produtoId: id,
   }),
-  body: dadosProduto,
+  body: z.object({
+    nome: nomeProduto.optional(),
+    preco: preco.optional(),
+    quantidade: quantidade.optional(),
+  }),
+});
+
+export const alterarStatusSchema = z.object({
+  params: z.object({
+    produtoId: id,
+  }),
+  body: z.object({
+    status: z.string().trim().toLowerCase(),
+  }),
+});
+
+export const alterarEstoqueSchema = z.object({
+  params: z.object({
+    produtoId: id,
+  }),
+  body: z.object({
+    operacao: z.enum(["adicionar", "diminuir", "corrigir"], {
+      error: "A operação deve ser adicionar, diminuir ou corrigir.",
+    }),
+    quantidade,
+  }),
+});
+
+export const buscarArmarioSchema = z.object({});
+
+export const listarProdutoSchema = z.object({
+  query: z.object({
+    busca: z.string().trim().optional().default(""),
+    tipo: z
+      .enum(["uniforme"], {
+        error: "O tipo precisa ser uniforme.",
+      })
+      .default("uniforme"),
+    arquivado: z
+      .enum(["true", "false"], {
+        error: "O filtro arquivado deve ser true ou false.",
+      })
+      .optional(),
+  }),
 });
