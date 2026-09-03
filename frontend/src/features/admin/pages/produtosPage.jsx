@@ -427,6 +427,7 @@ const ProdutosPage = () => {
       />
 
       <MovimentarEstoqueModal
+        key={uniformeParaEstoque?.id ?? "sem-uniforme"}
         uniforme={uniformeParaEstoque}
         onFechar={() =>
           setUniformeParaEstoque(null)
@@ -437,6 +438,7 @@ const ProdutosPage = () => {
       />
 
       <EditarUniformeModal
+        key={uniformeEmEdicao?.id ?? "sem-uniforme"}
         uniforme={uniformeEmEdicao}
         onFechar={() => setUniformeEmEdicao(null)}
         onSalvar={salvarUniformeEditado}

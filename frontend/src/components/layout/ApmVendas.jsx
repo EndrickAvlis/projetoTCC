@@ -52,7 +52,10 @@ const ApmVendasAtual = ({ dados, atendendo }) => {
           <Alert type="error" message={venda.erroCatalogo} />
         )}
         <InfoAluno aluno={dados} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div
+          className={`grid grid-cols-1 gap-5 ${venda.armarioDisponivel ? "md:grid-cols-2" : ""
+            }`}
+        >
           <ArmarioVenda
             armario={venda.armario}
             permitido={venda.armarioDisponivel}
@@ -96,6 +99,7 @@ const ApmVendasAtual = ({ dados, atendendo }) => {
         <AtendimentoActions
           podeFinalizar={possuiVenda ? venda.pagamentoValido : true}
           textoFinalizar={possuiVenda ? "Finalizar compra" : "Pular venda"}
+          variantFinalizar={possuiVenda ? "success" : "warning_outline"}
           onFinalizar={possuiVenda ? finalizar : pularVenda}
         />
       </div>
