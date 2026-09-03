@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Protótipo funcional da gestão e importação de alunos do SIGA Phila."
+    />
+    <title>Alunos | SIGA Phila</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-copy">
+            <strong>SIGA Phila</strong>
+            <span>Administração</span>
+          </div>
+          <button class="icon-button sidebar-toggle" id="sidebarToggle" aria-label="Recolher menu">
+            <span aria-hidden="true">‹</span>
+          </button>
+        </div>
+
+        <nav class="main-nav" aria-label="Navegação administrativa">
+          <a href="#" class="nav-item"><span class="nav-icon">⌂</span><span>Dashboard</span></a>
+          <a href="#" class="nav-item"><span class="nav-icon">▤</span><span>Filas</span></a>
+          <a href="#" class="nav-item active" aria-current="page"><span class="nav-icon">♙</span><span>Alunos</span></a>
+          <a href="#" class="nav-item"><span class="nav-icon">▣</span><span>Cursos</span></a>
+          <a href="#" class="nav-item"><span class="nav-icon">◇</span><span>Produtos</span></a>
+          <a href="#" class="nav-item"><span class="nav-icon">▥</span><span>Relatórios</span></a>
+          <a href="#" class="nav-item"><span class="nav-icon">♙</span><span>Usuários</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <a href="#" class="nav-item"><span class="nav-icon">⚙</span><span>Configurações</span></a>
+          <button class="nav-item nav-button"><span class="nav-icon">↪</span><span>Sair</span></button>
+        </div>
+      </aside>
+
+      <div class="main-column">
+        <header class="topbar">
+          <div class="page-identity">
+            <div class="page-icon" aria-hidden="true">♙</div>
+            <div>
+              <p>PAINEL ADMINISTRATIVO</p>
+              <h1>Alunos</h1>
+            </div>
+          </div>
+          <div class="admin-profile">
+            <div class="admin-copy">
+              <span>Seja bem-vindo</span>
+              <strong>Administrador</strong>
+            </div>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <section class="page-intro">
+            <div>
+              <p class="eyebrow">GESTÃO DE MATRÍCULAS</p>
+              <h2>Alunos e candidatos</h2>
+              <p class="intro-copy">Consulte os alunos cadastrados e importe novas listas de classificação.</p>
+            </div>
+            <button class="button button-primary" id="openImportButton">
+              <span class="button-icon" aria-hidden="true">⇧</span>
+              Importar lista de classificação
+            </button>
+          </section>
+
+          <section class="metrics-grid" aria-label="Resumo de alunos">
+            <article class="metric-card accent-green">
+              <div>
+                <p>Alunos ativos</p>
+                <strong id="activeCount">24</strong>
+                <span>Matrículas confirmadas</span>
+              </div>
+              <div class="metric-icon" aria-hidden="true">✓</div>
+            </article>
+            <article class="metric-card accent-blue">
+              <div>
+                <p>Candidatos</p>
+                <strong id="candidateCount">18</strong>
+                <span>Aguardando confirmação</span>
+              </div>
+              <div class="metric-icon" aria-hidden="true">◎</div>
+            </article>
+          </section>
+
+          <section class="content-card">
+            <div class="filters-header">
+              <div>
+                <h3>Lista de alunos</h3>
+                <p id="resultsSummary">Exibindo alunos ativos.</p>
+              </div>
+              <button class="button button-quiet" id="resetDataButton">Restaurar demonstração</button>
+            </div>
+
+            <div class="filters-grid">
+              <label class="field search-field">
+                <span class="sr-only">Pesquisar aluno</span>
+                <span class="field-icon" aria-hidden="true">⌕</span>
+                <input id="searchInput" type="search" placeholder="Pesquisar por nome do aluno..." />
+              </label>
+              <label class="field">
+                <span class="sr-only">Filtrar por curso</span>
+                <select id="courseFilter">
+                  <option value="">Todos os cursos</option>
+                </select>
+              </label>
+              <label class="field">
+                <span class="sr-only">Filtrar por situação</span>
+                <select id="statusFilter">
+                  <option value="ATIVO">Alunos ativos</option>
+                  <option value="CANDIDATO">Candidatos</option>
+                  <option value="ARQUIVADO">Arquivados</option>
+                  <option value="">Todas as situações</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="table-shell">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    <th>Curso</th>
+                    <th>Classificação</th>
+                    <th>Cidade</th>
+                    <th>Situação</th>
+                    <th>Matrícula</th>
+                    <th class="align-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="studentsTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="empty-state hidden" id="emptyState">
+              <div class="empty-icon" aria-hidden="true">⌕</div>
+              <h4>Nenhum aluno encontrado</h4>
+              <p>Tente ajustar a pesquisa ou os filtros.</p>
+            </div>
+
+            <footer class="pagination-bar">
+              <p id="paginationSummary">Mostrando 1–10 de 24 alunos</p>
+              <div class="pagination" id="pagination" aria-label="Paginação"></div>
+            </footer>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="importModal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+      <section class="modal-panel modal-panel-wide">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">NOVA IMPORTAÇÃO</p>
+            <h2 id="importModalTitle">Importar lista de classificação</h2>
+          </div>
+          <button class="icon-button modal-close" data-close-import aria-label="Fechar">×</button>
+        </header>
+        <div class="modal-scroll" id="importModalContent"></div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop hidden" id="detailsModal" role="dialog" aria-modal="true" aria-labelledby="detailsModalTitle">
+      <section class="modal-panel">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">REGISTRO DO ALUNO</p>
+            <h2 id="detailsModalTitle">Detalhes do aluno</h2>
+          </div>
+          <button class="icon-button modal-close" data-close-details aria-label="Fechar">×</button>
+        </header>
+        <div class="modal-scroll" id="detailsModalContent"></div>
+      </section>
+    </div>
+
+    <div class="action-menu hidden" id="rowActionMenu" role="menu"></div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

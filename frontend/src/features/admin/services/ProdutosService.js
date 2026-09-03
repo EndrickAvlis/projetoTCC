@@ -61,6 +61,17 @@ export const alterarEstoqueUniforme = (produtoId, alteracao) =>
     body: JSON.stringify(alteracao),
   });
 
+// export const buscarConfiguracaoArmario = () =>
+//   Promise.resolve({
+//     produto: {
+//       id: 20,
+//       nome: "Armário",
+//       preco: 120,
+//       quantidade: 18,
+//       tipo: "armario",
+//       status: "disponivel",
+//     },
+//   });
 export const buscarConfiguracaoArmario = () =>
   requisitarApi("/admin/produtos/armario");
 
