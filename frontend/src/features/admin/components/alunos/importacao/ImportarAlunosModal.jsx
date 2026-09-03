@@ -1,7 +1,10 @@
 import * as React from 'react';
-import Modal from "../../../../components/ui/Modal";
+import Modal from "../../../../../components/ui/Modal";
 import { useCursos } from "../../../hooks/useCursos";
 import * as AlunosService from "../../../services/AlunosService";
+import UploadCsv from "./UploadCsv";
+import MapeamentoCursos from "./MapeamentoCursos";
+import ResultadoImportacao from "./ResultadoImportacao";
 
 const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
     const [etapa, setEtapa] = React.useState(1);
@@ -13,7 +16,7 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
     const [carregando, setCarregando] = React.useState(false);
     const [erro, setErro] = React.useState(null);
 
-    const { cursos: cursosExistentes } = useCursos({ arquivado: false });
+    const { cursos: cursosExistentes, recarregar: recarregarCursos, carregando: carregandoCursos } = useCursos({ arquivado: false });
 
     const handleFechar = () => {
         setEtapa(1);
@@ -52,7 +55,7 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
                 candidatos: dadosArquivo.resultado.candidatosValidos,
             });
             setResultadoFinal(resposta);
-            setEtapa(3); // Avança para a tela de resultado
+            setEtapa(3);
         } catch (err) {
             setErro(err.message || "Erro ao importar candidatos.");
         } finally {
@@ -98,13 +101,56 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
                             >
                                 {step.label}
                             </span>
-                            {idx < 2 && <div className="mx-2 hidden h-[1px] w-8 bg-border sm:block" />}
+                            {idx < 2 && <div className="mx-2 hidden h-px w-8 bg-border sm:block" />}
                         </div>
                     );
                 })}
             </div>
 
-            {"modais de etapas"}
+            {etapa === 1 && (
+                <UploadCsv
+                    anoProcesso={anoProcesso}
+                    onAlterarAno={setAnoProcesso}
+                    semestreProcesso={semestreProcesso}
+                    onAlterarSemestre={setSemestreProcesso}
+                    cursosExistentes={cursosExistentes}
+                    onArquivoAnalisado={handleArquivoAnalisado}
+                    onAvancar={() => setEtapa(2)}
+                    onCancelar={handleFechar}
+                />
+            )}
+
+            {etapa === 2 && (
+                <MapeamentoCursos
+                    gruposCursos={gruposCursos}
+                    cursosExistentes={cursosExistentes}
+                    onAtualizarAssociacao={handleAtualizarAssociacao}
+                    onVoltar={() => setEtapa(1)}
+                    onConfirmar={handleConfirmarImportacao}
+                    onRecarregarCursos={recarregarCursos}
+                    carregandoCursos={carregandoCursos}
+                    carregando={carregando}
+                    erro={erro}
+                />
+            )}
+
+            {etapa === 3 && (
+                <ResultadoImportacao
+                    resultado={resultadoFinal}
+                    dadosArquivo={dadosArquivo}
+                    anoProcesso={anoProcesso}
+                    semestreProcesso={semestreProcesso}
+                    gruposCursos={gruposCursos}
+                    onConcluir={handleConcluir}
+                    onReiniciar={() => {
+                        setEtapa(1);
+                        setDadosArquivo(null);
+                        setGruposCursos([]);
+                        setResultadoFinal(null);
+                        setErro(null);
+                    }}
+                />
+            )}
         </Modal>
     );
 };
