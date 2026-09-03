@@ -17,6 +17,7 @@ enum Periodo {
   tarde
   noite
   integral
+  online
 }
 
 

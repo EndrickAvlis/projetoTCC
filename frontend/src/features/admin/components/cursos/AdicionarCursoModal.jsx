@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 import Alert from "../../../../components/ui/Alert";
-import Button from "../../../../components/ui/Button";
-import Input from "../../../../components/ui/Input";
+import Button from "../../../../components/ui/button";
+import Input from "../../../../components/ui/input";
 import Modal from "../../../../components/ui/Modal";
 import Select from "../../../../components/ui/Select";
 import { PERIODOS_CURSO } from "../../../../constants/cursoOptions";
@@ -13,7 +13,7 @@ const dadosIniciais = () => ({
     matriculaAtiva: true,
 });
 
-const LIMITE_PERIODOS = 4;
+const LIMITE_PERIODOS = 5;
 
 const CursoFormModal = ({
     aberto,

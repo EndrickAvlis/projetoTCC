@@ -5,6 +5,7 @@ const nomesPeriodos = {
   tarde: "Tarde",
   noite: "Noite",
   integral: "Integral",
+  online: "Online",
 };
 
 const formatarPeriodo = (periodo) => nomesPeriodos[periodo] ?? periodo;

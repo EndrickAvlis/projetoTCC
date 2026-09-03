@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const periodosValidos = ["manha", "tarde", "noite", "integral"];
+const periodosValidos = ["manha", "tarde", "noite", "integral", "online"];
 const palavrasMinusculas = new Set([
   "a",
   "as",
