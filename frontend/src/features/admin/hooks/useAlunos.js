@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { listarAlunosAdmin } from "../services/AlunosService";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useAlunos = ({
     busca = "",
@@ -8,6 +9,7 @@ export const useAlunos = ({
     pagina = 1,
     limite = 10,
 } = {}) => {
+    const buscaDebounced = useDebounce(busca, 300);
     const [alunos, setAlunos] = React.useState([]);
     const [total, setTotal] = React.useState(0);
     const [totalAtivos, setTotalAtivos] = React.useState(0);
@@ -20,7 +22,7 @@ export const useAlunos = ({
 
         try {
             const res = await listarAlunosAdmin({
-                busca,
+                busca: buscaDebounced,
                 cursoId,
                 status,
                 pagina,
@@ -28,21 +30,21 @@ export const useAlunos = ({
             });
 
             setAlunos(res?.alunos ?? []);
-            setTotal(res?.total ?? 0)
+            setTotal(res?.total ?? 0);
             if (typeof res?.totalAtivos === "number") {
                 setTotalAtivos(res.totalAtivos);
             }
         } catch (error) {
             setAlunos([]);
-            setTotal(0)
+            setTotal(0);
             setErro(error.message || "Erro ao carregar lista de alunos");
         } finally {
             setCarregando(false);
         }
-    }, [busca, cursoId, status, pagina, limite]);
+    }, [buscaDebounced, cursoId, status, pagina, limite]);
 
     React.useEffect(() => {
-        carregarAlunos();
+        void Promise.resolve().then(carregarAlunos);
     }, [carregarAlunos]);
 
     return {
@@ -52,5 +54,5 @@ export const useAlunos = ({
         carregando,
         erro,
         recarregar: carregarAlunos,
-    }
-}
+    };
+};

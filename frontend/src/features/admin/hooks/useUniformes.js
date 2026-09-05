@@ -1,7 +1,9 @@
 import * as React from "react";
 import { listarUniformesAdmin } from "../services/ProdutosService";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
+  const buscaDebounced = useDebounce(busca, 300);
   const [uniformes, setUniformes] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
@@ -12,7 +14,10 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
     setErro(null);
 
     try {
-      const res = await listarUniformesAdmin({ busca, arquivado });
+      const res = await listarUniformesAdmin({
+        busca: buscaDebounced,
+        arquivado,
+      });
 
       setUniformes(res.produtos ?? []);
       setTotal(res.total ?? 0);
@@ -23,10 +28,10 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
     } finally {
       setCarregando(false);
     }
-  }, [busca, arquivado]);
+  }, [buscaDebounced, arquivado]);
 
   React.useEffect(() => {
-    carregarUniformes();
+    void Promise.resolve().then(carregarUniformes);
   }, [carregarUniformes]);
 
   return {

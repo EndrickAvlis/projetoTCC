@@ -111,7 +111,8 @@ const AlunosPage = () => {
         <div className="space-y-0.5">
           <p className="font-semibold text-text-primary">{aluno.nomeAluno}</p>
           <p className="font-mono text-xs text-text-secondary">
-            Inscrição: <span className="text-text-primary">{aluno.numeroInscricao}</span>
+            Inscrição:{" "}
+            <span className="text-text-primary">{aluno.numeroInscricao}</span>
           </p>
         </div>
       ),
@@ -148,9 +149,7 @@ const AlunosPage = () => {
       key: "cidadeAluno",
       label: "Cidade",
       render: (aluno) => (
-        <span className="text-text-primary">
-          {aluno.cidadeAluno || "—"}
-        </span>
+        <span className="text-text-primary">{aluno.cidadeAluno || "—"}</span>
       ),
     },
     {
@@ -161,7 +160,8 @@ const AlunosPage = () => {
     {
       key: "statusMatricula",
       label: "Situação da Matrícula",
-      render: (aluno) => renderBadgeStatusMatricula(aluno.cursoAluno?.statusMatricula),
+      render: (aluno) =>
+        renderBadgeStatusMatricula(aluno.cursoAluno?.statusMatricula),
     },
   ];
 
@@ -171,7 +171,8 @@ const AlunosPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Alunos</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Consulte a lista de classificação, gerencie candidatos e acompanhe as matrículas.
+            Consulte a lista de classificação, gerencie candidatos e acompanhe
+            as matrículas.
           </p>
         </div>
 
@@ -189,10 +190,10 @@ const AlunosPage = () => {
           <FiIcons.FiUsers size={24} />
         </div>
         <div>
-          <p className="text-xs font-medium text-text-secondary">Total de alunos ativos</p>
-          <p className="text-2xl font-bold text-text-primary">
-            {totalAtivos}
+          <p className="text-xs font-medium text-text-secondary">
+            Total de alunos ativos
           </p>
+          <p className="text-2xl font-bold text-text-primary">{totalAtivos}</p>
         </div>
       </div>
 
@@ -232,6 +233,8 @@ const AlunosPage = () => {
         aberto={modalImportacaoAberto}
         onFechar={() => setModalImportacaoAberto(false)}
         onSucesso={() => {
+          setStatus("CANDIDATO");
+          setPagina(1);
           recarregarAlunos();
         }}
       />
