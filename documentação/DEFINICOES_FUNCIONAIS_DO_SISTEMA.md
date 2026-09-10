@@ -404,7 +404,7 @@ GET /filas?etapa=triagem
 | Método e rota | Controller | Service | Função |
 |---|---|---|---|
 | `POST /atendimentos` | `iniciarAtendimento` | `registrarInicioAtendimento` | Registra início no histórico atual |
-| `POST /atendimentos/:id/finalizacoes` | `finalizarAtendimento` | `concluirAtendimento` | Fecha histórico e avança/finaliza senha |
+| `POST /atendimentos/:id/finalizar` | `finalizarAtendimento` | `concluirAtendimento` | Fecha histórico e avança/finaliza senha |
 | `GET /atendimentos/:id` | `consultarAtendimento` | `buscarAtendimentoPorId` | Retorna atendimento e senha |
 | `PUT /senhas/:senhaId/aluno` | `vincularAlunoSenha` | `salvarAlunoNaTriagem` | Vincula aluno e matrícula à senha |
 

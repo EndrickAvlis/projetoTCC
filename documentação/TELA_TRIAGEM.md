@@ -1369,7 +1369,7 @@ silenciosa depois de chamadas concorrentes.
 | `GET /senhas/:senhaId/detalhe` | recuperar senha, aluno e histórico |
 | `POST /atendimentos` | iniciar manualmente |
 | `POST /atendimentos/:atendimentoId/pendencias` | salvar pendência |
-| `POST /atendimentos/:atendimentoId/finalizacoes` | concluir Triagem |
+| `POST /atendimentos/:atendimentoId/finalizar` | concluir Triagem |
 | `GET /alunos?nome=...` | pesquisa operacional por nome |
 | `POST /alunos` | cadastro manual operacional |
 | `PUT /senhas/:senhaId/aluno` | salvar e vincular dados da Triagem |
@@ -1778,7 +1778,7 @@ Transação:
 
 ## 38. Contrato: finalizar atendimento
 
-### `POST /atendimentos/:atendimentoId/finalizacoes`
+### `POST /atendimentos/:atendimentoId/finalizar`
 
 Não exige corpo quando os dados já foram salvos pelo endpoint de vínculo.
 
