@@ -20,6 +20,10 @@ export const salvarDados = async (senhaId, payload) => {
   });
 };
 
+export const recuperarAtendimentoAtual = async () => {
+  return requisitarApi("/filas/atual?etapa=triagem");
+};
+
 export const iniciarAtendimento = async (senhaId) => {
   return requisitarApi("/atendimentos", {
     method: "POST",
