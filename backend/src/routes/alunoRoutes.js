@@ -1,38 +1,38 @@
 import { Router } from "express";
-import * as alunosController from "../controllers/AlunosController.js";
+import * as alunoController from "../controllers/alunoController.js";
 import * as alunos from "../validators/ValidatorAlunos.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
 
-const alunosRoutes = Router();
+const alunoRoutes = Router();
 
-alunosRoutes.post(
+alunoRoutes.post(
   "/",
   validarRequisicao(alunos.criarAlunoSchema),
-  alunosController.criarAluno,
+  alunoController.criarAluno,
 );
 
-alunosRoutes.get(
+alunoRoutes.get(
   "/",
   validarRequisicao(alunos.listarAlunosSchema),
-  alunosController.listarAlunos,
+  alunoController.listarAlunos,
 );
 
-alunosRoutes.get(
+alunoRoutes.get(
   "/:id",
   validarRequisicao(alunos.consultarAlunoSchema),
-  alunosController.consultarAluno,
+  alunoController.consultarAluno,
 );
 
-alunosRoutes.patch(
+alunoRoutes.patch(
   "/:id",
   validarRequisicao(alunos.editarAlunoSchema),
-  alunosController.editarAluno,
+  alunoController.editarAluno,
 );
 
-alunosRoutes.post(
+alunoRoutes.post(
   "/:id/matriculas",
   validarRequisicao(alunos.adicionarMatriculaSchema),
-  alunosController.adicionarMatricula,
+  alunoController.adicionarMatricula,
 );
 
-export default alunosRoutes;
+export default alunoRoutes;
