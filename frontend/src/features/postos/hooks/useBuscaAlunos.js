@@ -2,7 +2,7 @@ import * as React from "react";
 import { buscarAlunos } from "../services/TriagemService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
-export const useBuscaAlunos = ({ limite = 10 } = {}) => {
+export const useBuscaAlunos = ({ limite = 5 } = {}) => {
   const [busca, setBusca] = React.useState("");
   const [alunos, setAlunos] = React.useState([]);
   const [carregando, setCarregando] = React.useState(false);
