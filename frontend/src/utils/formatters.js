@@ -47,4 +47,16 @@ export const formatarSenha = (codigo) => {
   return `A${String(numero).padStart(3, "0")}`;
 };
 
+export const formatarHora = (dataIso) => {
+  if (!dataIso) return "";
+  try {
+    return new Date(dataIso).toLocaleString("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  } catch {
+    return dataIso;
+  }
+};
+
 export default FormaterCpf;
