@@ -117,35 +117,35 @@ export const BuscarAlunos = ({
               </div>
             )}
 
-            {!erro &&
-              alunos.map((aluno, index) => {
-                const nome = aluno.nome ?? aluno.nomeAluno ?? "";
-                const detalhe =
-                  aluno.matriculas?.[0]?.curso ??
-                  aluno.numeroInscricao ??
-                  aluno.cidade ??
-                  "";
+            {!erro && (
+              <div className="divide-y divide-border/60">
+                {alunos.map((aluno, index) => {
+                  const curso = aluno.matriculas[0]?.curso;
 
-                return (
-                  <div
-                    key={aluno.id ?? aluno.idAluno ?? index}
-                    onClick={() => handleSelecionar(aluno)}
-                    onMouseEnter={() => setIndiceFocado(index)}
-                    className={`cursor-pointer px-4 py-2.5 text-sm transition-colors ${
-                      index === indiceFocado
-                        ? "bg-surface-muted text-primary font-medium"
-                        : "text-text-primary hover:bg-surface-muted"
-                    }`}
-                  >
-                    <div className="font-medium text-text-primary">{nome}</div>
-                    {detalhe && (
-                      <div className="text-xs text-text-secondary mt-0.5">
-                        {detalhe}
+                  return (
+                    <div
+                      key={aluno.id}
+                      onClick={() => handleSelecionar(aluno)}
+                      onMouseEnter={() => setIndiceFocado(index)}
+                      className={`cursor-pointer px-4 py-3 text-sm transition-colors ${
+                        index === indiceFocado
+                          ? "bg-surface-muted text-primary"
+                          : "text-text-primary hover:bg-surface-muted"
+                      }`}
+                    >
+                      <div className="font-semibold text-text-primary">
+                        {aluno.nome}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {curso && (
+                        <div className="text-xs text-text-secondary mt-0.5">
+                          {curso}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

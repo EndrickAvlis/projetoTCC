@@ -25,3 +25,10 @@ export const OPCOES_ANO_ESCOLAR = [
   { value: "2", label: "2º Ano" },
   { value: "3", label: "3º Ano" },
 ];
+
+export const OPCOES_SEXO = [
+  { value: "M", label: "Masculino" },
+  { value: "F", label: "Feminino" },
+  { value: "OUTRO", label: "Outro" },
+];
+
