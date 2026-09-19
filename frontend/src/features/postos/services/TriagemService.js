@@ -84,3 +84,8 @@ export const alterarPrioridadeSenha = async (senhaId, tipoSenha) => {
     body: JSON.stringify({ tipoSenha }),
   });
 };
+
+export const listarCursos = async () => {
+  const resposta = await requisitarApi("/cursos");
+  return resposta?.cursos ?? resposta ?? [];
+};

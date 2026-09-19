@@ -1,20 +1,32 @@
 import * as React from "react";
 import * as TriagemService from "../services/TriagemService";
+import { useAtendimento } from "../../../hooks/useAtendimento";
 
 export const useTriagem = () => {
-  const [fase, setFase] = React.useState("sem_senha");
-  const [senhaAtual, setSenhaAtual] = React.useState(null);
-  const [atendimentoAtual, setAtendimentoAtual] = React.useState(null);
+  const {
+    senhaAtual,
+    setSenhaAtual,
+    atendimentoAtual,
+    setAtendimentoAtual,
+  } = useAtendimento();
+
   const [carregando, setCarregando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
 
+  const fase = React.useMemo(() => {
+    if (!senhaAtual) return "sem_senha";
+    if (atendimentoAtual?.iniciadoEm) {
+      return "iniciada";
+    }
+    return "chamada";
+  }, [senhaAtual, atendimentoAtual]);
+
   const limparEstado = React.useCallback(() => {
-    setFase("sem_senha");
     setSenhaAtual(null);
     setAtendimentoAtual(null);
     setErro(null);
     setCarregando(false);
-  }, []);
+  }, [setSenhaAtual, setAtendimentoAtual]);
 
   const carregarEstadoAtual = React.useCallback(async () => {
     setCarregando(true);
@@ -22,24 +34,19 @@ export const useTriagem = () => {
 
     try {
       const res = await TriagemService.recuperarAtendimentoAtual();
-      if (res?.senha) {
+      if (res.senha) {
         setSenhaAtual(res.senha);
-        setAtendimentoAtual(res.historico ?? null);
-        if (res.historico?.iniciadaEm || res.historico?.iniciadoEm) {
-          setFase("iniciada");
-        } else {
-          setFase("chamada");
-        }
+        setAtendimentoAtual(res.historico);
       } else {
         limparEstado();
       }
     } catch (error) {
       limparEstado();
-      setErro(error.message || "Erro ao recuperar atendimento atual");
+      setErro(error.message);
     } finally {
       setCarregando(false);
     }
-  }, [limparEstado]);
+  }, [limparEstado, setSenhaAtual, setAtendimentoAtual]);
 
   React.useEffect(() => {
     void Promise.resolve().then(carregarEstadoAtual);
@@ -48,99 +55,91 @@ export const useTriagem = () => {
   const definirSenhaChamada = React.useCallback((senha) => {
     setSenhaAtual(senha);
     setAtendimentoAtual(null);
-    setFase("chamada");
     setErro(null);
-  }, []);
+  }, [setSenhaAtual, setAtendimentoAtual]);
 
-  const iniciar = React.useCallback(async (senhaId) => {
-    const id = senhaId ?? senhaAtual?.id;
-    if (!id) return null;
+  const iniciar = React.useCallback(async () => {
+    if (!senhaAtual) return null;
 
     setCarregando(true);
     setErro(null);
 
     try {
-      const res = await TriagemService.iniciarAtendimento(id);
-      const atendimento = res?.atendimento ?? res;
-      setAtendimentoAtual(atendimento);
-      setFase("iniciada");
-      return atendimento;
+      const res = await TriagemService.iniciarAtendimento(senhaAtual.id);
+      setAtendimentoAtual(res.atendimento);
+      return res.atendimento;
     } catch (error) {
-      setErro(error.message || "Erro ao iniciar atendimento");
+      setErro(error.message);
+      throw error;
+    } finally {
+      setCarregando(false);
+    }
+  }, [senhaAtual, setAtendimentoAtual]);
+
+  const salvarDados = React.useCallback(async (payload) => {
+    if (!senhaAtual) return null;
+
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const res = await TriagemService.salvarDados(senhaAtual.id, payload);
+      return res;
+    } catch (error) {
+      setErro(error.message);
       throw error;
     } finally {
       setCarregando(false);
     }
   }, [senhaAtual]);
 
-  const salvarDados = React.useCallback(async (payload, senhaId) => {
-    const id = senhaId ?? senhaAtual?.id;
-    if (!id) return null;
+  const finalizar = React.useCallback(async () => {
+    if (!atendimentoAtual) return null;
 
     setCarregando(true);
     setErro(null);
 
     try {
-      const res = await TriagemService.salvarDados(id, payload);
-      return res;
-    } catch (error) {
-      setErro(error.message || "Erro ao salvar dados do aluno");
-      throw error;
-    } finally {
-      setCarregando(false);
-    }
-  }, [senhaAtual]);
-
-  const finalizar = React.useCallback(async (atendimentoId) => {
-    const id = atendimentoId ?? atendimentoAtual?.id;
-    if (!id) return null;
-
-    setCarregando(true);
-    setErro(null);
-
-    try {
-      const res = await TriagemService.finalizarAtendimento(id);
+      const res = await TriagemService.finalizarAtendimento(atendimentoAtual.id);
       limparEstado();
       return res;
     } catch (error) {
-      setErro(error.message || "Erro ao finalizar atendimento");
+      setErro(error.message);
       throw error;
     } finally {
       setCarregando(false);
     }
   }, [atendimentoAtual, limparEstado]);
 
-  const salvarPendencia = React.useCallback(async (documentos, atendimentoId) => {
-    const id = atendimentoId ?? atendimentoAtual?.id;
-    if (!id) return null;
+  const salvarPendencia = React.useCallback(async (documentos) => {
+    if (!atendimentoAtual) return null;
 
     setCarregando(true);
     setErro(null);
 
     try {
-      const res = await TriagemService.salvarPendencia(id, documentos);
+      const res = await TriagemService.salvarPendencia(atendimentoAtual.id, documentos);
       limparEstado();
       return res;
     } catch (error) {
-      setErro(error.message || "Erro ao salvar pendência");
+      setErro(error.message);
       throw error;
     } finally {
       setCarregando(false);
     }
   }, [atendimentoAtual, limparEstado]);
 
-  const rechamar = React.useCallback(async (senhaId) => {
-    const id = senhaId ?? senhaAtual?.id;
-    if (!id) return null;
+  const rechamar = React.useCallback(async () => {
+    if (!senhaAtual) return null;
 
     setCarregando(true);
     setErro(null);
 
     try {
-      const res = await TriagemService.rechamarSenha(id);
+      const res = await TriagemService.rechamarSenha(senhaAtual.id);
       return res;
     } catch (error) {
-      setErro(error.message || "Erro ao rechamar senha");
+      setErro(error.message);
       throw error;
     } finally {
       setCarregando(false);
@@ -163,3 +162,5 @@ export const useTriagem = () => {
     recarregar: carregarEstadoAtual,
   };
 };
+
+export default useTriagem;
