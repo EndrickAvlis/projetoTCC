@@ -6,7 +6,6 @@ import { DOCUMENTOS_TRIAGEM } from "../../constants/triagem";
 export const DocumentosPendentes = ({
   documentosSelecionados = [],
   onChange,
-  onSelecionarDocumento,
   onSalvarPendencia,
   salvando = false,
   disabled = false,
@@ -17,9 +16,6 @@ export const DocumentosPendentes = ({
   const totalSelecionados = documentosSelecionados.length;
 
   const handleSelecionar = (chave) => {
-    if (onSelecionarDocumento) {
-      onSelecionarDocumento(chave);
-    }
     if (onChange) {
       const novos = documentosSelecionados.includes(chave)
         ? documentosSelecionados.filter((item) => item !== chave)

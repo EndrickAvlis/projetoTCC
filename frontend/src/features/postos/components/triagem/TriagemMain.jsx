@@ -10,14 +10,27 @@ import DocumentosPendentes from "./DocumentosPendentes";
 import PendenciasGrid from "./PendenciasGrid";
 import DetalhePendencia from "./DetalhePendencia";
 
+const DADOS_INICIAIS = {
+  nome: "",
+  classificacao: "",
+  curso: "",
+  periodo: "",
+  ano: "1",
+  cidade: "",
+  sexo: "",
+  escolaridadePublica: "null",
+};
+
 export const TriagemMain = () => {
   const {
     fase,
     senhaAtual,
     iniciar,
+    salvarDados,
     finalizar,
     salvarPendencia,
     rechamar,
+    definirSenhaChamada,
     carregando: carregandoTriagem,
     erro: erroTriagem,
   } = useTriagem();
@@ -34,86 +47,80 @@ export const TriagemMain = () => {
 
   const [abaAtiva, setAbaAtiva] = React.useState("atendimento");
   const [cursos, setCursos] = React.useState([]);
-  const [dadosAluno, setDadosAluno] = React.useState({
-    nome: "",
-    classificacao: "",
-    curso: "",
-    periodo: "",
-    ano: "1",
-    cidade: "",
-    sexo: "",
-    escolaridadePublica: "null",
-  });
+  const [alunoId, setAlunoId] = React.useState(null);
+  const [dadosAluno, setDadosAluno] = React.useState(DADOS_INICIAIS);
   const [documentosSelecionados, setDocumentosSelecionados] = React.useState([]);
-  const [erros] = React.useState({});
-  const [salvandoPendencia, setSalvandoPendencia] = React.useState(false);
 
   React.useEffect(() => {
-    const carregarListaCursos = async () => {
-      try {
-        const res = await listarCursos();
-        setCursos(res);
-      } catch {
-        setCursos([]);
-      }
-    };
-    carregarListaCursos();
+    listarCursos().then(setCursos).catch(() => setCursos([]));
   }, []);
 
   const handleSelecionarAluno = (aluno) => {
-    const matricula = aluno.matriculas[0];
+    const matricula = aluno.matriculas?.[0];
+    setAlunoId(aluno.id ?? null);
     setDadosAluno({
-      nome: aluno.nome,
+      nome: aluno.nome || "",
       classificacao: matricula?.classificacao ? String(matricula.classificacao) : "",
       curso: matricula?.cursoId ? String(matricula.cursoId) : "",
-      periodo: matricula?.periodo ? matricula.periodo : "",
+      periodo: matricula?.periodo || "",
       ano: matricula?.anoEscolar ? String(matricula.anoEscolar) : "1",
-      cidade: aluno.cidade ? aluno.cidade : "",
-      sexo: aluno.sexo ? aluno.sexo : "",
+      cidade: aluno.cidade || "",
+      sexo: aluno.sexo || "",
       escolaridadePublica: aluno.escolaridadePublica !== null ? String(aluno.escolaridadePublica) : "null",
     });
   };
 
-  const handleNovoAluno = () => {
-    setDadosAluno({
-      nome: "",
-      classificacao: "",
-      curso: "",
-      periodo: "",
-      ano: "1",
-      cidade: "",
-      sexo: "",
-      escolaridadePublica: "null",
-    });
+  const handleLimparFormulario = () => {
+    setAlunoId(null);
+    setDadosAluno(DADOS_INICIAIS);
+    setDocumentosSelecionados([]);
   };
 
   const handleChangeCampo = (campo, valor) => {
-    setDadosAluno((prev) => ({
-      ...prev,
-      [campo]: valor,
-    }));
+    setDadosAluno((prev) => ({ ...prev, [campo]: valor }));
   };
+
+  const montarPayload = () => ({
+    alunoId,
+    dadosAluno: {
+      nome: dadosAluno.nome.trim(),
+      escolaridadePublica:
+        dadosAluno.escolaridadePublica === "true"
+          ? true
+          : dadosAluno.escolaridadePublica === "false"
+            ? false
+            : null,
+      cidade: dadosAluno.cidade.trim() || null,
+      sexo: dadosAluno.sexo || null,
+    },
+    matricula: {
+      cursoId: Number(dadosAluno.curso),
+      classificacao: dadosAluno.classificacao ? Number(dadosAluno.classificacao) : null,
+      periodo: dadosAluno.periodo,
+      anoEscolar: Number(dadosAluno.ano),
+    },
+  });
 
   const handleSalvarPendencia = async () => {
     if (documentosSelecionados.length === 0) return;
-    try {
-      setSalvandoPendencia(true);
-      await salvarPendencia(documentosSelecionados);
-      setDocumentosSelecionados([]);
-      handleNovoAluno();
-    } finally {
-      setSalvandoPendencia(false);
+    if (dadosAluno.nome.trim() && dadosAluno.curso) {
+      await salvarDados(montarPayload());
     }
+    await salvarPendencia(documentosSelecionados);
+    handleLimparFormulario();
   };
 
   const handleFinalizar = async () => {
+    await salvarDados(montarPayload());
     await finalizar();
-    handleNovoAluno();
-    setDocumentosSelecionados([]);
+    handleLimparFormulario();
   };
 
   const handleRetomar = async (senhaId) => {
     const res = await retomar(senhaId);
+    if (res?.senha) {
+      definirSenhaChamada(res.senha);
+    }
     if (res?.documentos) {
       setDocumentosSelecionados(res.documentos);
     }
@@ -123,6 +130,9 @@ export const TriagemMain = () => {
   const podeFinalizar =
     fase === "iniciada" &&
     Boolean(dadosAluno.nome.trim()) &&
+    Boolean(dadosAluno.curso) &&
+    Boolean(dadosAluno.periodo) &&
+    Boolean(dadosAluno.ano) &&
     documentosSelecionados.length === 0;
 
   return (
@@ -140,6 +150,7 @@ export const TriagemMain = () => {
           <FiClock className="h-4 w-4" />
           <span>Atendimento atual</span>
         </button>
+
         <button
           type="button"
           onClick={() => setAbaAtiva("pendencias")}
@@ -163,15 +174,9 @@ export const TriagemMain = () => {
         </button>
       </div>
 
-      {erroTriagem && (
+      {(erroTriagem || erroPendencias) && (
         <div className="p-3 text-sm text-status-danger bg-status-danger-bg rounded-md border border-status-danger/30">
-          {erroTriagem}
-        </div>
-      )}
-
-      {erroPendencias && (
-        <div className="p-3 text-sm text-status-danger bg-status-danger-bg rounded-md border border-status-danger/30">
-          {erroPendencias}
+          {erroTriagem || erroPendencias}
         </div>
       )}
 
@@ -190,7 +195,7 @@ export const TriagemMain = () => {
           <div className="bg-surface rounded-lg border border-border p-6 shadow-xs flex flex-col gap-6">
             <BuscarAlunos
               onSelecionarAluno={handleSelecionarAluno}
-              onNovoAluno={handleNovoAluno}
+              onNovoAluno={handleLimparFormulario}
               disabled={fase !== "iniciada"}
             />
 
@@ -198,7 +203,6 @@ export const TriagemMain = () => {
               <DadosAlunoForm
                 dados={dadosAluno}
                 onChange={handleChangeCampo}
-                erros={erros}
                 disabled={fase !== "iniciada"}
                 cursos={cursos}
               />
@@ -209,7 +213,7 @@ export const TriagemMain = () => {
                 documentosSelecionados={documentosSelecionados}
                 onChange={setDocumentosSelecionados}
                 onSalvarPendencia={handleSalvarPendencia}
-                salvando={salvandoPendencia}
+                salvando={carregandoTriagem}
                 disabled={fase !== "iniciada"}
               />
             </div>

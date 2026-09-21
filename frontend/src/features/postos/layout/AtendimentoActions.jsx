@@ -2,7 +2,6 @@ import {
   FiPlay,
   FiRotateCw,
   FiCheck,
-  FiSkipForward,
   FiClock,
 } from "react-icons/fi";
 import Button from "../../../components/ui/Button";
@@ -12,17 +11,20 @@ export const AtendimentoActions = ({
   fase = "sem_senha",
   carregando = false,
   podeFinalizar = true,
-  permitePular = false,
   textoFinalizar = "Finalizar Atendimento",
   textoIniciar = "Iniciar Atendimento",
   onIniciar,
   onRechamar,
   onFinalizar,
-  onPular,
   className = "",
 }) => {
-  const numeroSenha = senhaAtual ? senhaAtual.numero : "";
-  const isPrioritaria = senhaAtual ? Boolean(senhaAtual.prioritaria) : false;
+  const numeroSenha = senhaAtual ? (senhaAtual.numero ?? senhaAtual.codigo ?? "") : "";
+  const isPrioritaria = senhaAtual
+    ? Boolean(
+        senhaAtual.prioritaria ??
+          (senhaAtual.tipoSenha === true || senhaAtual.tipoSenha === "PREFERENCIAL")
+      )
+    : false;
 
   const renderIdentificacao = () => {
     if (fase === "sem_senha" || !senhaAtual) {
@@ -77,7 +79,7 @@ export const AtendimentoActions = ({
       <div className="flex items-center">{renderIdentificacao()}</div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {fase === "chamada" && onRechamar && (
+        {fase !== "sem_senha" && onRechamar && (
           <Button
             variant="secondary"
             size="md"
@@ -89,39 +91,15 @@ export const AtendimentoActions = ({
           </Button>
         )}
 
-        {fase === "chamada" && permitePular && onPular && (
-          <Button
-            variant="secondary"
-            size="md"
-            leftIcon={<FiSkipForward />}
-            onClick={onPular}
-            disabled={carregando}
-          >
-            Pular Atendimento
-          </Button>
-        )}
-
-        {fase !== "iniciada" && (
+        {fase === "chamada" && (
           <Button
             variant="primary"
             size="md"
             leftIcon={<FiPlay />}
             onClick={onIniciar}
-            disabled={fase === "sem_senha" || !senhaAtual || carregando}
+            disabled={!senhaAtual || carregando}
           >
             {textoIniciar}
-          </Button>
-        )}
-
-        {fase === "iniciada" && onRechamar && (
-          <Button
-            variant="secondary"
-            size="md"
-            leftIcon={<FiRotateCw />}
-            onClick={onRechamar}
-            disabled={carregando}
-          >
-            Rechamar
           </Button>
         )}
 

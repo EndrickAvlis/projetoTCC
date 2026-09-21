@@ -7,7 +7,6 @@ export const useBuscaAlunos = ({ limite = 5 } = {}) => {
   const [alunos, setAlunos] = React.useState([]);
   const [carregando, setCarregando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
-  const [alunoSelecionado, setAlunoSelecionado] = React.useState(null);
 
   const buscaDebounced = useDebounce(busca, 300);
   const requisicaoRef = React.useRef(0);
@@ -47,15 +46,10 @@ export const useBuscaAlunos = ({ limite = 5 } = {}) => {
     void Promise.resolve().then(carregarAlunos);
   }, [carregarAlunos]);
 
-  const selecionarAluno = React.useCallback((aluno) => {
-    setAlunoSelecionado(aluno);
-  }, []);
-
   const limparBusca = React.useCallback(() => {
     setBusca("");
     setAlunos([]);
     setErro(null);
-    setAlunoSelecionado(null);
     setCarregando(false);
   }, []);
 
@@ -65,8 +59,6 @@ export const useBuscaAlunos = ({ limite = 5 } = {}) => {
     alunos,
     carregando,
     erro,
-    alunoSelecionado,
-    selecionarAluno,
     limparBusca,
   };
 };

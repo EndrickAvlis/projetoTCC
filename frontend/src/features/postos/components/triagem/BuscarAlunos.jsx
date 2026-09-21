@@ -120,7 +120,7 @@ export const BuscarAlunos = ({
             {!erro && (
               <div className="divide-y divide-border/60">
                 {alunos.map((aluno, index) => {
-                  const curso = aluno.matriculas[0]?.curso;
+                  const curso = aluno.matriculas?.[0]?.curso;
 
                   return (
                     <div

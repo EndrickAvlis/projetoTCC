@@ -9,7 +9,10 @@ const PendenciasGrid = ({
 }) => {
   const renderizarPendencia = (pendencia) => {
     const isSelecionada = pendenciaSelecionada?.senha?.id === pendencia.senha.id;
-    const isPrioritaria = pendencia.senha.tipoSenha;
+    const isPrioritaria = Boolean(
+      pendencia.senha.prioritaria ??
+        (pendencia.senha.tipoSenha === true || pendencia.senha.tipoSenha === "PREFERENCIAL")
+    );
 
     return (
       <button

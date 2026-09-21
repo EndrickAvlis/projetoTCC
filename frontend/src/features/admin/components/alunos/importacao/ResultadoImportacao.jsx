@@ -1,6 +1,5 @@
-import * as React from "react";
 import * as FiIcons from "react-icons/fi";
-import Button from "../../../../../components/ui/button";
+import Button from "../../../../../components/ui/Button";
 
 const ResultadoImportacao = ({
   resultado,
@@ -126,9 +125,7 @@ const ResultadoImportacao = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-text-secondary">
           <div>
             Arquivo:{" "}
-            <strong className="text-text-primary">
-              {dadosArquivo?.nome}
-            </strong>
+            <strong className="text-text-primary">{dadosArquivo?.nome}</strong>
           </div>
           <div>
             Total de linhas lidas:{" "}

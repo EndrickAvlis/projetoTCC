@@ -1,5 +1,5 @@
 import { FiAlertCircle, FiClock, FiFileText } from "react-icons/fi";
-import Button from "../../../../components/ui/button";
+import Button from "../../../../components/ui/Button";
 import { DOCUMENTOS_TRIAGEM } from "../../constants/triagem";
 import { formatarHora, formatarSenha } from "../../../../utils/formatters";
 
@@ -34,7 +34,10 @@ export const DetalhePendencia = ({
   }
 
   const { senha, aluno, matricula, documentos = [], registradaEm } = pendencia;
-  const prioritaria = senha.tipoSenha;
+  const prioritaria = Boolean(
+    senha.prioritaria ??
+      (senha.tipoSenha === true || senha.tipoSenha === "PREFERENCIAL")
+  );
 
   return (
     <div
