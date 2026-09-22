@@ -18,7 +18,7 @@ export default class AuthClass extends BaseService {
     async login(dados){
         const usuario = await prisma.voluntario.findFirst({
             where: {
-                nomeVoluntario: dados.nomeVoluntario,
+                nomeVoluntario: dados.nome,
             },
         });
 
@@ -28,9 +28,16 @@ export default class AuthClass extends BaseService {
                 code: "CREDENCIAIS_INVALIDAS",
             });
         }
+
+        if(usuario.statusVoluntario !== "ativo"){
+            throw new AppError("Usuario desativado.", {
+                        status: 401,
+                        code: "USUARIO_DESATIVADO",
+                    });
+        }
         
         const senhaValida = await bcrypt.compare(
-            dados.senhaVoluntario,
+            dados.senha,
             usuario.senhaVoluntario,
         );
 
@@ -41,14 +48,25 @@ export default class AuthClass extends BaseService {
             });
         }
 
+        if (!verificarPermissaoTela(usuario.tipoVoluntario, dados.tela)){
+            throw new AppError("Acesso negado.", {
+                status: 401,
+                code: "CREDENCIAIS_INSUFICIENTES",
+            });
+        }
+
         const refreshPayload = {
-            "id": usuario.idVoluntario
+            "id": usuario.idVoluntario,
+            "tela": dados.tela,
+            "guiche": dados.guiche,
         }
 
         const accessPayload = {
             "id": usuario.idVoluntario,
             "nome": usuario.nomeVoluntario,
-            "tipo": usuario.tipoVoluntario
+            "tipo": usuario.tipoVoluntario,
+            "tela": dados.tela,
+            "guiche": dados.guiche
         }
 
         const refreshToken = jwt.sign(refreshPayload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
@@ -73,17 +91,26 @@ export default class AuthClass extends BaseService {
             },
         });
 
-        if(!usuario || usuario.statusVoluntario !== "ativo"){
-            throw new AppError("Usuario inexistente.", {
+        if (!usuario) {
+            throw new AppError("Credenciais inválidas.", {
+                status: 401,
+                code: "CREDENCIAIS_INVALIDAS",
+            });
+        }
+
+        if (usuario.statusVoluntario !== "ativo"){
+            throw new AppError("Usuario desativado.", {
                         status: 401,
-                        code: "TOKEN_INVALIDO",
+                        code: "USUARIO_DESATIVADO",
                     });
         }
 
         const accessPayload = {
             "id": usuario.idVoluntario,
             "nome": usuario.nomeVoluntario,
-            "tipo": usuario.tipoVoluntario
+            "tipo": usuario.tipoVoluntario,
+            "tela": payload.tela,
+            "guiche": payload.guiche
         }
 
         const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
@@ -93,4 +120,18 @@ export default class AuthClass extends BaseService {
         }
         
     }
+}
+
+function verificarPermissaoTela(tipoUsuario, tela){
+    const telasGerais = {
+        admin: ["triagem", "apm", "docs", "admin", "secretaria"],
+        supervisor: ["triagem", "apm", "docs", "admin", "secretaria"],
+        atendente: ["triagem", "apm", "docs"]
+    }
+
+    const telasPermitidas = telasGerais[tipoUsuario];
+
+    const temAcesso = telasPermitidas.includes(tela);
+
+    return temAcesso;
 }

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const loginSchema = z.object({
-    nomeVoluntario: z
+    nome: z
         .string()
         .trim()
         .min(1, "O nome do voluntário é obrigatório.")
@@ -11,10 +11,16 @@ const loginSchema = z.object({
                 .toLowerCase()
                 .replace(/\b\p{L}/gu, letra => letra.toUpperCase())
         ),
-    senhaVoluntario: z
+    senha: z
         .string()
         .min(8, "A senha deve ter no mínimo 8 caracteres.")
         .max(50, "A senha deve ter no máximo 50 caracteres."),
+    guiche: z
+        .string()
+        .trim()
+        .optional(),
+    tela: z
+        .enum(["triagem", "apm", "docs", "admin", "secretaria"]),
 })
 
 export const realizarLoginRequisicaoSchema = z.object({

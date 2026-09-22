@@ -15,7 +15,6 @@ authRoutes.post("/login",
 );
 
 authRoutes.post("/refresh",
-    validarRequisicao(ValidatorAuth.refreshTokenSchema),
     AuthController.renovarAccessToken,
 );
 

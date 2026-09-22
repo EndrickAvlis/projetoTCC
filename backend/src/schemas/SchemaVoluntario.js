@@ -2,7 +2,7 @@ import { z } from "zod";
 
 
 export const criarVoluntarioSchema = z.object({
-    nomeVoluntario: z
+    nome: z
         .string()
         .trim()
         .min(1, "O nome do voluntário é obrigatório.")
@@ -13,17 +13,17 @@ export const criarVoluntarioSchema = z.object({
                 .replace(/\b\p{L}/gu, letra => letra.toUpperCase())
         ),
 
-    senhaVoluntario: z
+    senha: z
         .string()
         .min(8, "A senha deve ter no mínimo 8 caracteres.")
         .max(50, "A senha deve ter no máximo 50 caracteres.")
         .optional(),
 
-    tipoVoluntario: z
+    tipo: z
         .enum(["admin", "supervisor", "atendente"])
         .default("atendente"),
 
-    statusVoluntario: z
+    status: z
         .string()
         .min(1, "O status é obrigatório.")
         .max(20)
@@ -31,14 +31,14 @@ export const criarVoluntarioSchema = z.object({
 });
 
 export const buscarVoluntarioSchema = z.object({
-    idVoluntario: z
+    id: z
         .coerce
         .number()
         .int("O ID deve ser um número inteiro.")
         .positive("O ID deve ser maior que zero.")
         .optional(),
 
-    nomeVoluntario: z
+    nome: z
         .string()
         .trim()
         .max(100, "O nome deve ter no máximo 100 caracteres.")
@@ -50,11 +50,11 @@ export const buscarVoluntarioSchema = z.object({
         .default("")
         .optional(),
 
-    tipoVoluntario: z
+    tipo: z
         .enum(["admin", "supervisor", "atendente"])
         .optional(),
 
-    statusVoluntario: z
+    status: z
         .string()
         .max(20)
         .default("ativo")
@@ -73,7 +73,7 @@ export const criarVoluntarioRequisicaoSchema = z.object({
 
 export const atualizarVoluntarioRequisicaoSchema = z.object({
     params: z.object({
-        idVoluntario: z.coerce
+        id: z.coerce
             .number()
             .int("O ID deve ser um número inteiro.")
             .positive("O ID deve ser maior que zero."),

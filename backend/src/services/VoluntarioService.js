@@ -16,25 +16,25 @@ export default class VoluntarioService extends BaseService {
                 statusVoluntario: true,
             },
             where:{
-                idVoluntario: busca.idVoluntario,
+                idVoluntario: busca.id,
                 nomeVoluntario:{
-                    contains: busca.nomeVoluntario,
+                    contains: busca.nome,
                     mode: "insensitive"
                 },
-                tipoVoluntario: busca.tipoVoluntario,
-                statusVoluntario: busca.statusVoluntario,
+                tipoVoluntario: busca.tipo,
+                statusVoluntario: busca.status,
             }
         });
     }
 
     async criar(dados){
-        const senhaHash = await bcrypt.hash(dados.senhaVoluntario, 12);
+        const senhaHash = await bcrypt.hash(dados.senha, 12);
         return await prisma.voluntario.create({
             data: {
-                nomeVoluntario: dados.nomeVoluntario,
+                nomeVoluntario: dados.nome,
                 senhaVoluntario: senhaHash,
-                tipoVoluntario: dados.tipoVoluntario,
-                statusVoluntario: dados.statusVoluntario,
+                tipoVoluntario: dados.tipo,
+                statusVoluntario: dados.status,
             },
         })
     }
