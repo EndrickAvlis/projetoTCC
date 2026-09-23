@@ -1,5 +1,4 @@
 import { Router } from "express";
-
 import * as produtosController from "../controllers/ProdutosController.js";
 
 import * as produtos from "../validators/ValidatorProdutos.js";

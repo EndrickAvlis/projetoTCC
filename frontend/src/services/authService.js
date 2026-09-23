@@ -1,14 +1,14 @@
-// Serviço de autenticação: concentra login, restauração e encerramento de sessão.
 import { requisitarApi } from "./apiClient";
 
-export const autenticar = (credenciais) =>
+export const logar = (credenciais) =>
   requisitarApi("/auth/login", {
     method: "POST",
-    autenticada: false,
-    body: JSON.stringify(credenciais),
+    body: credenciais,
   });
 
-export const obterSessaoAtual = () => requisitarApi("/auth/me");
+export const obterSessao = () => requisitarApi("/auth/me");
 
-export const encerrarSessao = () =>
-  requisitarApi("/auth/logout", { method: "POST" });
+export const deslogar = () =>
+  requisitarApi("/auth/logout", {
+    method: "POST",
+  });
