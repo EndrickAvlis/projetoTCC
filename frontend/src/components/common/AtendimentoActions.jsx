@@ -8,6 +8,7 @@ const AtendimentoActions = ({
   onFinalizar,
   textoFinalizar = "Finalizar Atendimento",
   textoIniciar = "Iniciar Atendimento",
+  variantFinalizar = "success"
 }) => {
   const {
     senhaAtual,
@@ -69,7 +70,7 @@ const AtendimentoActions = ({
         {textoIniciar}
       </Button>
       <Button
-        variant="success"
+        variant={variantFinalizar}
         className="w-75"
         disabled={!atendendo || !atendimentoAtual || !podeFinalizar}
         onClick={handleFinalizar}
