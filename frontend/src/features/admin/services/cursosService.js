@@ -18,29 +18,29 @@ export const listarCursosAdmin = ({ busca = "", arquivado = false } = {}) => {
 export const criarCurso = (dados) =>
   requisitarApi("/admin/cursos", {
     method: "POST",
-    body: JSON.stringify(dados),
+    body: dados,
   });
 
 export const atualizarNomeCurso = (cursoId, nome) =>
   requisitarApi(criarUrlCurso(cursoId), {
     method: "PATCH",
-    body: JSON.stringify({ nome }),
+    body: nome,
   });
 
 export const alterarArquivamentoCurso = (cursoId, arquivado) =>
   requisitarApi(`${criarUrlCurso(cursoId)}/arquivamento`, {
     method: "PATCH",
-    body: JSON.stringify({ arquivado }),
+    body: arquivado,
   });
 
 export const criarPeriodoCurso = (cursoId, dados) =>
   requisitarApi(`${criarUrlCurso(cursoId)}/periodos`, {
     method: "POST",
-    body: JSON.stringify(dados),
+    body: dados,
   });
 
 export const atualizarPeriodoCurso = (cursoId, periodoId, dados) =>
   requisitarApi(criarUrlPeriodo(cursoId, periodoId), {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: dados,
   });

@@ -6,7 +6,7 @@ const criarUrlProduto = (produtoId) =>
 const alterarStatusProduto = (produtoId, status) =>
   requisitarApi(`${criarUrlProduto(produtoId)}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status }),
+    body: status,
   });
 
 export const listarUniformesAdmin = ({
@@ -30,26 +30,26 @@ export const listarUniformesAdmin = ({
 export const criarUniforme = (dados) =>
   requisitarApi("/admin/produtos", {
     method: "POST",
-    body: JSON.stringify({
+    body: {
       ...dados,
       tipo: "uniforme",
-    }),
+    },
   });
 
 export const criarConfiguracaoArmario = (dados) =>
   requisitarApi("/admin/produtos", {
     method: "POST",
-    body: JSON.stringify({
+    body: {
       ...dados,
       nome: "Armário",
       tipo: "armario",
-    }),
+    },
   });
 
 export const atualizarUniforme = (produtoId, dados) =>
   requisitarApi(criarUrlProduto(produtoId), {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: dados,
   });
 
 export const alterarArquivamentoUniforme = (produtoId, arquivado) =>
@@ -58,27 +58,16 @@ export const alterarArquivamentoUniforme = (produtoId, arquivado) =>
 export const alterarEstoqueUniforme = (produtoId, alteracao) =>
   requisitarApi(`${criarUrlProduto(produtoId)}/alterarEstoque`, {
     method: "PATCH",
-    body: JSON.stringify(alteracao),
+    body: alteracao,
   });
 
-// export const buscarConfiguracaoArmario = () =>
-//   Promise.resolve({
-//     produto: {
-//       id: 20,
-//       nome: "Armário",
-//       preco: 120,
-//       quantidade: 18,
-//       tipo: "armario",
-//       status: "disponivel",
-//     },
-//   });
 export const buscarConfiguracaoArmario = () =>
   requisitarApi("/admin/produtos/armario");
 
 export const atualizarConfiguracaoArmario = (produtoId, dados) =>
   requisitarApi(criarUrlProduto(produtoId), {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: dados,
   });
 
 export const alterarDisponibilidadeArmario = (produtoId, disponivel) =>

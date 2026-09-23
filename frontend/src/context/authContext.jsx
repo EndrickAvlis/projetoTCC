@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as authService from "../services/authService";
 
-const AuthContext = React.createContext(null);
+export const AuthContext = React.createContext(null);
 
 const telasGerais = {
   admin: ["triagem", "apm", "docs", "admin", "secretaria"],

@@ -9,14 +9,14 @@ export const buscarAlunos = async (nome, limite = 10) => {
 export const criarAluno = async (dados) => {
   return requisitarApi("/alunos", {
     method: "POST",
-    body: JSON.stringify(dados),
+    body: dados,
   });
 };
 
 export const salvarDados = async (senhaId, payload) => {
   return requisitarApi(`/senhas/${encodeURIComponent(senhaId)}/aluno`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 };
 
@@ -27,7 +27,7 @@ export const recuperarAtendimentoAtual = async () => {
 export const iniciarAtendimento = async (senhaId) => {
   return requisitarApi("/atendimentos", {
     method: "POST",
-    body: JSON.stringify({ senhaId }),
+    body: senhaId,
   });
 };
 
@@ -36,7 +36,7 @@ export const rechamarSenha = async (senhaId) => {
     `/filas/chamadas/${encodeURIComponent(senhaId)}/rechamadas`,
     {
       method: "POST",
-      body: JSON.stringify({ etapa: "triagem" }),
+      body: { etapa: "triagem" },
     },
   );
 };
@@ -55,7 +55,7 @@ export const salvarPendencia = async (atendimentoId, documentos) => {
     `/atendimentos/${encodeURIComponent(atendimentoId)}/pendencias`,
     {
       method: "POST",
-      body: JSON.stringify({ documentos }),
+      body: documentos,
     },
   );
 };
@@ -73,7 +73,7 @@ export const retomarPendencia = async (senhaId) => {
     `/filas/pendencias/${encodeURIComponent(senhaId)}/retomadas`,
     {
       method: "POST",
-      body: JSON.stringify({ etapa: "triagem" }),
+      body: { etapa: "triagem" },
     },
   );
 };
@@ -81,7 +81,7 @@ export const retomarPendencia = async (senhaId) => {
 export const alterarPrioridadeSenha = async (senhaId, tipoSenha) => {
   return requisitarApi(`/senhas/${encodeURIComponent(senhaId)}/prioridade`, {
     method: "PATCH",
-    body: JSON.stringify({ tipoSenha }),
+    body: tipoSenha,
   });
 };
 
