@@ -1,7 +1,7 @@
 import { Router } from "express";
-import * as cursoController from "../controllers/CursoController.js";
+import * as cursoController from "../controllers/cursoController.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
-import * as cursos from "../schemas/SchemaCursos.js";
+import * as cursos from "../validators/ValidatorCursos.js";
 
 const cursoRoutes = Router();
 

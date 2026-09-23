@@ -1,8 +1,8 @@
-// Rotas HTTP relacionadas à fila de atendimento.
+// Rotas HTTP relacionadas aos voluntários.
 import { Router } from "express";
 import * as VoluntarioController from "../controllers/VoluntarioController.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
-import * as ValidatorVoluntario from "../schemas/SchemaVoluntario.js";
+import * as ValidatorVoluntario from "../validators/ValidatorVoluntario.js";
 import * as auth from "../middlewares/authMiddleware.js";
 
 const voluntarioRoutes = Router();
@@ -21,7 +21,7 @@ voluntarioRoutes.post(
   VoluntarioController.criarVoluntario,
 );
 voluntarioRoutes.patch(
-  "/:idVoluntario",
+  "/:id",
   validarRequisicao(ValidatorVoluntario.atualizarVoluntarioRequisicaoSchema),
   VoluntarioController.atualizarVoluntario,
 );

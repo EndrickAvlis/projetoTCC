@@ -1,7 +1,7 @@
 import { Router } from "express";
-import * as senhaController from "../controllers/SenhaController.js";
+import * as senhaController from "../controllers/senhaController.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
-import { alterarPrioridadeSenhaSchema } from "../schemas/SchemaSenha.js";
+import { alterarPrioridadeSenhaSchema } from "../validators/ValidatorSenha.js";
 
 const senhaRouter = Router();
 

@@ -1,8 +1,8 @@
 // Rotas HTTP relacionadas à fila de atendimento.
 import { Router } from "express";
-import * as FilaController from "../controllers/FilaController.js";
+import * as FilaController from "../controllers/filaController.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
-import * as ValidatorFila from "../schemas/SchemaFila.js";
+import * as ValidatorFila from "../validators/ValidatorFila.js";
 
 const filaRoutes = Router();
 
