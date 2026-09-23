@@ -1,7 +1,9 @@
 import * as React from "react";
 import { listarCursosAdmin } from "../services/CursosService";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useCursos = ({ busca = "", arquivado = false } = {}) => {
+  const buscaDebounced = useDebounce(busca, 300);
   const [cursos, setCursos] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
@@ -13,7 +15,7 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
 
     try {
       const resposta = await listarCursosAdmin({
-        busca,
+        busca: buscaDebounced,
         arquivado,
       });
       setCursos(resposta.cursos ?? []);
@@ -25,10 +27,10 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
     } finally {
       setCarregando(false);
     }
-  }, [busca, arquivado]);
+  }, [buscaDebounced, arquivado]);
 
   React.useEffect(() => {
-    carregarCursos();
+    void Promise.resolve().then(carregarCursos);
   }, [carregarCursos]);
 
   return {

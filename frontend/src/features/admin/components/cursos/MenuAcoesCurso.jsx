@@ -79,7 +79,7 @@ const MenuAcoesCurso = ({
         createPortal(
           <div
             ref={menuRef}
-            className="fixed z-[60] w-52 rounded-lg border border-border bg-surface py-1 text-left shadow-lg"
+            className="fixed z-60 w-52 rounded-lg border border-border bg-surface py-1 text-left shadow-lg"
             style={{
               top: posicao.top,
               right: posicao.right,

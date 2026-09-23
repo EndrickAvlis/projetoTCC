@@ -4,48 +4,50 @@ import { forwardRef } from 'react';
 const Button = forwardRef(({
     // VARIAÇÕES
     variant = 'primary',     // primary | secondary | danger | success | outline
-    
+
     // TAMANHOS
     size = 'md',            // sm | md | lg
-    
+
     // ESTADOS
     disabled = false,
     loading = false,
-    
+
     // TIPO
     type = 'button',        // button | submit | reset
-    
+
     // ÍCONES
     leftIcon = null,
     rightIcon = null,
-    
+
     // FUNÇÕES
     onClick = null,
-    
+
     // OUTROS
     className = '',
     children,
     ...props
 }, ref) => {
-    
+
     // ===== ESTILOS POR VARIANTE =====
-    const variants = {
+const variants = {
         primary: 'bg-primary text-text-inverse hover:bg-primary-hover active:bg-primary-active',
-        secondary: 'bg-surface-muted text-text-primary hover:bg-disabled-bg active:bg-border',
+        secondary: 'bg-surface-muted text-text-secondary border border-border hover:bg-disabled-bg active:bg-border-strong',
         danger: 'bg-surface text-status-danger border border-status-danger hover:bg-status-danger-bg active:bg-status-danger-bg',
         success: 'bg-status-success text-text-inverse hover:bg-status-success active:bg-status-success',
         outline: 'bg-transparent text-primary border border-primary hover:bg-primary hover:text-text-inverse active:bg-primary-active',
+        warning: 'bg-status-warning text-text-inverse hover:bg-status-warning-hover active:bg-status-warning-hover',
+        warning_outline: 'bg-surface text-status-warning border border-status-warning hover:bg-status-warning-bg active:bg-status-warning-bg',
     };
 
-    // ===== ESTILOS POR TAMANHO =====
-    const sizes = {
-        sm: 'px-3 py-1.5 text-sm',
-        md: 'px-4 py-2 text-base',
-        lg: 'px-6 py-3 text-lg',
-    };
+// ===== ESTILOS POR TAMANHO =====
+const sizes = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-base',
+    lg: 'px-6 py-3 text-lg',
+};
 
-    // ===== BASE =====
-    const baseStyles = `
+// ===== BASE =====
+const baseStyles = `
         inline-flex items-center justify-center
         font-medium rounded-btn
         transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-out
@@ -57,40 +59,40 @@ const Button = forwardRef(({
         ${className}
     `;
 
-    // ===== FUNÇÃO DE CLIQUE =====
-    const handleClick = (e) => {
-        if (disabled || loading) return;
-        if (onClick) onClick(e);
-    };
+// ===== FUNÇÃO DE CLIQUE =====
+const handleClick = (e) => {
+    if (disabled || loading) return;
+    if (onClick) onClick(e);
+};
 
-    // ===== RENDER =====
-    return (
-        <button
-            ref={ref}
-            type={type}
-            disabled={disabled || loading}
-            onClick={handleClick}
-            className={baseStyles}
-            {...props}
-        >
-            {leftIcon && !loading && (
-                <span className="mr-2">{leftIcon}</span>
-            )}
+// ===== RENDER =====
+return (
+    <button
+        ref={ref}
+        type={type}
+        disabled={disabled || loading}
+        onClick={handleClick}
+        className={baseStyles}
+        {...props}
+    >
+        {leftIcon && !loading && (
+            <span className="mr-2">{leftIcon}</span>
+        )}
 
-            {loading && (
-                <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-            )}
+        {loading && (
+            <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+        )}
 
-            <span>{children}</span>
+        <span>{children}</span>
 
-            {rightIcon && !loading && (
-                <span className="ml-2">{rightIcon}</span>
-            )}
-        </button>
-    );
+        {rightIcon && !loading && (
+            <span className="ml-2">{rightIcon}</span>
+        )}
+    </button>
+);
 });
 
 Button.displayName = 'Button';

@@ -428,8 +428,9 @@ Uniformes e armário continuam sendo registros da entidade `Produto`. O campo
 
 Existe somente um produto do tipo `armario`. Essa unicidade é uma regra do service
 do backend, pois o schema atual não possui uma restrição de unicidade para
-`tipoProduto`. O registro único de armário deve ser criado previamente no banco ou
-em um seed. A tela administrativa não oferece cadastro de um segundo armário.
+`tipoProduto`. A tela administrativa pode criar a configuração inicial; o service
+deve impedir a criação de qualquer segundo armário, inclusive em chamadas
+concorrentes.
 
 O frontend usa exclusivamente o prefixo `/admin/produtos`. O backend deverá montar
 as rotas com:
@@ -440,6 +441,10 @@ app.use("/admin/produtos", produtosRoutes);
 
 A rota fixa `/armario` deve ser declarada antes de `/:produtoId`, para que o Express
 não interprete a palavra `armario` como um identificador de produto.
+
+Todas as rotas deste capítulo são administrativas. O backend deve exigir usuário
+autenticado com permissão administrativa antes de chamar controller ou service. Em
+ausência de autenticação deve responder `401`; sem a permissão necessária, `403`.
 
 #### Mapeamento entre API e Prisma
 
@@ -475,7 +480,7 @@ Formato padrão de um produto enviado pelo backend:
 | Método e rota | Função do frontend | Responsabilidade do backend |
 |---|---|---|
 | `GET /admin/produtos` | `listarUniformesAdmin` | Lista uniformes usando os filtros da query |
-| `POST /admin/produtos` | `criarUniforme` | Cadastra um novo uniforme ativo |
+| `POST /admin/produtos` | `criarUniforme` ou `criarConfiguracaoArmario` | Cadastra um uniforme ativo ou a única configuração de armário indisponível |
 | `PATCH /admin/produtos/:produtoId` | `atualizarUniforme` ou `atualizarConfiguracaoArmario` | Atualiza os dados permitidos conforme o tipo |
 | `PATCH /admin/produtos/:produtoId/status` | função interna `alterarStatusProduto` | Altera arquivamento do uniforme ou disponibilidade do armário |
 | `PATCH /admin/produtos/:produtoId/alterarEstoque` | `alterarEstoqueUniforme` | Adiciona, diminui ou corrige o estoque do uniforme |
@@ -527,7 +532,7 @@ Quando não houver resultados, o backend deve responder `200 OK` com:
 O backend deve validar `tipo` e `arquivado`, remover espaços da busca e ordenar os
 uniformes de maneira estável pelo nome/tamanho.
 
-#### `POST /admin/produtos` — cadastrar uniforme
+#### `POST /admin/produtos` — cadastrar produto
 
 Corpo enviado pelo frontend:
 
@@ -550,6 +555,25 @@ Regras do backend:
 - impedir dois uniformes com o mesmo tamanho/nome;
 - criar o produto com `statusItem` igual a `ativo`.
 
+Para criar a configuração inicial do armário, o frontend envia:
+
+```json
+{
+  "nome": "Armário",
+  "preco": 120,
+  "quantidade": 18,
+  "tipo": "armario"
+}
+```
+
+Para `tipo` igual a `armario`, o backend deve:
+
+- validar preço decimal maior que zero e quantidade inteira maior ou igual a zero;
+- fixar ou validar o nome como `Armário`;
+- criar o produto com `statusItem` igual a `indisponivel`;
+- impedir a criação de um segundo produto do tipo `armario`;
+- responder `409` com o código `ARMARIO_JA_CONFIGURADO` se a configuração já existir.
+
 Resposta `201 Created`:
 
 ```json
@@ -561,6 +585,21 @@ Resposta `201 Created`:
     "quantidade": 20,
     "tipo": "uniforme",
     "status": "ativo"
+  }
+}
+```
+
+Quando o produto criado for o armário, a resposta deve seguir o mesmo formato:
+
+```json
+{
+  "produto": {
+    "id": 20,
+    "nome": "Armário",
+    "preco": 120,
+    "quantidade": 18,
+    "tipo": "armario",
+    "status": "indisponivel"
   }
 }
 ```
@@ -624,6 +663,20 @@ Corpo enviado pelo frontend:
 }
 ```
 
+Exemplos válidos para armário:
+
+```json
+{
+  "status": "disponivel"
+}
+```
+
+```json
+{
+  "status": "indisponivel"
+}
+```
+
 Valores permitidos de acordo com o tipo encontrado no banco:
 
 | Tipo do produto | Status permitidos | Significado |
@@ -677,6 +730,8 @@ Corpos aceitos:
 
 Regras do backend:
 
+- localizar o produto e exigir que seu tipo seja `uniforme`; para armário, responder
+  `422` com `OPERACAO_ESTOQUE_NAO_PERMITIDA`;
 - aceitar somente `adicionar`, `diminuir` ou `corrigir`;
 - em `adicionar` e `diminuir`, exigir quantidade inteira maior que zero;
 - em `corrigir`, interpretar quantidade como o novo estoque total e aceitar zero;
@@ -757,9 +812,10 @@ Erros previstos:
 | `409` | `UNIFORME_JA_CADASTRADO` | Já existe uniforme com o mesmo nome/tamanho |
 | `409` | `ARMARIO_JA_CONFIGURADO` | Tentativa de criar um segundo armário |
 | `409` | `ESTOQUE_INSUFICIENTE` | A diminuição deixaria o estoque negativo |
+| `422` | `OPERACAO_ESTOQUE_NAO_PERMITIDA` | Tentativa de movimentar estoque de um produto que não é uniforme |
 | `422` | `STATUS_PRODUTO_INVALIDO` | Status incompatível com o tipo do produto |
 
-#### Responsabilidades para a futura implementação do backend
+#### Implementação obrigatória do backend
 
 1. Montar `produtosRoutes` em `/admin/produtos`.
 2. Declarar `GET /armario` antes das rotas com `/:produtoId`.
@@ -770,6 +826,45 @@ Erros previstos:
 7. Garantir operações de estoque atômicas e impedir quantidades negativas.
 8. Não criar novas tabelas para cumprir este contrato.
 9. Manter os formatos de sucesso e erro documentados nesta seção.
+
+#### Estrutura recomendada de rotas, controller e service
+
+As rotas devem ser registradas nesta ordem, mantendo `/armario` antes de qualquer
+rota dinâmica com `:produtoId`:
+
+```js
+router.get("/", autenticarAdmin, ProdutosController.listar);
+router.post("/", autenticarAdmin, ProdutosController.criar);
+router.get("/armario", autenticarAdmin, ProdutosController.buscarArmario);
+router.patch("/:produtoId", autenticarAdmin, ProdutosController.atualizar);
+router.patch("/:produtoId/status", autenticarAdmin, ProdutosController.alterarStatus);
+router.patch("/:produtoId/alterarEstoque", autenticarAdmin, ProdutosController.alterarEstoque);
+```
+
+O controller deve somente ler `params`, `query` e `body`, executar o validador,
+chamar o service e devolver JSON. Regras como status permitido, unicidade do
+armário, comparação de estoque e atualização atômica pertencem ao `ProdutoService`.
+
+Todo produto retornado pelo service deve passar por um único mapper público antes da
+resposta. Esse mapper converte `idProduto`, `nomeProduto`, `precoProduto`,
+`quantidadeProduto`, `tipoProduto` e `statusItem` para o formato `id`, `nome`,
+`preco`, `quantidade`, `tipo` e `status` descrito nesta seção. `Decimal` deve ser
+convertido para `number`, nunca serializado como objeto ou string.
+
+Para criação do armário, a verificação de inexistência e a inserção devem ocorrer
+na mesma transação. Caso o banco permita concorrência entre duas requisições, o
+service deve revalidar a unicidade dentro da transação e traduzir qualquer conflito
+para `409 ARMARIO_JA_CONFIGURADO`.
+
+Para `alterarEstoque`, a leitura da quantidade, a validação e a atualização devem
+ocorrer na mesma transação. Uma redução nunca pode persistir quantidade negativa.
+O retorno deve conter o produto já atualizado, e não a quantidade anterior.
+
+Enquanto o frontend usar mock em `buscarConfiguracaoArmario`, ele poderá exibir a
+interface sem backend. Na integração real, essa função deve voltar a requisitar
+`GET /admin/produtos/armario`; o backend deve então devolver `404
+ARMARIO_NAO_CONFIGURADO` quando a configuração ainda não existir, permitindo ao
+frontend exibir o botão de criação inicial.
 
 ### Compras — `/compras`
 
