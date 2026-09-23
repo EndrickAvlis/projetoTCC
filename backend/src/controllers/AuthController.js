@@ -24,7 +24,7 @@ export const login = async (req, res, next) => {
                 maxAge: 7 * 24 * 60 * 60 * 1000     // Tempo de vida: 7 dias (em milissegundos)
             });
 
-        res.status(200).send();
+        res.status(200).json(token.usuario);
     } catch (erro){
         return next(erro);
     }
@@ -47,6 +47,10 @@ export const renovarAccessToken = async (req, res, next) => {
         return next(erro)
     }
 }
+
+export const me = async (req, res) => {
+    res.status(200).json(req.usuario);
+};
 
 export const logout = async (req, res, next) => {
     res.clearCookie('accessToken', {

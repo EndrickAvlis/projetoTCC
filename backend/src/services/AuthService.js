@@ -71,7 +71,7 @@ export default class AuthClass extends BaseService {
 
         const refreshToken = jwt.sign(refreshPayload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
         const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
-        return { refreshToken, accessToken };
+        return { refreshToken, accessToken, usuario: accessPayload };
     }
 
     async renovarAccessToken(refreshToken) {
@@ -123,15 +123,11 @@ export default class AuthClass extends BaseService {
 }
 
 function verificarPermissaoTela(tipoUsuario, tela){
-    const telasGerais = {
+    const telasPermitidas = {
         admin: ["triagem", "apm", "docs", "admin", "secretaria"],
         supervisor: ["triagem", "apm", "docs", "admin", "secretaria"],
         atendente: ["triagem", "apm", "docs"]
-    }
+    };
 
-    const telasPermitidas = telasGerais[tipoUsuario];
-
-    const temAcesso = telasPermitidas.includes(tela);
-
-    return temAcesso;
+    return telasPermitidas[tipoUsuario]?.includes(tela) ?? false;
 }

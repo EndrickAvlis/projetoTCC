@@ -6,9 +6,6 @@ import * as auth from "../middlewares/authMiddleware.js";
 
 const authRoutes = Router();
 
-//authRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor"]));
-
-
 authRoutes.post("/login",
     validarRequisicao(ValidatorAuth.realizarLoginRequisicaoSchema),
     AuthController.login,
@@ -17,6 +14,9 @@ authRoutes.post("/login",
 authRoutes.post("/refresh",
     AuthController.renovarAccessToken,
 );
+
+//authRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor"]));
+authRoutes.get("/me", auth.accessValidator, AuthController.me);
 
 authRoutes.post("/logout",
     AuthController.logout,
