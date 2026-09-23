@@ -10,4 +10,5 @@ export const PERIODOS_CURSO = [
   { value: "tarde", label: "Tarde" },
   { value: "noite", label: "Noite" },
   { value: "integral", label: "Integral" },
+  { value: "online", label: "Online" },
 ];
