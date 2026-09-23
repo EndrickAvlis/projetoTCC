@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as alunoController from "../controllers/alunoController.js";
-import * as alunos from "../validators/ValidatorAlunos.js";
+import * as alunos from "../schemas/SchemaAlunos.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
 
 const alunoRoutes = Router();
