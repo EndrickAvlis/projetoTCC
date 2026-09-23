@@ -4,7 +4,7 @@ import { AtendimentoProvider } from "./context/atendimentoContext";
 import { AuthProvider } from "./context/authContext";
 import RotaProtegida from "./components/routing/RotaProtegida";
 import LoginPage from "./pages/LoginPage";
-import TriagemPage from "./pages/TriagemPage";
+import TriagemPage from "./features/postos/pages/triagemPage";
 import ApmPage from "./pages/ApmPage";
 import DocsPage from "./pages/DocsPage";
 import AcessoNegadoPage from "./pages/AcessoNegadoPage";
@@ -27,12 +27,40 @@ function App() {
         <AtendimentoProvider>
           <ReactRouter.Routes>
             <ReactRouter.Route path="/" element={<LoginPage />} />
-            <ReactRouter.Route path="/triagem" element={<TriagemPage />} />
-            <ReactRouter.Route path="/apm" element={<ApmPage />} />
-            <ReactRouter.Route path="/docs" element={<DocsPage />} />
+            <ReactRouter.Route
+              path="/triagem"
+              element={
+                //<RotaProtegida tela="triagem">
+                  <TriagemPage />
+                //</RotaProtegida>
+              }
+            />
+            <ReactRouter.Route
+              path="/apm"
+              element={
+                //<RotaProtegida tela="apm">
+                  <ApmPage />
+                //</RotaProtegida>
+              }
+            />
+            <ReactRouter.Route
+              path="/docs"
+              element={
+                //<RotaProtegida tela="docs">
+                  <DocsPage />
+                //</RotaProtegida>
+              }
+            />
             <ReactRouter.Route path="/emitir-senha" element={<EmitirSenhaPage />} />
             <ReactRouter.Route path="/acesso-negado" element={<AcessoNegadoPage />} />
-            <ReactRouter.Route path="admin" element={<AdminLayout />}>
+            <ReactRouter.Route
+              path="admin"
+              element={
+                //<RotaProtegida tela="admin">
+                  <AdminLayout />
+                //</RotaProtegida>
+              }
+            >
               <ReactRouter.Route index element={<ReactRouter.Navigate to="dashboard" replace />} />
               <ReactRouter.Route path="dashboard" element={<DashboardPage />} />
               <ReactRouter.Route path="filas" element={<FilasPage />} />

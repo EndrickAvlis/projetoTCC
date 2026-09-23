@@ -83,10 +83,6 @@ const MenuAcoesUniforme = ({
         };
     }, [aberto, onFechar]);
 
-    const movimentarEstoque = () => {
-        onFechar();
-        onMovimentarEstoque(uniforme);
-    };
     const executarAcao = (acao) => {
         onFechar();
         acao(uniforme);
