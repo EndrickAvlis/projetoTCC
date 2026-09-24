@@ -2,7 +2,7 @@
 import { MdLogout } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { useAtendimento } from "../../hooks/useAtendimento";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../context/authContext";
 import Button from "../ui/Button";
 
 const Header = () => {

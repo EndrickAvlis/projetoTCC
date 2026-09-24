@@ -11,7 +11,7 @@ const TELAS_GERAIS = {
 
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = React.useState(null);
-  const [carregando, setCarregando] = React.useState(true);
+  const [validandoSessao, setValidandoSessao] = React.useState(true);
 
   React.useEffect(() => {
     let ativo = true;
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
       } catch {
         if (ativo) setUsuario(null);
       } finally {
-        if (ativo) setCarregando(false);
+        if (ativo) setValidandoSessao(false);
       }
     }
 
@@ -67,12 +67,12 @@ export const AuthProvider = ({ children }) => {
     () => ({
       usuario,
       estaAutenticado: Boolean(usuario),
-      carregando,
+      validandoSessao,
       login,
       logout,
       temAcessoATela,
     }),
-    [usuario, carregando, login, logout, temAcessoATela],
+    [usuario, validandoSessao, login, logout, temAcessoATela],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

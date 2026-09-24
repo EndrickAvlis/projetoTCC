@@ -1,6 +1,6 @@
 import * as AdminNavigation from "../constants/adminNavigation";
-import AdminLogoutButton from "../components/admin/adminLogoutButton";
-import AdminNavItem from "../components/admin/AdminNavItem";
+import AdminLogoutButton from "./adminLogoutButton";
+import AdminNavItem from "./AdminNavItem";
 import * as FiIcons from "react-icons/fi";
 
 const AdminSideBar = ({ collapsed, onToggle }) => {

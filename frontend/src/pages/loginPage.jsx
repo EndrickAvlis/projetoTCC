@@ -5,8 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
-import { useAuth } from "../hooks/useAuth";
-import { autenticar } from "../services/authService";
+import { useAuth } from "../context/authContext";
 
 const TELAS = [
   { value: "admin", label: "Administrador" },
@@ -19,18 +18,18 @@ const TELAS = [
 const TELAS_COM_GUICHE = ["triagem", "apm", "docs"];
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
+  const [nome, setNome] = useState("");
   const [senha, setSenha] = useState("");
   const [tela, setTela] = useState("");
   const [guiche, setGuiche] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
-  const { registrarSessao } = useAuth();
+  const { login } = useAuth();
 
   const exigeGuiche = TELAS_COM_GUICHE.includes(tela);
   const formularioInvalido =
-    !username || !senha || !tela || (exigeGuiche && !guiche);
+    !nome || !senha || !tela || (exigeGuiche && !guiche);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -38,14 +37,13 @@ const LoginPage = () => {
     try {
       setCarregando(true);
       setErro("");
-      const resposta = await autenticar({
-        username,
+      const resposta = await login({
+        nome,
         senha,
         tela,
-        guiche: exigeGuiche ? guiche : null,
+        guiche: exigeGuiche ? guiche : undefined,
       });
-      const sessao = registrarSessao(resposta);
-      navigate(`/${sessao.telaAtual}`, { replace: true });
+      navigate(`/${tela}`, { replace: true });
     } catch (falha) {
       setErro(falha.message);
     } finally {
@@ -71,8 +69,8 @@ const LoginPage = () => {
             label="Nome de usuário"
             size="md"
             placeholder="Digite seu usuário"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            value={nome}
+            onChange={(event) => setNome(event.target.value)}
             icon={<FaIcons.FaUser className="text-primary" />}
             iconPosition="left"
           />

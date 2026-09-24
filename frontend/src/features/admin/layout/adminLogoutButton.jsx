@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useAtendimento } from "../../../../hooks/useAtendimento";
-import { useAuth } from "../../../../hooks/useAuth";
-import { encerrarSessao } from "../../../../services/authService";
+import { useAtendimento } from "../../../hooks/useAtendimento";
+import { useAuth } from "../../../context/authContext";
+
 
 const AdminLogoutButton = ({ collapsed }) => {
   const [loggingOut, setLoggingOut] = useState(false);
@@ -17,12 +17,11 @@ const AdminLogoutButton = ({ collapsed }) => {
     setLoggingOut(true);
 
     try {
-      await encerrarSessao();
+      await logout();
     } catch {
       // A sessão local deve ser removida mesmo se a API não responder.
     } finally {
       limparAtendimentoExibido();
-      logout();
       navigate("/", { replace: true });
     }
   };

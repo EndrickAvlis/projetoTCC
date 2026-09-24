@@ -18,7 +18,8 @@ const loginSchema = z.object({
     guiche: z
         .string()
         .trim()
-        .optional(),
+        .optional()
+        .nullable(),
     tela: z
         .enum(["triagem", "apm", "docs", "admin", "secretaria"]),
 })

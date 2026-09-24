@@ -936,3 +936,31 @@ GET /relatorios/financeiro?cursoId=2&ano=3&voluntarioId=5&inicio=2026-08-01&fim=
 Para atualização em menos de 500 ms, usar WebSocket ou Server-Sent Events. A API
 HTTP pode carregar o estado inicial, mas não deve ser consultada a cada poucos
 milissegundos.
+
+
+
+Parte 1: Como fazer a separação Admin vs Supervisor na tela de Usuários?
+A regra básica de segurança web é: o frontend cuida da usabilidade (UX), mas o backend é o dono da verdade (Segurança).
+
+1. No Backend (Onde a regra de segurança DEVE existir):
+Você nunca deve enviar todos os administradores e supervisores no JSON para o frontend e simplesmente fazer um filter visual no React. Se fizesse isso, qualquer supervisor experiente poderia abrir a aba Network (F12) do navegador e ver os dados de todos os administradores da escola.
+
+No GET /voluntarios:
+O backend lê o token de quem está chamando (req.usuario.tipo).
+Se for admin: faz a busca normal no banco (prisma.voluntario.findMany()) trazendo todos os usuários.
+Se for supervisor: o Prisma adiciona a condição automaticamente:
+js
+where: { tipoVoluntario: 'atendente' }
+Assim, para o supervisor, a API só entrega atendentes. Não há risco de vazamento de dados.
+Nas ações de Adicionar/Editar/Arquivar (POST, PUT, DELETE /voluntarios):
+Se o req.usuario.tipo === "supervisor" tentar alterar ou cadastrar alguém que não seja "atendente", o backend bloqueia com status 403 Forbidden.
+2. No Frontend (Na tela de usuários):
+Como o backend já entrega a lista filtrada, a tela de usuários fica simples e sem lógica pesada:
+
+A rota /admin/usuarios é permitida tanto para admin quanto para supervisor (ambos têm permissão de acesso ao módulo admin).
+Dentro da tela, para as ações visuais:
+jsx
+const { usuario } = useAuth();
+const ehAdmin = usuario?.tipo === "admin";
+No <Select> de "Tipo de Usuário" ao criar/editar: se ehAdmin for falso, exibe apenas a opção "Atendente".
+Se houver algum botão exclusivo (ex: "Excluir Usuário"), basta renderizar: {ehAdmin && <BotaoExcluir />}.

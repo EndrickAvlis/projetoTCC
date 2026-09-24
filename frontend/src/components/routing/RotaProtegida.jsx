@@ -1,8 +1,8 @@
-// Protege uma rota usando a sessão e as telas permitidas pelo backend.
+// src/components/routing/RotaProtegida.jsx
 import * as ReactRouter from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../context/authContext";
 
-const RotaProtegida = ({ tela, children }) => {
+const RotaProtegida = ({ tela }) => {
   const { estaAutenticado, validandoSessao, temAcessoATela } = useAuth();
   const location = ReactRouter.useLocation();
 
@@ -14,15 +14,18 @@ const RotaProtegida = ({ tela, children }) => {
     );
   }
 
+  // Não está logado -> redireciona para o Login
   if (!estaAutenticado) {
     return <ReactRouter.Navigate to="/" replace state={{ origem: location.pathname }} />;
   }
 
-  if (!temAcessoATela(tela)) {
+  // Se a rota exige uma tela específica e o usuário não tem permissão -> Acesso Negado
+  if (tela && !temAcessoATela(tela)) {
     return <ReactRouter.Navigate to="/acesso-negado" replace />;
   }
 
-  return children;
+  // Autorizado -> renderiza a rota filha correspondente
+  return <ReactRouter.Outlet />;
 };
 
 export default RotaProtegida;
