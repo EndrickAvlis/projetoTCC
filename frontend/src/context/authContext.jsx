@@ -3,7 +3,7 @@ import * as authService from "../services/authService";
 
 export const AuthContext = React.createContext(null);
 
-const telasGerais = {
+const TELAS_GERAIS = {
   admin: ["triagem", "apm", "docs", "admin", "secretaria"],
   supervisor: ["triagem", "apm", "docs", "admin", "secretaria"],
   atendente: ["triagem", "apm", "docs"],
@@ -16,23 +16,18 @@ export const AuthProvider = ({ children }) => {
   React.useEffect(() => {
     let ativo = true;
 
-    authService
-      .obterSessao()
-      .then((dados) => {
-        if (ativo) {
-          setUsuario(dados);
-        }
-      })
-      .catch(() => {
-        if (ativo) {
-          setUsuario(null);
-        }
-      })
-      .finally(() => {
-        if (ativo) {
-          setCarregando(false);
-        }
-      });
+    const carregarSessao = async () => {
+      try {
+        const dados = await authService.obterSessao();
+        if (ativo) setUsuario(dados);
+      } catch {
+        if (ativo) setUsuario(null);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    carregarSessao();
 
     return () => {
       ativo = false;
@@ -40,14 +35,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   React.useEffect(() => {
-    const tratarNaoAutorizado = () => {
-      setUsuario(null);
-    };
+    const tratarNaoAutorizado = () => setUsuario(null);
 
     window.addEventListener("auth:unauthorized", tratarNaoAutorizado);
-    return () => {
-      window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
-    };
+    return () => window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
   }, []);
 
   const login = React.useCallback(async (credenciais) => {
@@ -67,9 +58,7 @@ export const AuthProvider = ({ children }) => {
   const temAcessoATela = React.useCallback(
     (tela) => {
       if (!usuario) return false;
-      
-      const telasPermitidas = telasGerais[usuario.tipo] ?? [];
-      return telasPermitidas.includes(tela);
+      return (TELAS_GERAIS[usuario.tipo] ?? []).includes(tela);
     },
     [usuario],
   );
