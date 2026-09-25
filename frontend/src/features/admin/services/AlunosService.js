@@ -29,7 +29,7 @@ export const consultarAluno = (alunoId) => {
 export const atualizarDadosAluno = (alunoId, dados) => {
   return requisitarApi(criarUrlAluno(alunoId), {
     method: "PATCH",
-    body: JSON.stringify(dados),
+    body: dados,
   });
 };
 
@@ -39,7 +39,7 @@ export const alterarStatusAluno = (
 ) => {
   return requisitarApi(`${criarUrlAluno(alunoId)}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status, statusMatricula }),
+    body: { status, statusMatricula },
   });
 };
 
@@ -51,11 +51,11 @@ export const importarAlunos = ({
 }) => {
   return requisitarApi("/admin/alunos/importar", {
     method: "POST",
-    body: JSON.stringify({
+    body: {
       anoProcesso,
       semestreProcesso,
       mapeamentoCursos,
       candidatos,
-    }),
+    },
   });
 };

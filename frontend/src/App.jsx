@@ -3,7 +3,7 @@ import * as ReactRouter from "react-router-dom";
 import { AtendimentoProvider } from "./context/atendimentoContext";
 import { AuthProvider } from "./context/authContext";
 import RotaProtegida from "./components/routing/RotaProtegida";
-import LoginPage from "./pages/LoginPage";
+import LoginPage from "./pages/loginPage";
 import TriagemPage from "./features/postos/pages/triagemPage";
 import ApmPage from "./pages/ApmPage";
 import DocsPage from "./pages/DocsPage";
@@ -26,62 +26,52 @@ function App() {
       <AuthProvider>
         <AtendimentoProvider>
           <ReactRouter.Routes>
+            {/* 1. Rotas Públicas */}
             <ReactRouter.Route path="/" element={<LoginPage />} />
-            <ReactRouter.Route
-              path="/triagem"
-              element={
-                //<RotaProtegida tela="triagem">
-                  <TriagemPage />
-                //</RotaProtegida>
-              }
-            />
-            <ReactRouter.Route
-              path="/apm"
-              element={
-                //<RotaProtegida tela="apm">
-                  <ApmPage />
-                //</RotaProtegida>
-              }
-            />
-            <ReactRouter.Route
-              path="/docs"
-              element={
-                //<RotaProtegida tela="docs">
-                  <DocsPage />
-                //</RotaProtegida>
-              }
-            />
             <ReactRouter.Route path="/emitir-senha" element={<EmitirSenhaPage />} />
             <ReactRouter.Route path="/acesso-negado" element={<AcessoNegadoPage />} />
-            <ReactRouter.Route
-              path="admin"
-              element={
-                //<RotaProtegida tela="admin">
-                  <AdminLayout />
-                //</RotaProtegida>
-              }
-            >
-              <ReactRouter.Route index element={<ReactRouter.Navigate to="dashboard" replace />} />
-              <ReactRouter.Route path="dashboard" element={<DashboardPage />} />
-              <ReactRouter.Route path="filas" element={<FilasPage />} />
-              <ReactRouter.Route path="alunos" element={<AlunosPage />} />
-              <ReactRouter.Route path="cursos" element={<CursosPage />} />
-              <ReactRouter.Route path="produtos" element={<ProdutosPage />} />
-              <ReactRouter.Route path="relatorios" element={<RelatoriosPage />} />
-              <ReactRouter.Route path="usuarios" element={<UsuariosPage />} />
-              <ReactRouter.Route path="configuracoes" element={<ConfiguracoesPage />} />
+
+            {/* 2. ROTA PAI: Exige que o usuário esteja autenticado */}
+            <ReactRouter.Route element={<RotaProtegida />}>
+
+              {/* Postos de Atendimento (cada um com seu guard de tela) */}
+              <ReactRouter.Route element={<RotaProtegida tela="triagem" />}>
+                <ReactRouter.Route path="/triagem" element={<TriagemPage />} />
+              </ReactRouter.Route>
+
+              <ReactRouter.Route element={<RotaProtegida tela="apm" />}>
+                <ReactRouter.Route path="/apm" element={<ApmPage />} />
+              </ReactRouter.Route>
+
+              <ReactRouter.Route element={<RotaProtegida tela="docs" />}>
+                <ReactRouter.Route path="/docs" element={<DocsPage />} />
+              </ReactRouter.Route>
+
+              {/* Módulo Admin: Protegido EM BLOCO para quem tem permissão "admin" */}
+              {/* Tanto admin quanto supervisor passam por aqui automaticamente! */}
+              <ReactRouter.Route element={<RotaProtegida tela="admin" />}>
+                <ReactRouter.Route path="admin" element={<AdminLayout />}>
+                  <ReactRouter.Route index element={<ReactRouter.Navigate to="dashboard" replace />} />
+                  <ReactRouter.Route path="dashboard" element={<DashboardPage />} />
+                  <ReactRouter.Route path="filas" element={<FilasPage />} />
+                  <ReactRouter.Route path="alunos" element={<AlunosPage />} />
+                  <ReactRouter.Route path="cursos" element={<CursosPage />} />
+                  <ReactRouter.Route path="produtos" element={<ProdutosPage />} />
+                  <ReactRouter.Route path="relatorios" element={<RelatoriosPage />} />
+                  <ReactRouter.Route path="usuarios" element={<UsuariosPage />} />
+                  <ReactRouter.Route path="configuracoes" element={<ConfiguracoesPage />} />
+                </ReactRouter.Route>
+              </ReactRouter.Route>
+
             </ReactRouter.Route>
+
+            {/* 3. Rota 404 */}
             <ReactRouter.Route
               path="*"
-              element={
-                <div
-                  className="p-5 text-xl text-status-danger"
-                >
-                  Página não encontrada.
-                </div>
-              }
+              element={<div className="p-5 text-xl text-status-danger">Página não encontrada.</div>}
             />
           </ReactRouter.Routes>
+
         </AtendimentoProvider>
       </AuthProvider>
     </ReactRouter.BrowserRouter>

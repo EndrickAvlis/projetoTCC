@@ -28,7 +28,7 @@ export const registrarVenda = (atendimentoId, venda) =>
     `/atendimentos/${encodeURIComponent(atendimentoId)}/vendas`,
     {
       method: "POST",
-      body: JSON.stringify(venda),
+      body: venda,
     },
   );
 

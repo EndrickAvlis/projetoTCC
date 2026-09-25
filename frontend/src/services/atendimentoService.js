@@ -16,7 +16,7 @@ export const obterDetalheSenha = async (senhaId) => {
 export const iniciarAtendimento = (senhaId) =>
   requisitarApi("/atendimentos", {
     method: "POST",
-    body: JSON.stringify({ senhaId }),
+    body: senhaId,
   });
 
 export const finalizarAtendimento = (atendimentoId) =>

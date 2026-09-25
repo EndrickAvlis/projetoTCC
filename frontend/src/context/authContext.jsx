@@ -1,9 +1,9 @@
 import * as React from "react";
 import * as authService from "../services/authService";
 
-const AuthContext = React.createContext(null);
+export const AuthContext = React.createContext(null);
 
-const telasGerais = {
+const TELAS_GERAIS = {
   admin: ["triagem", "apm", "docs", "admin", "secretaria"],
   supervisor: ["triagem", "apm", "docs", "admin", "secretaria"],
   atendente: ["triagem", "apm", "docs"],
@@ -11,28 +11,23 @@ const telasGerais = {
 
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = React.useState(null);
-  const [carregando, setCarregando] = React.useState(true);
+  const [validandoSessao, setValidandoSessao] = React.useState(true);
 
   React.useEffect(() => {
     let ativo = true;
 
-    authService
-      .obterSessao()
-      .then((dados) => {
-        if (ativo) {
-          setUsuario(dados);
-        }
-      })
-      .catch(() => {
-        if (ativo) {
-          setUsuario(null);
-        }
-      })
-      .finally(() => {
-        if (ativo) {
-          setCarregando(false);
-        }
-      });
+    const carregarSessao = async () => {
+      try {
+        const dados = await authService.obterSessao();
+        if (ativo) setUsuario(dados);
+      } catch {
+        if (ativo) setUsuario(null);
+      } finally {
+        if (ativo) setValidandoSessao(false);
+      }
+    }
+
+    carregarSessao();
 
     return () => {
       ativo = false;
@@ -40,14 +35,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   React.useEffect(() => {
-    const tratarNaoAutorizado = () => {
-      setUsuario(null);
-    };
+    const tratarNaoAutorizado = () => setUsuario(null);
 
     window.addEventListener("auth:unauthorized", tratarNaoAutorizado);
-    return () => {
-      window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
-    };
+    return () => window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
   }, []);
 
   const login = React.useCallback(async (credenciais) => {
@@ -67,9 +58,7 @@ export const AuthProvider = ({ children }) => {
   const temAcessoATela = React.useCallback(
     (tela) => {
       if (!usuario) return false;
-      
-      const telasPermitidas = telasGerais[usuario.tipo] ?? [];
-      return telasPermitidas.includes(tela);
+      return (TELAS_GERAIS[usuario.tipo] ?? []).includes(tela);
     },
     [usuario],
   );
@@ -78,12 +67,12 @@ export const AuthProvider = ({ children }) => {
     () => ({
       usuario,
       estaAutenticado: Boolean(usuario),
-      carregando,
+      validandoSessao,
       login,
       logout,
       temAcessoATela,
     }),
-    [usuario, carregando, login, logout, temAcessoATela],
+    [usuario, validandoSessao, login, logout, temAcessoATela],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

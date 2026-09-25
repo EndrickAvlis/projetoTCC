@@ -1,7 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { FiGrid } from "react-icons/fi";
 import * as AdminNavigation from "../constants/adminNavigation";
-import { useAuth } from "../../../hooks/useAuth";
+import { useAuth } from "../../../context/authContext";
 
 const adminRoutes = [
   ...AdminNavigation.adminNavigation,
