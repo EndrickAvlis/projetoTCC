@@ -132,6 +132,7 @@ model Senha {
   etapaSenha          String    @db.VarChar(15)
   tipoSenha           Boolean   @default(false)
   statusSenha         String    @db.VarChar(20)
+  documentosPendentes Json?
 
   aluno      Aluno?           @relation(fields: [codAluno], references: [idAluno])
   historicos HistoricoSenha[]

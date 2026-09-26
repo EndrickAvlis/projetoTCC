@@ -38,7 +38,7 @@ export const buscarVoluntarioSchema = z.object({
         .positive("O ID deve ser maior que zero.")
         .optional(),
 
-    nome: z
+    busca: z
         .string()
         .trim()
         .max(100, "O nome deve ter no máximo 100 caracteres.")
