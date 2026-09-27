@@ -1,6 +1,6 @@
 import { requisitarApi } from "../../../services/apiClient";
 
-const criarUrlCurso = (cursoId) => `/admin/cursos/${encodeURIComponent(cursoId)}`;
+const criarUrlCurso = (cursoId) => `/cursos/${encodeURIComponent(cursoId)}`;
 const criarUrlPeriodo = (cursoId, periodoId) => `${criarUrlCurso(cursoId)}/periodos/${encodeURIComponent(periodoId)}`;
 
 export const listarCursosAdmin = ({ busca = "", arquivado = false } = {}) => {
@@ -12,11 +12,11 @@ export const listarCursosAdmin = ({ busca = "", arquivado = false } = {}) => {
     params.set("busca", buscaLimpa);
   }
 
-  return requisitarApi(`/admin/cursos?${params.toString()}`);
+  return requisitarApi(`/cursos?${params.toString()}`);
 };
 
 export const criarCurso = (dados) =>
-  requisitarApi("/admin/cursos", {
+  requisitarApi("/cursos", {
     method: "POST",
     body: dados,
   });
@@ -24,13 +24,13 @@ export const criarCurso = (dados) =>
 export const atualizarNomeCurso = (cursoId, nome) =>
   requisitarApi(criarUrlCurso(cursoId), {
     method: "PATCH",
-    body: nome,
+    body: { nome },
   });
 
 export const alterarArquivamentoCurso = (cursoId, arquivado) =>
   requisitarApi(`${criarUrlCurso(cursoId)}/arquivamento`, {
     method: "PATCH",
-    body: arquivado,
+    body: { arquivado },
   });
 
 export const criarPeriodoCurso = (cursoId, dados) =>

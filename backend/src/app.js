@@ -25,11 +25,11 @@ app.use(cookieParser());
 
 app.use("/filas", filaRoutes);
 app.use("/senhas", senhaRouter);
-app.use("/admin/cursos", cursoRoutes);
+app.use("/cursos", cursoRoutes);
 app.use("/voluntarios", voluntarioRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/auth", authRoutes);
-app.use("/admin/alunos", alunoRoutes);
+app.use("/alunos", alunoRoutes);
 
 app.get("/", (req, res) => {
   res.json({
