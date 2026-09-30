@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 import Alert from "../../../../../components/ui/Alert";
-import Button from "../../../../../components/ui/button";
-import Input from "../../../../../components/ui/input";
+import Button from "../../../../../components/ui/Button";
+import Input from "../../../../../components/ui/Input";
 import Select from "../../../../../components/ui/Select";
 import {
   decodificarCsv,
@@ -44,7 +44,9 @@ const UploadCsv = ({
 
     const nome = arquivoSelecionado.name.toLowerCase();
     if (!nome.endsWith(".csv")) {
-      setErro("Formato inválido. Por favor, selecione um arquivo com extensão .csv");
+      setErro(
+        "Formato inválido. Por favor, selecione um arquivo com extensão .csv",
+      );
       return false;
     }
 
@@ -90,7 +92,11 @@ const UploadCsv = ({
   };
 
   const handleProcessarArquivo = async () => {
-    if (!anoProcesso || Number(anoProcesso) < 2000 || Number(anoProcesso) > 2100) {
+    if (
+      !anoProcesso ||
+      Number(anoProcesso) < 2000 ||
+      Number(anoProcesso) > 2100
+    ) {
       setErro("Informe um ano válido para o processo seletivo (ex: 2026).");
       return;
     }
@@ -119,11 +125,11 @@ const UploadCsv = ({
       if (resultado.candidatosValidos.length === 0) {
         if (resultado.metricas.treineiros > 0) {
           throw new Error(
-            `Nenhum candidato elegível encontrado no arquivo. Todos os ${resultado.metricas.treineiros} registros são treineiros.`
+            `Nenhum candidato elegível encontrado no arquivo. Todos os ${resultado.metricas.treineiros} registros são treineiros.`,
           );
         }
         throw new Error(
-          "Nenhum candidato válido foi encontrado no arquivo CSV. Verifique o layout dos dados."
+          "Nenhum candidato válido foi encontrado no arquivo CSV. Verifique o layout dos dados.",
         );
       }
 
@@ -141,7 +147,10 @@ const UploadCsv = ({
         onAvancar();
       }
     } catch (err) {
-      setErro(err.message || "Erro ao processar o arquivo CSV. Verifique a estrutura e os dados.");
+      setErro(
+        err.message ||
+          "Erro ao processar o arquivo CSV. Verifique a estrutura e os dados.",
+      );
     } finally {
       setAnalisando(false);
     }
@@ -150,11 +159,7 @@ const UploadCsv = ({
   return (
     <div className="space-y-6">
       {erro && (
-        <Alert
-          type="error"
-          message={erro}
-          onClose={() => setErro(null)}
-        />
+        <Alert type="error" message={erro} onClose={() => setErro(null)} />
       )}
 
       <div className="flex items-start gap-3 rounded-lg border border-border bg-surface-muted/50 p-4 text-sm text-text-secondary">
@@ -164,9 +169,10 @@ const UploadCsv = ({
             Importação da Lista de Classificação do Vestibulinho
           </p>
           <p>
-            O arquivo CSV deve ser delimitado por ponto e vírgula (<code>;</code>) e conter os
-            cabeçalhos obrigatórios. Candidatos marcados como <strong>TREINEIRO</strong> e
-            colunas desnecessárias serão desconsiderados automaticamente.
+            O arquivo CSV deve ser delimitado por ponto e vírgula (
+            <code>;</code>) e conter os cabeçalhos obrigatórios. Candidatos
+            marcados como <strong>TREINEIRO</strong> e colunas desnecessárias
+            serão desconsiderados automaticamente.
           </p>
         </div>
       </div>
@@ -195,7 +201,8 @@ const UploadCsv = ({
 
       <div>
         <label className="block text-sm font-medium text-primary mb-2">
-          Arquivo CSV da Classificação <span className="text-status-danger">*</span>
+          Arquivo CSV da Classificação{" "}
+          <span className="text-status-danger">*</span>
         </label>
 
         <input
@@ -229,7 +236,8 @@ const UploadCsv = ({
               Clique para selecionar ou arraste o arquivo CSV aqui
             </p>
             <p className="mt-1 text-xs text-text-secondary">
-              Codificações aceitas: UTF-8 e Windows-1252 (ANSI) • Delimitador: ponto e vírgula (;)
+              Codificações aceitas: UTF-8 e Windows-1252 (ANSI) • Delimitador:
+              ponto e vírgula (;)
             </p>
           </div>
         ) : (
@@ -239,7 +247,9 @@ const UploadCsv = ({
                 <FiIcons.FiFileText size={24} />
               </div>
               <div>
-                <p className="font-semibold text-text-primary text-sm">{arquivo.name}</p>
+                <p className="font-semibold text-text-primary text-sm">
+                  {arquivo.name}
+                </p>
                 <p className="text-xs text-text-secondary">
                   {formatarTamanhoArquivo(arquivo.size)} • Pronto para análise
                 </p>

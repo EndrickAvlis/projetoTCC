@@ -6,16 +6,15 @@ import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
 
-import AdicionarCursoModal from "../components/cursos/AdicionarCursoModal";
+import CursoModal from "../components/cursos/CursoModal";
 import AdicionarPeriodoModal from "../components/cursos/AdicionarPeriodoModal";
 import ConfirmarArquivamentoCursoModal from "../components/cursos/ConfirmarArquivamentoCursoModal";
-import EditarCursoModal from "../components/cursos/EditarCursoModal";
 import EditarPeriodoModal from "../components/cursos/EditarPeriodoModal";
 import MenuAcoesCurso from "../components/cursos/MenuAcoesCurso";
 import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
 import { useCursos } from "../hooks/useCursos";
-import * as cursoService from "../services/CursosService";
+import * as cursoService from "../services/cursosService";
 
 const CursosPage = () => {
   const [busca, setBusca] = React.useState("");
@@ -23,15 +22,16 @@ const CursosPage = () => {
 
   const [modalAberto, setModalAberto] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
-  const [salvandoAcao, setSalvandoAcao] = React.useState(false);
   const [erroOperacao, setErroOperacao] = React.useState(null);
 
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
   const [cursoEmEdicao, setCursoEmEdicao] = React.useState(null);
 
-  const [cursoParaArquivamento, setCursoParaArquivamento] = React.useState(null);
+  const [cursoParaArquivamento, setCursoParaArquivamento] =
+    React.useState(null);
   const [periodoEmEdicao, setPeriodoEmEdicao] = React.useState(null);
-  const [cursoParaAdicionarPeriodo, setCursoParaAdicionarPeriodo] = React.useState(null);
+  const [cursoParaAdicionarPeriodo, setCursoParaAdicionarPeriodo] =
+    React.useState(null);
   const [cursoComMenuAberto, setCursoComMenuAberto] = React.useState(null);
 
   const { cursos, total, carregando, erro, recarregar } = useCursos({
@@ -42,21 +42,30 @@ const CursosPage = () => {
   const fecharMenuAcoes = () => {
     setCursoComMenuAberto(null);
   };
-    
-  const abrirModalCriacaoCurso = () => {
+
+  //Adição e edição de cursos
+  const fecharModalCurso = () => {
+    setModalAberto(false);
+    setCursoEmEdicao(null);
+  };
+  const abrirModalCurso = (curso = null) => {
     setErroOperacao(null);
+    fecharMenuAcoes();
+    setCursoEmEdicao(curso);
     setModalAberto(true);
   };
-
-  const handleSalvarCurso = async (dadosCurso) => {
+  const handleSalvarCurso = async (dados) => {
     setSalvando(true);
     setErroOperacao(null);
 
     try {
-      await cursoService.criarCurso(dadosCurso);
+      if (cursoEmEdicao) {
+        await cursoService.atualizarNomeCurso(cursoEmEdicao.id, dados.nome);
+      } else {
+        await cursoService.criarCurso(dados);
+      }
 
-      setModalAberto(false);
-
+      fecharModalCurso();
       await recarregar();
     } catch (error) {
       setErroOperacao(error.message);
@@ -65,41 +74,12 @@ const CursosPage = () => {
     }
   };
 
-  const abrirEdicaoCurso = (curso) => {
-    setErroOperacao(null);
-    fecharMenuAcoes();
-    setCursoEmEdicao(curso);
-  };
-
-
-  const salvarNomeCurso = async (nome) => {
-    if (!nome || !cursoEmEdicao) {
-      setErroOperacao("Informe o nome do curso.");
-      return;
-    }
-
-    setSalvandoAcao(true);
-    setErroOperacao(null);
-
-    try {
-      await cursoService.atualizarNomeCurso(cursoEmEdicao.id, nome);
-
-      setCursoEmEdicao(null);
-
-      await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
-    } finally {
-      setSalvandoAcao(false);
-    }
-  };
-
   const confirmarArquivamento = async () => {
     if (!cursoParaArquivamento) {
       return;
     }
 
-    setSalvandoAcao(true);
+    setSalvando(true);
     setErroOperacao(null);
 
     try {
@@ -114,7 +94,7 @@ const CursosPage = () => {
     } catch (error) {
       setErroOperacao(error.message);
     } finally {
-      setSalvandoAcao(false);
+      setSalvando(false);
     }
   };
 
@@ -128,7 +108,7 @@ const CursosPage = () => {
       return;
     }
 
-    setSalvandoAcao(true);
+    setSalvando(true);
     setErroOperacao(null);
 
     try {
@@ -144,13 +124,13 @@ const CursosPage = () => {
     } catch (error) {
       setErroOperacao(error.message);
     } finally {
-      setSalvandoAcao(false);
+      setSalvando(false);
     }
   };
   const salvarNovoPeriodo = async (dadosPeriodo) => {
     if (!cursoParaAdicionarPeriodo) return;
 
-    setSalvandoAcao(true);
+    setSalvando(true);
     setErroOperacao(null);
 
     try {
@@ -165,7 +145,7 @@ const CursosPage = () => {
     } catch (error) {
       setErroOperacao(error.message);
     } finally {
-      setSalvandoAcao(false);
+      setSalvando(false);
     }
   };
 
@@ -176,7 +156,7 @@ const CursosPage = () => {
   };
   const abrirEdicaoPeriodo = (curso, periodo) => {
     setErroOperacao(null);
-    
+
     setPeriodoEmEdicao({
       cursoId: curso.id,
       periodo,
@@ -219,10 +199,7 @@ const CursosPage = () => {
 
             {expandido &&
               periodosRestantes.map((periodoCurso) => (
-                <div
-                  key={periodoCurso.id}
-                  className="animate-offer-expand"
-                >
+                <div key={periodoCurso.id} className="animate-offer-expand">
                   <PeriodoResumo
                     periodoCurso={periodoCurso}
                     onEditar={
@@ -242,13 +219,15 @@ const CursosPage = () => {
               >
                 {expandido
                   ? "Ver menos"
-                  : `Ver mais ${periodosRestantes.length} período${periodosRestantes.length === 1 ? "" : "s"
-                  }`}
+                  : `Ver mais ${periodosRestantes.length} período${
+                      periodosRestantes.length === 1 ? "" : "s"
+                    }`}
 
                 <FiIcons.FiChevronDown
                   size={16}
-                  className={`transition-transform duration-200 ease-out ${expandido ? "rotate-180" : ""
-                    }`}
+                  className={`transition-transform duration-200 ease-out ${
+                    expandido ? "rotate-180" : ""
+                  }`}
                 />
               </button>
             )}
@@ -274,7 +253,7 @@ const CursosPage = () => {
             onAbrir={() => setCursoComMenuAberto(curso.id)}
             onFechar={fecharMenuAcoes}
             onAdicionarPeriodo={abrirCriacaoPeriodo}
-            onEditarNome={abrirEdicaoCurso}
+            onEditarNome={abrirModalCurso}
             onAlterarArquivamento={(cursoSelecionado) => {
               setErroOperacao(null);
               setCursoParaArquivamento(cursoSelecionado);
@@ -300,7 +279,7 @@ const CursosPage = () => {
         <Button
           leftIcon={<FiIcons.FiPlus />}
           className="w-full sm:w-auto"
-          onClick={abrirModalCriacaoCurso}
+          onClick={() => abrirModalCurso()}
         >
           Adicionar curso
         </Button>
@@ -320,22 +299,23 @@ const CursosPage = () => {
           <button
             type="button"
             onClick={() => setArquivado(false)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${!arquivado
-              ? "bg-primary text-text-inverse"
-              : "text-text-secondary hover:bg-surface-muted"
-              }`}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
+              !arquivado
+                ? "bg-primary text-text-inverse"
+                : "text-text-secondary hover:bg-surface-muted"
+            }`}
           >
-
             Ativos
           </button>
 
           <button
             type="button"
             onClick={() => setArquivado(true)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${arquivado
-              ? "bg-primary text-text-inverse"
-              : "text-text-secondary hover:bg-surface-muted"
-              }`}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
+              arquivado
+                ? "bg-primary text-text-inverse"
+                : "text-text-secondary hover:bg-surface-muted"
+            }`}
           >
             Arquivados
           </button>
@@ -361,9 +341,10 @@ const CursosPage = () => {
         />
       )}
 
-      <AdicionarCursoModal
+      <CursoModal
         aberto={modalAberto}
-        onFechar={() => setModalAberto(false)}
+        curso={cursoEmEdicao}
+        onFechar={fecharModalCurso}
         onSalvar={handleSalvarCurso}
         salvando={salvando}
         erro={erroOperacao}
@@ -373,24 +354,14 @@ const CursosPage = () => {
         aberto={Boolean(cursoParaAdicionarPeriodo)}
         onFechar={() => setCursoParaAdicionarPeriodo(null)}
         onSalvar={salvarNovoPeriodo}
-        salvando={salvandoAcao}
+        salvando={salvando}
         erro={erroOperacao}
       />
-
-      <EditarCursoModal
-        key={cursoEmEdicao?.id ?? "sem-curso"}
-        curso={cursoEmEdicao}
-        onFechar={() => setCursoEmEdicao(null)}
-        onSalvar={salvarNomeCurso}
-        salvando={salvandoAcao}
-        erro={erroOperacao}
-      />
-
       <ConfirmarArquivamentoCursoModal
         curso={cursoParaArquivamento}
         onFechar={() => setCursoParaArquivamento(null)}
         onConfirmar={confirmarArquivamento}
-        salvando={salvandoAcao}
+        salvando={salvando}
         erro={erroOperacao}
       />
 
@@ -399,7 +370,7 @@ const CursosPage = () => {
         periodo={periodoEmEdicao?.periodo ?? null}
         onFechar={() => setPeriodoEmEdicao(null)}
         onSalvar={salvarPeriodo}
-        salvando={salvandoAcao}
+        salvando={salvando}
         erro={erroOperacao}
       />
     </section>
