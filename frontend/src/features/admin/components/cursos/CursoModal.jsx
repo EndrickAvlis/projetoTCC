@@ -58,13 +58,13 @@ const CursoModal = ({
 
   //Validar formulário
   const validarCursoForm = () => {
-    const novosErros = {};
+    const newErrors = {};
     if (!nome.trim()) {
-      novosErros.nome = "Informe o nome do curso.";
+      newErrors.nome = "Informe o nome do curso.";
     }
     if (!emEdicao) {
       if (!periodos || periodos.length === 0) {
-        novosErros.periodos = "Adicione pelo menos um período.";
+        newErrors.periodos = "Adicione pelo menos um período.";
       } else {
         const periodosVistos = new Set();
         const periodosPorIndice = {};
@@ -86,12 +86,12 @@ const CursoModal = ({
           }
         });
         if (Object.keys(periodosPorIndice).length > 0) {
-          novosErros.periodosPorIndice = periodosPorIndice;
+          newErrors.periodosPorIndice = periodosPorIndice;
         }
       }
     }
-    setErros(novosErros);
-    return Object.keys(novosErros).length === 0;
+    setErros(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {

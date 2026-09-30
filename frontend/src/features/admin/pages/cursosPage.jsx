@@ -7,9 +7,8 @@ import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
 
 import CursoModal from "../components/cursos/CursoModal";
-import AdicionarPeriodoModal from "../components/cursos/AdicionarPeriodoModal";
+import PeriodoModal from "../components/cursos/PeriodoModal";
 import ConfirmarArquivamentoCursoModal from "../components/cursos/ConfirmarArquivamentoCursoModal";
-import EditarPeriodoModal from "../components/cursos/EditarPeriodoModal";
 import MenuAcoesCurso from "../components/cursos/MenuAcoesCurso";
 import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
@@ -20,18 +19,21 @@ const CursosPage = () => {
   const [busca, setBusca] = React.useState("");
   const [arquivado, setArquivado] = React.useState(false);
 
-  const [modalAberto, setModalAberto] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
   const [erroOperacao, setErroOperacao] = React.useState(null);
 
-  const [cursoExpandido, setCursoExpandido] = React.useState(null);
+  // Modal de Curso
+  const [modalCursoAberto, setModalCursoAberto] = React.useState(false);
   const [cursoEmEdicao, setCursoEmEdicao] = React.useState(null);
 
-  const [cursoParaArquivamento, setCursoParaArquivamento] =
-    React.useState(null);
-  const [periodoEmEdicao, setPeriodoEmEdicao] = React.useState(null);
-  const [cursoParaAdicionarPeriodo, setCursoParaAdicionarPeriodo] =
-    React.useState(null);
+  // Modal de Período
+  const [modalPeriodo, setModalPeriodo] = React.useState(null);
+
+  // Modal de Arquivamento
+  const [cursoParaArquivamento, setCursoParaArquivamento] = React.useState(null);
+
+  // UI da Tabela
+  const [cursoExpandido, setCursoExpandido] = React.useState(null);
   const [cursoComMenuAberto, setCursoComMenuAberto] = React.useState(null);
 
   const { cursos, total, carregando, erro, recarregar } = useCursos({
@@ -39,20 +41,16 @@ const CursosPage = () => {
     arquivado,
   });
 
-  const fecharMenuAcoes = () => {
-    setCursoComMenuAberto(null);
-  };
-
   //Adição e edição de cursos
   const fecharModalCurso = () => {
-    setModalAberto(false);
+    setModalCursoAberto(false);
     setCursoEmEdicao(null);
   };
   const abrirModalCurso = (curso = null) => {
     setErroOperacao(null);
     fecharMenuAcoes();
     setCursoEmEdicao(curso);
-    setModalAberto(true);
+    setModalCursoAberto(true);
   };
   const handleSalvarCurso = async (dados) => {
     setSalvando(true);
@@ -66,6 +64,39 @@ const CursosPage = () => {
       }
 
       fecharModalCurso();
+      await recarregar();
+    } catch (error) {
+      setErroOperacao(error.message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  //Adição e edição de periodos
+  const fecharModalPeriodo = () => {
+    setModalPeriodo(null)
+  }
+  const abrirModalPeriodo = (curso, periodo = null) => {
+    setErroOperacao(null);
+    fecharMenuAcoes();
+    setModalPeriodo({ curso, periodo })
+  }
+  const handleSalvarPeriodo = async (dados) => {
+    if (!modalPeriodo) return;
+
+    const { curso, periodo } = modalPeriodo;
+
+    setSalvando(true);
+    setErroOperacao(null);
+
+    try {
+      if (periodo) {
+        await cursoService.atualizarPeriodoCurso(curso.id, periodo.id, dados);
+      } else {
+        await cursoService.criarPeriodoCurso(curso.id, dados);
+      }
+
+      fecharModalPeriodo();
       await recarregar();
     } catch (error) {
       setErroOperacao(error.message);
@@ -97,71 +128,15 @@ const CursosPage = () => {
       setSalvando(false);
     }
   };
-
-  const abrirCriacaoPeriodo = (curso) => {
-    setErroOperacao(null);
-    fecharMenuAcoes();
-    setCursoParaAdicionarPeriodo(curso);
-  };
-  const salvarPeriodo = async (dadosPeriodo) => {
-    if (!periodoEmEdicao) {
-      return;
-    }
-
-    setSalvando(true);
-    setErroOperacao(null);
-
-    try {
-      await cursoService.atualizarPeriodoCurso(
-        periodoEmEdicao.cursoId,
-        periodoEmEdicao.periodo.id,
-        dadosPeriodo,
-      );
-
-      setPeriodoEmEdicao(null);
-
-      await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
-    } finally {
-      setSalvando(false);
-    }
-  };
-  const salvarNovoPeriodo = async (dadosPeriodo) => {
-    if (!cursoParaAdicionarPeriodo) return;
-
-    setSalvando(true);
-    setErroOperacao(null);
-
-    try {
-      await cursoService.criarPeriodoCurso(
-        cursoParaAdicionarPeriodo.id,
-        dadosPeriodo,
-      );
-
-      setCursoParaAdicionarPeriodo(null);
-
-      await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const alternarPeriodos = (cursoId) => {
     setCursoExpandido((cursoAtual) =>
       cursoAtual === cursoId ? null : cursoId,
     );
   };
-  const abrirEdicaoPeriodo = (curso, periodo) => {
-    setErroOperacao(null);
-
-    setPeriodoEmEdicao({
-      cursoId: curso.id,
-      periodo,
-    });
+  const fecharMenuAcoes = () => {
+    setCursoComMenuAberto(null);
   };
+
 
   const columnsCurso = [
     {
@@ -193,7 +168,7 @@ const CursosPage = () => {
               onEditar={
                 curso.arquivado
                   ? null
-                  : () => abrirEdicaoPeriodo(curso, primeiroPeriodo)
+                  : () => abrirModalPeriodo(curso, primeiroPeriodo)
               }
             />
 
@@ -205,7 +180,7 @@ const CursosPage = () => {
                     onEditar={
                       curso.arquivado
                         ? null
-                        : () => abrirEdicaoPeriodo(curso, periodoCurso)
+                        : () => abrirModalPeriodo(curso, periodoCurso)
                     }
                   />
                 </div>
@@ -219,15 +194,13 @@ const CursosPage = () => {
               >
                 {expandido
                   ? "Ver menos"
-                  : `Ver mais ${periodosRestantes.length} período${
-                      periodosRestantes.length === 1 ? "" : "s"
-                    }`}
+                  : `Ver mais ${periodosRestantes.length} período${periodosRestantes.length === 1 ? "" : "s"
+                  }`}
 
                 <FiIcons.FiChevronDown
                   size={16}
-                  className={`transition-transform duration-200 ease-out ${
-                    expandido ? "rotate-180" : ""
-                  }`}
+                  className={`transition-transform duration-200 ease-out ${expandido ? "rotate-180" : ""
+                    }`}
                 />
               </button>
             )}
@@ -252,7 +225,7 @@ const CursosPage = () => {
             aberto={cursoComMenuAberto === curso.id}
             onAbrir={() => setCursoComMenuAberto(curso.id)}
             onFechar={fecharMenuAcoes}
-            onAdicionarPeriodo={abrirCriacaoPeriodo}
+            onAdicionarPeriodo={abrirModalPeriodo}
             onEditarNome={abrirModalCurso}
             onAlterarArquivamento={(cursoSelecionado) => {
               setErroOperacao(null);
@@ -299,11 +272,10 @@ const CursosPage = () => {
           <button
             type="button"
             onClick={() => setArquivado(false)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              !arquivado
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${!arquivado
+              ? "bg-primary text-text-inverse"
+              : "text-text-secondary hover:bg-surface-muted"
+              }`}
           >
             Ativos
           </button>
@@ -311,11 +283,10 @@ const CursosPage = () => {
           <button
             type="button"
             onClick={() => setArquivado(true)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              arquivado
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${arquivado
+              ? "bg-primary text-text-inverse"
+              : "text-text-secondary hover:bg-surface-muted"
+              }`}
           >
             Arquivados
           </button>
@@ -342,18 +313,18 @@ const CursosPage = () => {
       )}
 
       <CursoModal
-        aberto={modalAberto}
+        aberto={modalCursoAberto}
         curso={cursoEmEdicao}
         onFechar={fecharModalCurso}
         onSalvar={handleSalvarCurso}
         salvando={salvando}
         erro={erroOperacao}
       />
-
-      <AdicionarPeriodoModal
-        aberto={Boolean(cursoParaAdicionarPeriodo)}
-        onFechar={() => setCursoParaAdicionarPeriodo(null)}
-        onSalvar={salvarNovoPeriodo}
+      <PeriodoModal
+        aberto={Boolean(modalPeriodo)}
+        periodo={modalPeriodo?.periodo}
+        onFechar={fecharModalPeriodo}
+        onSalvar={handleSalvarPeriodo}
         salvando={salvando}
         erro={erroOperacao}
       />
@@ -361,15 +332,6 @@ const CursosPage = () => {
         curso={cursoParaArquivamento}
         onFechar={() => setCursoParaArquivamento(null)}
         onConfirmar={confirmarArquivamento}
-        salvando={salvando}
-        erro={erroOperacao}
-      />
-
-      <EditarPeriodoModal
-        aberto={Boolean(periodoEmEdicao)}
-        periodo={periodoEmEdicao?.periodo ?? null}
-        onFechar={() => setPeriodoEmEdicao(null)}
-        onSalvar={salvarPeriodo}
         salvando={salvando}
         erro={erroOperacao}
       />
