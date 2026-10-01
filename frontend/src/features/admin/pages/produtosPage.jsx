@@ -5,12 +5,10 @@ import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 
-import AdicionarConfiguracaoArmarioModal from "../components/produtos/armarios/AdicionarConfiguracaoArmarioModal";
-import ConfiguracaoArmario from "../components/produtos/armarios/ConfiguracaoArmario";
-import EditarConfiguracaoArmarioModal from "../components/produtos/armarios/EditarConfiguracaoArmarioModal";
+import SecaoArmarios from "../components/produtos/armarios/SecaoArmarios";
+import ArmarioModal from "../components/produtos/armarios/ArmarioModal";
+import UniformeModal from "../components/produtos/uniformes/UniformeModal";
 
-import AdicionarUniformeModal from "../components/produtos/uniformes/AdicionarUniformeModal";
-import EditarUniformeModal from "../components/produtos/uniformes/EditarUniformeModal";
 import MenuAcoesUniforme from "../components/produtos/uniformes/MenuAcoesUniforme";
 import MovimentarEstoqueModal from "../components/produtos/uniformes/MovimentarEstoqueModal";
 import ProdutosTipoSelector from "../components/produtos/uniformes/ProdutosTipoSelector";
@@ -31,16 +29,20 @@ const ProdutosPage = () => {
   const [salvando, setSalvando] = React.useState(false);
   const [erroOperacao, setErroOperacao] = React.useState(null);
   const [salvandoAcao, setSalvandoAcao] = React.useState(false);
-  const [uniformeComMenuAberto, setUniformeComMenuAberto] = React.useState(null);
+  const [uniformeComMenuAberto, setUniformeComMenuAberto] =
+    React.useState(null);
   const [uniformeParaEstoque, setUniformeParaEstoque] = React.useState(null);
   const [uniformeEmEdicao, setUniformeEmEdicao] = React.useState(null);
-  const [uniformeParaArquivamento, setUniformeParaArquivamento] = React.useState(null);
+  const [uniformeParaArquivamento, setUniformeParaArquivamento] =
+    React.useState(null);
+
   const [modalArmarioAberto, setModalArmarioAberto] = React.useState(false);
   const [armarioEmEdicao, setArmarioEmEdicao] = React.useState(null);
-  const [salvandoArmario, setSalvandoArmario] = React.useState(false);
-  const [erroArmarioOperacao, setErroArmarioOperacao] = React.useState(null);
 
-  const { uniformes, total, carregando, erro, recarregar } = useUniformes({ busca, arquivado });
+  const { uniformes, total, carregando, erro, recarregar } = useUniformes({
+    busca,
+    arquivado,
+  });
   const {
     armario,
     carregando: carregandoArmario,
@@ -48,23 +50,65 @@ const ProdutosPage = () => {
     recarregar: recarregarArmario,
   } = useArmario();
 
-  const fecharMenuAcoes = () => {
-    setUniformeComMenuAberto(null);
+  // Adição e edição de armário
+  const fecharModalArmario = () => {
+    setModalArmarioAberto(false);
+    setArmarioEmEdicao(null);
+    setErroOperacao(null);
   };
 
-  const abrirModalCriacaoUniforme = () => {
+  const abrirModalArmario = (armario = null) => {
     setErroOperacao(null);
-    setModalAberto(true);
+    setArmarioEmEdicao(armario);
+    setModalArmarioAberto(true);
   };
-  const handleSalvarUniforme = async (dadosUniforme) => {
+
+  const handleSalvarArmario = async (dados) => {
     setSalvando(true);
     setErroOperacao(null);
 
     try {
-      await produtoService.criarUniforme(dadosUniforme);
+      if (armarioEmEdicao) {
+        await produtoService.atualizarArmario(armarioEmEdicao.id, dados);
+      } else {
+        await produtoService.criarArmario(dados);
+      }
+      fecharModalArmario();
+      await recarregarArmario();
+    } catch (error) {
+      setErroOperacao(error.message);
+    } finally {
+      setSalvando(false);
+    }
+  };
 
-      setModalAberto(false);
+  // Adição e edição de uniforme
+  const fecharModalUniforme = () => {
+    setModalAberto(false);
+    setUniformeEmEdicao(null);
+    setErroOperacao(null);
+  };
 
+  const abrirModalUniforme = (uniformeParaEdicao = null) => {
+    setErroOperacao(null);
+    fecharMenuAcoes();
+    setUniformeEmEdicao(uniformeParaEdicao);
+    setModalAberto(true);
+  };
+
+  const handleSalvarUniforme = async (dadosUniforme) => {
+    setSalvando(true);
+    setErroOperacao(null);
+    try {
+      if (uniformeEmEdicao) {
+        await produtoService.atualizarUniforme(
+          uniformeEmEdicao.id,
+          dadosUniforme,
+        );
+      } else {
+        await produtoService.criarUniforme(dadosUniforme);
+      }
+      fecharModalUniforme();
       await recarregar();
     } catch (error) {
       setErroOperacao(error.message);
@@ -73,17 +117,18 @@ const ProdutosPage = () => {
     }
   };
 
+  const fecharMenuAcoes = () => {
+    setUniformeComMenuAberto(null);
+  };
+
   const abrirMovimentacaoEstoque = (uniforme) => {
     setErroOperacao(null);
     fecharMenuAcoes();
     setUniformeParaEstoque(uniforme);
   };
-  const salvarMovimentacaoEstoque = async (
-    movimentacao,
-  ) => {
-    if (!uniformeParaEstoque) {
-      return;
-    }
+
+  const salvarMovimentacaoEstoque = async (movimentacao) => {
+    if (!uniformeParaEstoque) return;
 
     setSalvandoAcao(true);
     setErroOperacao(null);
@@ -93,38 +138,7 @@ const ProdutosPage = () => {
         uniformeParaEstoque.id,
         movimentacao,
       );
-
       setUniformeParaEstoque(null);
-
-      await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
-    } finally {
-      setSalvandoAcao(false);
-    }
-  };
-
-  const abrirEdicaoUniforme = (uniforme) => {
-    setErroOperacao(null);
-    fecharMenuAcoes();
-    setUniformeEmEdicao(uniforme);
-  };
-  const salvarUniformeEditado = async (dadosUniforme) => {
-    if (!uniformeEmEdicao) {
-      return;
-    }
-
-    setSalvandoAcao(true);
-    setErroOperacao(null);
-
-    try {
-      await produtoService.atualizarUniforme(
-        uniformeEmEdicao.id,
-        dadosUniforme,
-      );
-
-      setUniformeEmEdicao(null);
-
       await recarregar();
     } catch (error) {
       setErroOperacao(error.message);
@@ -134,9 +148,7 @@ const ProdutosPage = () => {
   };
 
   const confirmarArquivamento = async () => {
-    if (!uniformeParaArquivamento) {
-      return;
-    }
+    if (!uniformeParaArquivamento) return;
 
     setSalvandoAcao(true);
     setErroOperacao(null);
@@ -146,71 +158,20 @@ const ProdutosPage = () => {
         uniformeParaArquivamento.id,
         uniformeParaArquivamento.status !== "arquivado",
       );
-
       setUniformeParaArquivamento(null);
-
       await recarregar();
     } catch (error) {
       setErroOperacao(error.message);
     } finally {
       setSalvandoAcao(false);
     }
-  }
-
-  const abrirCriacaoArmario = () => {
-    setErroArmarioOperacao(null);
-    setModalArmarioAberto(true);
-  };
-
-  const salvarConfiguracaoInicialArmario = async (dadosArmario) => {
-    setSalvandoArmario(true);
-    setErroArmarioOperacao(null);
-
-    try {
-      await produtoService.criarConfiguracaoArmario(dadosArmario);
-      setModalArmarioAberto(false);
-      await recarregarArmario();
-    } catch (error) {
-      setErroArmarioOperacao(error.message);
-    } finally {
-      setSalvandoArmario(false);
-    }
-  };
-
-  const abrirEdicaoArmario = () => {
-    setErroArmarioOperacao(null);
-    setArmarioEmEdicao(armario);
-  };
-
-  const salvarConfiguracaoArmario = async (dadosArmario) => {
-    if (!armarioEmEdicao) {
-      return;
-    }
-
-    setSalvandoArmario(true);
-    setErroArmarioOperacao(null);
-
-    try {
-      await produtoService.atualizarConfiguracaoArmario(
-        armarioEmEdicao.id,
-        dadosArmario,
-      );
-      setArmarioEmEdicao(null);
-      await recarregarArmario();
-    } catch (error) {
-      setErroArmarioOperacao(error.message);
-    } finally {
-      setSalvandoArmario(false);
-    }
   };
 
   const alterarDisponibilidadeArmario = async () => {
-    if (!armario) {
-      return;
-    }
+    if (!armario) return;
 
-    setSalvandoArmario(true);
-    setErroArmarioOperacao(null);
+    setSalvando(true);
+    setErroOperacao(null);
 
     try {
       await produtoService.alterarDisponibilidadeArmario(
@@ -219,25 +180,20 @@ const ProdutosPage = () => {
       );
       await recarregarArmario();
     } catch (error) {
-      setErroArmarioOperacao(error.message);
+      setErroOperacao(error.message);
     } finally {
-      setSalvandoArmario(false);
+      setSalvando(false);
     }
   };
 
   const columnsUniforme = [
-    //*nome
     {
       key: "nome",
       label: "Tamanho",
       render: (uniforme) => (
-        <span className="font-semibold text-text-primary">
-          {uniforme.nome}
-        </span>
+        <span className="font-semibold text-text-primary">{uniforme.nome}</span>
       ),
     },
-
-    //*preço
     {
       key: "preco",
       label: "Preço",
@@ -245,8 +201,6 @@ const ProdutosPage = () => {
       cellClassName: "text-right",
       render: (uniforme) => formatarMoeda(Number(uniforme.preco)),
     },
-
-    //*quantidade
     {
       key: "quantidade",
       label: "Quantidade",
@@ -259,44 +213,37 @@ const ProdutosPage = () => {
         </span>
       ),
     },
-
-    //*status
     {
       key: "status",
       label: "Situação",
       render: (uniforme) => {
         const isArquivado = uniforme.status === "arquivado";
-
         return (
           <span
-            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${isArquivado
-              ? "bg-disabled-bg text-text-secondary"
-              : "bg-status-success-bg text-status-success"
-              }`}
+            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+              isArquivado
+                ? "bg-disabled-bg text-text-secondary"
+                : "bg-status-success-bg text-status-success"
+            }`}
           >
             {isArquivado ? "Arquivado" : "Ativo"}
           </span>
         );
       },
     },
-
-    //*ações
     {
       key: "acoes",
       label: "Ações",
       headerClassName: "text-right",
       cellClassName: "text-right",
-
       render: (uniforme) => (
         <MenuAcoesUniforme
           uniforme={uniforme}
           aberto={uniformeComMenuAberto === uniforme.id}
-          onAbrir={() =>
-            setUniformeComMenuAberto(uniforme.id)
-          }
+          onAbrir={() => setUniformeComMenuAberto(uniforme.id)}
           onFechar={fecharMenuAcoes}
           onMovimentarEstoque={abrirMovimentacaoEstoque}
-          onEditar={abrirEdicaoUniforme}
+          onEditar={abrirModalUniforme}
           onAlterarArquivamento={(uniformeSelecionado) => {
             setErroOperacao(null);
             setUniformeParaArquivamento(uniformeSelecionado);
@@ -310,7 +257,10 @@ const ProdutosPage = () => {
     <section className="space-y-6">
       <ProdutosTipoSelector
         tipoSelecionado={tipoSelecionado}
-        onSelecionar={setTipoSelecionado}
+        onSelecionar={(tipo) => {
+          setErroOperacao(null);
+          setTipoSelecionado(tipo);
+        }}
       />
 
       {tipoSelecionado === "uniformes" ? (
@@ -331,7 +281,7 @@ const ProdutosPage = () => {
             <Button
               leftIcon={<FiIcons.FiPlus />}
               className="w-full sm:w-auto"
-              onClick={abrirModalCriacaoUniforme}
+              onClick={() => abrirModalUniforme()}
             >
               Adicionar uniforme
             </Button>
@@ -354,16 +304,6 @@ const ProdutosPage = () => {
             <DataTable
               columns={columnsUniforme}
               data={uniformes}
-              // data={[
-              //   {
-              //     id: 1,
-              //     nome: "M",
-              //     preco: 45,
-              //     quantidade: 10,
-              //     tipo: "uniforme",
-              //     status: "ativo",
-              //   },
-              // ]}
               getRowKey={(uniforme) => uniforme.id}
               emptyMessage={
                 arquivado
@@ -380,25 +320,20 @@ const ProdutosPage = () => {
           aria-labelledby="tab-armarios"
           className="space-y-4"
         >
-          {erroArmarioOperacao && (
-            <Alert type="error" message={erroArmarioOperacao} />
-          )}
+          {erroOperacao && <Alert type="error" message={erroOperacao} />}
 
           {carregandoArmario ? (
             <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center text-text-secondary">
               Carregando configuração do armário...
             </div>
           ) : erroArmario ? (
-            <Alert
-              type="error"
-              message={erroArmario}
-            />
+            <Alert type="error" message={erroArmario} />
           ) : armario ? (
-            <ConfiguracaoArmario
+            <SecaoArmarios
               armario={armario}
-              onEditar={abrirEdicaoArmario}
+              onEditar={() => abrirModalArmario(armario)}
               onAlterarDisponibilidade={alterarDisponibilidadeArmario}
-              salvando={salvandoArmario}
+              salvando={salvando}
             />
           ) : (
             <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center">
@@ -409,7 +344,7 @@ const ProdutosPage = () => {
               <Button
                 leftIcon={<FiIcons.FiPlus />}
                 className="mt-4"
-                onClick={abrirCriacaoArmario}
+                onClick={() => abrirModalArmario()}
               >
                 Configurar armário
               </Button>
@@ -418,30 +353,33 @@ const ProdutosPage = () => {
         </section>
       )}
 
-      <AdicionarUniformeModal
+      <UniformeModal
         aberto={modalAberto}
-        onFechar={() => setModalAberto(false)}
+        uniforme={uniformeEmEdicao}
+        onFechar={fecharModalUniforme}
         onSalvar={handleSalvarUniforme}
         salvando={salvando}
         erro={erroOperacao}
       />
 
-      <MovimentarEstoqueModal
-        key={uniformeParaEstoque ? `estoque-${uniformeParaEstoque.id}` : "sem-uniforme-estoque"}
-        uniforme={uniformeParaEstoque}
-        onFechar={() =>
-          setUniformeParaEstoque(null)
-        }
-        onSalvar={salvarMovimentacaoEstoque}
-        salvando={salvandoAcao}
+      <ArmarioModal
+        aberto={modalArmarioAberto}
+        armario={armarioEmEdicao}
+        onFechar={fecharModalArmario}
+        onSalvar={handleSalvarArmario}
+        salvando={salvando}
         erro={erroOperacao}
       />
 
-      <EditarUniformeModal
-        key={uniformeEmEdicao ? `edicao-${uniformeEmEdicao.id}` : "sem-uniforme-edicao"}
-        uniforme={uniformeEmEdicao}
-        onFechar={() => setUniformeEmEdicao(null)}
-        onSalvar={salvarUniformeEditado}
+      <MovimentarEstoqueModal
+        key={
+          uniformeParaEstoque
+            ? `estoque-${uniformeParaEstoque.id}`
+            : "sem-uniforme-estoque"
+        }
+        uniforme={uniformeParaEstoque}
+        onFechar={() => setUniformeParaEstoque(null)}
+        onSalvar={salvarMovimentacaoEstoque}
         salvando={salvandoAcao}
         erro={erroOperacao}
       />
@@ -453,25 +391,6 @@ const ProdutosPage = () => {
         salvando={salvandoAcao}
         erro={erroOperacao}
       />
-
-      <AdicionarConfiguracaoArmarioModal
-        key={modalArmarioAberto ? "novo-armario" : "sem-novo-armario"}
-        aberto={modalArmarioAberto}
-        onFechar={() => setModalArmarioAberto(false)}
-        onSalvar={salvarConfiguracaoInicialArmario}
-        salvando={salvandoArmario}
-        erro={erroArmarioOperacao}
-      />
-
-      <EditarConfiguracaoArmarioModal
-        key={armarioEmEdicao?.id ?? "sem-armario"}
-        armario={armarioEmEdicao}
-        onFechar={() => setArmarioEmEdicao(null)}
-        onSalvar={salvarConfiguracaoArmario}
-        salvando={salvandoArmario}
-        erro={erroArmarioOperacao}
-      />
-
     </section>
   );
 };

@@ -30,7 +30,8 @@ const CursosPage = () => {
   const [modalPeriodo, setModalPeriodo] = React.useState(null);
 
   // Modal de Arquivamento
-  const [cursoParaArquivamento, setCursoParaArquivamento] = React.useState(null);
+  const [cursoParaArquivamento, setCursoParaArquivamento] =
+    React.useState(null);
 
   // UI da Tabela
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
@@ -45,6 +46,7 @@ const CursosPage = () => {
   const fecharModalCurso = () => {
     setModalCursoAberto(false);
     setCursoEmEdicao(null);
+    setErroOperacao(null);
   };
   const abrirModalCurso = (curso = null) => {
     setErroOperacao(null);
@@ -74,13 +76,14 @@ const CursosPage = () => {
 
   //Adição e edição de periodos
   const fecharModalPeriodo = () => {
-    setModalPeriodo(null)
-  }
+    setModalPeriodo(null);
+    setErroOperacao(null);
+  };
   const abrirModalPeriodo = (curso, periodo = null) => {
     setErroOperacao(null);
     fecharMenuAcoes();
-    setModalPeriodo({ curso, periodo })
-  }
+    setModalPeriodo({ curso, periodo });
+  };
   const handleSalvarPeriodo = async (dados) => {
     if (!modalPeriodo) return;
 
@@ -136,7 +139,6 @@ const CursosPage = () => {
   const fecharMenuAcoes = () => {
     setCursoComMenuAberto(null);
   };
-
 
   const columnsCurso = [
     {
@@ -194,13 +196,15 @@ const CursosPage = () => {
               >
                 {expandido
                   ? "Ver menos"
-                  : `Ver mais ${periodosRestantes.length} período${periodosRestantes.length === 1 ? "" : "s"
-                  }`}
+                  : `Ver mais ${periodosRestantes.length} período${
+                      periodosRestantes.length === 1 ? "" : "s"
+                    }`}
 
                 <FiIcons.FiChevronDown
                   size={16}
-                  className={`transition-transform duration-200 ease-out ${expandido ? "rotate-180" : ""
-                    }`}
+                  className={`transition-transform duration-200 ease-out ${
+                    expandido ? "rotate-180" : ""
+                  }`}
                 />
               </button>
             )}
@@ -272,10 +276,11 @@ const CursosPage = () => {
           <button
             type="button"
             onClick={() => setArquivado(false)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${!arquivado
-              ? "bg-primary text-text-inverse"
-              : "text-text-secondary hover:bg-surface-muted"
-              }`}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
+              !arquivado
+                ? "bg-primary text-text-inverse"
+                : "text-text-secondary hover:bg-surface-muted"
+            }`}
           >
             Ativos
           </button>
@@ -283,10 +288,11 @@ const CursosPage = () => {
           <button
             type="button"
             onClick={() => setArquivado(true)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${arquivado
-              ? "bg-primary text-text-inverse"
-              : "text-text-secondary hover:bg-surface-muted"
-              }`}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
+              arquivado
+                ? "bg-primary text-text-inverse"
+                : "text-text-secondary hover:bg-surface-muted"
+            }`}
           >
             Arquivados
           </button>

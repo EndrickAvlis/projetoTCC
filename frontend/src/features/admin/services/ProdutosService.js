@@ -36,7 +36,7 @@ export const criarUniforme = (dados) =>
     },
   });
 
-export const criarConfiguracaoArmario = (dados) =>
+export const criarArmario = (dados) =>
   requisitarApi("/produtos", {
     method: "POST",
     body: {
@@ -61,10 +61,10 @@ export const alterarEstoqueUniforme = (produtoId, alteracao) =>
     body: alteracao,
   });
 
-export const buscarConfiguracaoArmario = () =>
+export const buscarArmario = () =>
   requisitarApi("/produtos/armario");
 
-export const atualizarConfiguracaoArmario = (produtoId, dados) =>
+export const atualizarArmario = (produtoId, dados) =>
   requisitarApi(criarUrlProduto(produtoId), {
     method: "PATCH",
     body: dados,

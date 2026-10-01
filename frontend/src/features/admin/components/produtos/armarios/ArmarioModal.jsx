@@ -7,82 +7,74 @@ import InputMoeda from "../../../../../components/ui/InputMoeda";
 import Modal from "../../../../../components/ui/Modal";
 
 const dadosIniciais = {
-  nome: "",
   preco: 0,
   quantidade: "",
 };
 
-const AdicionarUniformeModal = ({
+const ArmarioModal = ({
   aberto,
+  armario = null,
   onFechar,
   onSalvar,
   salvando = false,
   erro = null,
 }) => {
+  const emEdicao = Boolean(armario);
+
   const [dados, setDados] = React.useState(dadosIniciais);
   const [erros, setErros] = React.useState({});
 
   React.useEffect(() => {
     if (aberto) {
-      setDados(dadosIniciais);
-      setErros({});
+      if (armario) {
+        setDados({
+          preco: armario.preco,
+          quantidade: armario.quantidade,
+        });
+      } else {
+        setDados(dadosIniciais);
+      }
     }
-  }, [aberto]);
+    setErros({});
+  }, [aberto, armario]);
 
-  const atualizarCampo = (campo, valor) => {
+  const atualizarCampo = (campo, value) => {
     setDados((dadosAtuais) => ({
       ...dadosAtuais,
-      [campo]: valor,
+      [campo]: value,
+    }));
+
+    setErros((errosAtuais) => ({
+      ...errosAtuais,
+      [campo]: "",
     }));
   };
 
-  const validarFormulario = () => {
-    const novosErros = {};
-
-    const nome = dados.nome.trim();
+  const validarArmarioForm = () => {
+    const newErrors = {};
     const preco = Number(dados.preco);
     const quantidade = Number(dados.quantidade);
-
-    if (!nome) {
-      novosErros.nome =
-        "Informe o tamanho do uniforme.";
-    } else if (nome.length > 50) {
-      novosErros.nome =
-        "O tamanho deve ter no máximo 50 caracteres.";
-    }
-
     if (!Number.isFinite(preco) || preco <= 0) {
-      novosErros.preco =
-        "Informe um preço maior que zero.";
+      newErrors.preco = "Informe um preço maior que zero.";
     }
-
     if (
       dados.quantidade === "" ||
       !Number.isInteger(quantidade) ||
       quantidade < 0
     ) {
-      novosErros.quantidade =
+      newErrors.quantidade =
         "Informe uma quantidade inteira maior ou igual a zero.";
     }
-
-    const possuiErros =
-      Object.keys(novosErros).length > 0;
-
-    setErros(novosErros);
-
-    return !possuiErros;
+    setErros(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (evento) => {
-    evento.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-    if (!validarFormulario()) {
-      return;
-    }
-
+    if (!validarArmarioForm) return;
     onSalvar({
-      nome: dados.nome.trim(),
-      preco: Number(dados.preco),
+      preco: dados.preco,
       quantidade: Number(dados.quantidade),
     });
   };
@@ -91,61 +83,40 @@ const AdicionarUniformeModal = ({
     <Modal
       aberto={aberto}
       onFechar={() => !salvando && onFechar()}
-      titulo="Adicionar uniforme"
+      titulo={
+        emEdicao ? "Editar configuração dos armários" : "Configurar armários"
+      }
       largura="max-w-lg"
     >
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-5"
-      >
-        {erro && (
-          <Alert
-            type="error"
-            message={erro}
-          />
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {erro && <Alert type="error" message={erro} />}
+        {!emEdicao && (
+          <p className="text-sm text-text-secondary">
+            Informe o preço e a quantidade inicial para os armários.
+          </p>
         )}
-
-        <Input
-          label="Tamanho"
-          value={dados.nome}
-          onChange={(evento) =>
-            atualizarCampo(
-              "nome",
-              evento.target.value,
-            )
-          }
-          placeholder="Ex.: GG"
-          error={erros.nome}
-          required
-          autoFocus
-        />
-
         <InputMoeda
           label="Preço"
           valor={dados.preco}
-          onChange={(valor) =>
-            atualizarCampo("preco", valor)
-          }
+          onChange={(valor) => atualizarCampo("preco", valor)}
           error={erros.preco}
+          disabled={salvando}
           required
+          autoFocus
         />
-
         <Input
-          label="Quantidade inicial"
+          label="Quantidade disponível"
           type="number"
           min="0"
           step="1"
           value={dados.quantidade}
           onChange={(evento) =>
-            atualizarCampo(
-              "quantidade",
-              evento.target.value,
-            )
+            atualizarCampo("quantidade", evento.target.value)
           }
           error={erros.quantidade}
+          disabled={salvando}
           required
         />
-
         <footer className="flex justify-end gap-3 border-t border-border pt-5">
           <Button
             type="button"
@@ -155,17 +126,12 @@ const AdicionarUniformeModal = ({
           >
             Cancelar
           </Button>
-
-          <Button
-            type="submit"
-            loading={salvando}
-          >
-            Adicionar uniforme
+          <Button type="submit" loading={salvando}>
+            {emEdicao ? "Salvar alterações" : "Salvar configuração"}
           </Button>
         </footer>
       </form>
     </Modal>
   );
 };
-
-export default AdicionarUniformeModal;
+export default ArmarioModal;

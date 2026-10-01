@@ -16,7 +16,7 @@ const dadosIniciais = () => ({
 
 const CursoModal = ({
   aberto,
-  curso,
+  curso = null,
   onFechar,
   onSalvar,
   salvando = false,
@@ -31,7 +31,7 @@ const CursoModal = ({
   React.useEffect(() => {
     if (aberto) {
       if (curso) {
-        setNome(curso.nome || "");
+        setNome(curso.nome);
       } else {
         setNome("");
         setPeriodos([dadosIniciais()]);
@@ -43,17 +43,23 @@ const CursoModal = ({
   //Somente ao criar curso
   const adicionarPeriodo = () => {
     if (periodos.length >= 5) return;
-    setPeriodos((prevs) => [...prevs, dadosIniciais()]);
+    setPeriodos((dadosAtuais) => [...dadosAtuais, dadosIniciais()]);
   };
   const removerPeriodo = (index) => {
-    setPeriodos((prevs) => prevs.filter((_, indice) => indice !== index));
+    setPeriodos((dadosAtuais) =>
+      dadosAtuais.filter((_, indice) => indice !== index),
+    );
   };
   const atualizarPeriodo = (index, campo, value) => {
     setPeriodos((prevs) =>
-      prevs.map((item, indice) =>
-        indice === index ? { ...item, [campo]: value } : item,
+      prevs.map((item, i) =>
+        i === index ? { ...item, [campo]: value } : item,
       ),
     );
+
+    if (erros.periodosPorIndice) {
+      setErros((prev) => ({ ...prev, periodosPorIndice: {} }));
+    }
   };
 
   //Validar formulário
@@ -119,10 +125,11 @@ const CursoModal = ({
       largura="max-w-xl"
       conteudoRolavel={false}
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         {erro && <Alert type="error" message={erro} />}
         <Input
           label="Nome do curso"
+          maxLength="100"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Ex.: Desenvolvimento de Sistemas"
@@ -190,8 +197,8 @@ const CursoModal = ({
                     <Input
                       label="Vagas totais"
                       type="number"
-                      min="0"
-                      step="5"
+                      min="1"
+                      step="1"
                       value={item.vagasTotais}
                       onChange={(e) =>
                         atualizarPeriodo(index, "vagasTotais", e.target.value)
@@ -206,7 +213,11 @@ const CursoModal = ({
                       type="checkbox"
                       checked={item.matriculaAtiva}
                       onChange={(e) =>
-                        atualizarPeriodo(index, "matriculaAtiva", e.target.checked)
+                        atualizarPeriodo(
+                          index,
+                          "matriculaAtiva",
+                          e.target.checked,
+                        )
                       }
                     />
                     Matrícula disponível para este período
