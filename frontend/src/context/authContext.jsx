@@ -1,143 +1,100 @@
-// Contexto da sessão: persiste o usuário autenticado e suas permissões.
 import * as React from "react";
-import { obterSessaoAtual } from "../services/authService";
-import { AuthContext } from "./authContextBase";
+import * as authService from "../services/authService";
 
-const AUTH_STORAGE_KEY = "tcc.auth";
+const AuthContext = React.createContext(null);
 
-const recuperarSessao = () => {
-  try {
-    const sessao = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY));
-
-    if (!sessao?.token || !Array.isArray(sessao.telasPermitidas)) {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      return null;
-    }
-
-    return sessao;
-  } catch {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    return null;
-  }
-};
-
-const montarSessao = (
-  {
-    token,
-    usuario,
-    telasPermitidas,
-    telaAtual,
-    postoAtual,
-    guiche,
-  },
-  tokenAnterior = null,
-) => {
-  if (
-    !usuario?.id ||
-    !usuario?.nome ||
-    !Array.isArray(telasPermitidas) ||
-    !(token ?? tokenAnterior)
-  ) {
-    throw new Error("A API retornou uma sessão inválida.");
-  }
-
-  return {
-    token: token ?? tokenAnterior,
-    id: usuario.id,
-    nome: usuario.nome,
-    tipo: usuario.tipo,
-    telasPermitidas,
-    telaAtual,
-    postoAtual,
-    guiche,
-  };
+const telasGerais = {
+  admin: ["triagem", "apm", "docs", "admin", "secretaria"],
+  supervisor: ["triagem", "apm", "docs", "admin", "secretaria"],
+  atendente: ["triagem", "apm", "docs"],
 };
 
 export const AuthProvider = ({ children }) => {
-  const [sessaoInicial] = React.useState(recuperarSessao);
-  const [usuario, setUsuario] = React.useState(sessaoInicial);
-  const [validandoSessao, setValidandoSessao] = React.useState(
-    Boolean(sessaoInicial),
-  );
+  const [usuario, setUsuario] = React.useState(null);
+  const [carregando, setCarregando] = React.useState(true);
 
   React.useEffect(() => {
-    if (usuario) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(usuario));
-      return;
-    }
-
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-  }, [usuario]);
-
-  React.useEffect(() => {
-    const removerSessaoInvalida = () => {
-      setUsuario(null);
-      setValidandoSessao(false);
-    };
-    window.addEventListener("auth:unauthorized", removerSessaoInvalida);
-    return () =>
-      window.removeEventListener("auth:unauthorized", removerSessaoInvalida);
-  }, []);
-
-  React.useEffect(() => {
-    if (!sessaoInicial) return;
-
     let ativo = true;
 
-    // Valida no backend a sessão que foi recuperada após recarregar a página.
-    obterSessaoAtual()
-      .then((resposta) => {
-        if (!ativo) return;
-        setUsuario(montarSessao(resposta, sessaoInicial.token));
+    authService
+      .obterSessao()
+      .then((dados) => {
+        if (ativo) {
+          setUsuario(dados);
+        }
       })
       .catch(() => {
-        if (ativo) setUsuario(null);
+        if (ativo) {
+          setUsuario(null);
+        }
       })
       .finally(() => {
-        if (ativo) setValidandoSessao(false);
+        if (ativo) {
+          setCarregando(false);
+        }
       });
 
     return () => {
       ativo = false;
     };
-  }, [sessaoInicial]);
+  }, []);
 
-  // Registra somente a sessão que o POST /auth/login devolveu após validar acesso.
-  const registrarSessao = React.useCallback((resposta) => {
-    const sessao = montarSessao(resposta);
+  React.useEffect(() => {
+    const tratarNaoAutorizado = () => {
+      setUsuario(null);
+    };
 
-    setUsuario(sessao);
-    return sessao;
+    window.addEventListener("auth:unauthorized", tratarNaoAutorizado);
+    return () => {
+      window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
+    };
+  }, []);
+
+  const login = React.useCallback(async (credenciais) => {
+    const dados = await authService.logar(credenciais);
+    setUsuario(dados);
+    return dados;
+  }, []);
+
+  const logout = React.useCallback(async () => {
+    try {
+      await authService.deslogar();
+    } finally {
+      setUsuario(null);
+    }
   }, []);
 
   const temAcessoATela = React.useCallback(
-    (tela) => Boolean(usuario?.telasPermitidas?.includes(tela)),
+    (tela) => {
+      if (!usuario) return false;
+      
+      const telasPermitidas = telasGerais[usuario.tipo] ?? [];
+      return telasPermitidas.includes(tela);
+    },
     [usuario],
   );
-
-  // Limpa a sessão local depois da tentativa de encerrar a sessão no servidor.
-  const logout = React.useCallback(() => {
-    setUsuario(null);
-    setValidandoSessao(false);
-  }, []);
 
   const value = React.useMemo(
     () => ({
       usuario,
       estaAutenticado: Boolean(usuario),
-      validandoSessao,
-      registrarSessao,
-      temAcessoATela,
+      carregando,
+      login,
       logout,
+      temAcessoATela,
     }),
-    [
-      usuario,
-      validandoSessao,
-      registrarSessao,
-      temAcessoATela,
-      logout,
-    ],
+    [usuario, carregando, login, logout, temAcessoATela],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de AuthProvider.");
+  }
+
+  return context;
 };

@@ -13,7 +13,7 @@ const dadosIniciais = () => ({
     matriculaAtiva: true,
 });
 
-const LIMITE_PERIODOS = 4;
+const LIMITE_PERIODOS = 5;
 
 const CursoFormModal = ({
     aberto,

@@ -1,6 +1,5 @@
-// Hook usado pelos componentes para acessar a sessão e as permissões do usuário.
 import { useContext } from "react";
-import { AuthContext } from "../context/authContextBase";
+import { AuthContext } from "../context/authContext";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

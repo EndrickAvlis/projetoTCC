@@ -19,9 +19,9 @@ export const criarVoluntario = async (req, res) => {
 };
 
 export const atualizarVoluntario = async (req, res) => {
-  const { idVoluntario } = req.validado.params;
+  const { id } = req.validado.params;
   const voluntario = await voluntarioService.atualizar(
-    idVoluntario,
+    id,
     req.validado.body,
   );
 
