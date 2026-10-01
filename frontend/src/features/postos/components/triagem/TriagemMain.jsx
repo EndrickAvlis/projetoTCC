@@ -23,6 +23,40 @@ const DADOS_INICIAIS = {
   escolaridadePublica: "",
 };
 
+const alunoParaForm = (aluno) => {
+  const matricula = aluno?.matriculas?.[0] || {};
+
+  return {
+    nome: aluno?.nome || "",
+    cidade: aluno?.cidade || "",
+    sexo: aluno?.sexo || "",
+    escolaridadePublica: aluno?.escolaridadePublica ?? "",
+    classificacao: matricula.classificacao ?? "",
+    curso: matricula.cursoId ? String(matricula.cursoId) : "",
+    periodo: matricula.periodo || "",
+    ano: String(matricula.anoEscolar || "1"),
+  };
+};
+
+const formParaPayload = (dados, alunoId) => ({
+  alunoId,
+  dadosAluno: {
+    nome: dados.nome.trim(),
+    cidade: dados.cidade.trim() || null,
+    sexo: dados.sexo || null,
+    escolaridadePublica:
+      dados.escolaridadePublica === ""
+        ? null
+        : String(dados.escolaridadePublica) === "true",
+  },
+  matricula: {
+    cursoId: Number(dados.curso),
+    classificacao: dados.classificacao ? Number(dados.classificacao) : null,
+    periodo: dados.periodo,
+    anoEscolar: Number(dados.ano),
+  },
+});
+
 export const TriagemMain = () => {
   const {
     fase,
@@ -58,21 +92,8 @@ export const TriagemMain = () => {
   }, []);
 
   const handleSelecionarAluno = (aluno) => {
-    const matricula = aluno.matriculas?.[0] || {};
-    setAlunoId(aluno.id);
-    setDadosAluno({
-      nome: aluno.nome || "",
-      classificacao: matricula.classificacao ? String(matricula.classificacao) : "",
-      curso: matricula.cursoId ? String(matricula.cursoId) : "",
-      periodo: matricula.periodo || "",
-      ano: String(matricula.anoEscolar || 1),
-      cidade: aluno.cidade || "",
-      sexo: aluno.sexo || "",
-      escolaridadePublica:
-        aluno.escolaridadePublica !== null && aluno.escolaridadePublica !== undefined
-          ? String(aluno.escolaridadePublica)
-          : "",
-    });
+    setAlunoId(aluno?.id ?? null);
+    setDadosAluno(alunoParaForm(aluno));
   };
 
   const handleLimparFormulario = () => {
@@ -85,36 +106,17 @@ export const TriagemMain = () => {
     setDadosAluno((prev) => ({ ...prev, [campo]: valor }));
   };
 
-  const montarPayload = () => ({
-    alunoId,
-    dadosAluno: {
-      nome: dadosAluno.nome.trim(),
-      escolaridadePublica:
-        dadosAluno.escolaridadePublica === ""
-          ? null
-          : dadosAluno.escolaridadePublica === "true",
-      cidade: dadosAluno.cidade.trim(),
-      sexo: dadosAluno.sexo,
-    },
-    matricula: {
-      cursoId: Number(dadosAluno.curso),
-      classificacao: dadosAluno.classificacao ? Number(dadosAluno.classificacao) : null,
-      periodo: dadosAluno.periodo,
-      anoEscolar: Number(dadosAluno.ano),
-    },
-  });
-
   const handleSalvarPendencia = async () => {
     if (documentosSelecionados.length === 0) return;
     if (dadosAluno.nome.trim() && dadosAluno.curso) {
-      await salvarDados(montarPayload());
+      await salvarDados(formParaPayload(dadosAluno, alunoId));
     }
     await salvarPendencia(documentosSelecionados);
     handleLimparFormulario();
   };
 
   const handleFinalizar = async () => {
-    await salvarDados(montarPayload());
+    await salvarDados(formParaPayload(dadosAluno, alunoId));
     await finalizar();
     handleLimparFormulario();
   };
