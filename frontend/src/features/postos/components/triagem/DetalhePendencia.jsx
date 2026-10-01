@@ -27,17 +27,15 @@ export const DetalhePendencia = ({
           Selecione uma senha
         </div>
         <p className="text-xs text-text-secondary mt-1 max-w-xs">
-          Os dados do aluno e os documentos faltantes serão exibidos aqui para conferência.
+          Os dados do aluno e os documentos faltantes serão exibidos aqui para
+          conferência.
         </p>
       </div>
     );
   }
 
   const { senha, aluno, matricula, documentos = [], registradaEm } = pendencia;
-  const prioritaria = Boolean(
-    senha.prioritaria ??
-      (senha.tipoSenha === true || senha.tipoSenha === "PREFERENCIAL")
-  );
+  const prioritaria = Boolean(senha?.tipoSenha);
 
   return (
     <div
