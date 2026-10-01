@@ -13,7 +13,7 @@ import MenuAcoesUniforme from "../components/produtos/uniformes/MenuAcoesUniform
 import MovimentarEstoqueModal from "../components/produtos/uniformes/MovimentarEstoqueModal";
 import ProdutosTipoSelector from "../components/produtos/uniformes/ProdutosTipoSelector";
 import UniformeSelector from "../components/produtos/uniformes/UniformeSelector";
-import ConfirmarArquivamentoUniformeModal from "../components/produtos/uniformes/ConfirmarArquivamentoUniformeModal";
+import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 
 import { useUniformes } from "../hooks/useUniformes";
 import { useArmario } from "../hooks/useArmario";
@@ -384,10 +384,30 @@ const ProdutosPage = () => {
         erro={erroOperacao}
       />
 
-      <ConfirmarArquivamentoUniformeModal
-        uniforme={uniformeParaArquivamento}
+      <ConfirmarModal
+        aberto={Boolean(uniformeParaArquivamento)}
         onFechar={() => setUniformeParaArquivamento(null)}
         onConfirmar={confirmarArquivamento}
+        titulo={
+          uniformeParaArquivamento?.status === "arquivado"
+            ? "Desarquivar uniforme"
+            : "Arquivar uniforme"
+        }
+        mensagem={
+          uniformeParaArquivamento?.status === "arquivado"
+            ? `Deseja desarquivar o uniforme ${uniformeParaArquivamento?.nome}?`
+            : `Deseja arquivar o uniforme ${uniformeParaArquivamento?.nome}? Ele deixará de aparecer entre os uniformes ativos.`
+        }
+        textoConfirmar={
+          uniformeParaArquivamento?.status === "arquivado"
+            ? "Desarquivar"
+            : "Arquivar"
+        }
+        variante={
+          uniformeParaArquivamento?.status === "arquivado"
+            ? "success"
+            : "danger"
+        }
         salvando={salvandoAcao}
         erro={erroOperacao}
       />

@@ -8,7 +8,7 @@ import Input from "../../../components/ui/Input";
 
 import CursoModal from "../components/cursos/CursoModal";
 import PeriodoModal from "../components/cursos/PeriodoModal";
-import ConfirmarArquivamentoCursoModal from "../components/cursos/ConfirmarArquivamentoCursoModal";
+import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 import MenuAcoesCurso from "../components/cursos/MenuAcoesCurso";
 import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
@@ -334,10 +334,24 @@ const CursosPage = () => {
         salvando={salvando}
         erro={erroOperacao}
       />
-      <ConfirmarArquivamentoCursoModal
-        curso={cursoParaArquivamento}
+      <ConfirmarModal
+        aberto={Boolean(cursoParaArquivamento)}
         onFechar={() => setCursoParaArquivamento(null)}
         onConfirmar={confirmarArquivamento}
+        titulo={
+          cursoParaArquivamento?.arquivado
+            ? "Desarquivar curso"
+            : "Arquivar curso"
+        }
+        mensagem={
+          cursoParaArquivamento?.arquivado
+            ? `Deseja desarquivar o curso ${cursoParaArquivamento?.nome}?`
+            : `Deseja arquivar o curso ${cursoParaArquivamento?.nome}? As matrículas dos períodos serão fechadas.`
+        }
+        textoConfirmar={
+          cursoParaArquivamento?.arquivado ? "Desarquivar" : "Arquivar"
+        }
+        variante={cursoParaArquivamento?.arquivado ? "success" : "danger"}
         salvando={salvando}
         erro={erroOperacao}
       />
