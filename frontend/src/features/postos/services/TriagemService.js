@@ -3,7 +3,7 @@ import { requisitarApi } from "../../../services/apiClient";
 export const buscarAlunos = async (nome, limite = 10) => {
   const query = new URLSearchParams({ nome, limite: String(limite) });
   const res = await requisitarApi(`/alunos?${query.toString()}`);
-  return res?.alunos ?? [];
+  return res.alunos || [];
 };
 
 export const criarAluno = async (dados) => {
@@ -63,8 +63,8 @@ export const salvarPendencia = async (atendimentoId, documentos) => {
 export const listarPendencias = async () => {
   const res = await requisitarApi("/filas/pendencias?etapa=triagem");
   return {
-    pendencias: res?.pendencias ?? [],
-    total: res?.total ?? 0,
+    pendencias: res.pendencias || [],
+    total: res.total || 0,
   };
 };
 
@@ -87,5 +87,5 @@ export const alterarPrioridadeSenha = async (senhaId, tipoSenha) => {
 
 export const listarCursos = async () => {
   const resposta = await requisitarApi("/cursos");
-  return resposta?.cursos ?? resposta ?? [];
+  return resposta.cursos || [];
 };
