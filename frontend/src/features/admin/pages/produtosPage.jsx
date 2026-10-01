@@ -4,12 +4,12 @@ import * as FiIcons from "react-icons/fi";
 import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
+import TableMenuActions from "../../../components/ui/TableMenuActions";
 
 import SecaoArmarios from "../components/produtos/armarios/SecaoArmarios";
 import ArmarioModal from "../components/produtos/armarios/ArmarioModal";
 import UniformeModal from "../components/produtos/uniformes/UniformeModal";
 
-import MenuAcoesUniforme from "../components/produtos/uniformes/MenuAcoesUniforme";
 import MovimentarEstoqueModal from "../components/produtos/uniformes/MovimentarEstoqueModal";
 import ProdutosTipoSelector from "../components/produtos/uniformes/ProdutosTipoSelector";
 import UniformeSelector from "../components/produtos/uniformes/UniformeSelector";
@@ -231,25 +231,41 @@ const ProdutosPage = () => {
         );
       },
     },
-    {
+        {
       key: "acoes",
       label: "Ações",
       headerClassName: "text-right",
       cellClassName: "text-right",
-      render: (uniforme) => (
-        <MenuAcoesUniforme
-          uniforme={uniforme}
-          aberto={uniformeComMenuAberto === uniforme.id}
-          onAbrir={() => setUniformeComMenuAberto(uniforme.id)}
-          onFechar={fecharMenuAcoes}
-          onMovimentarEstoque={abrirMovimentacaoEstoque}
-          onEditar={abrirModalUniforme}
-          onAlterarArquivamento={(uniformeSelecionado) => {
-            setErroOperacao(null);
-            setUniformeParaArquivamento(uniformeSelecionado);
-          }}
-        />
-      ),
+      render: (uniforme) => {
+        const isArquivado = uniforme.status === "arquivado";
+
+        return (
+          <TableMenuActions
+            label={`Ações do uniforme ${uniforme.nome}`}
+            itens={[
+              {
+                label: "Editar uniforme",
+                icone: FiIcons.FiEdit2,
+                onClick: () => abrirModalUniforme(uniforme),
+              },
+              {
+                label: "Movimentar estoque",
+                icone: FiIcons.FiPackage,
+                onClick: () => abrirMovimentacaoEstoque(uniforme),
+              },
+              {
+                label: isArquivado ? "Desarquivar" : "Arquivar",
+                icone: isArquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
+                onClick: () => {
+                  setErroOperacao(null);
+                  setUniformeParaArquivamento(uniforme);
+                },
+                variante: isArquivado ? "success" : "danger",
+              },
+            ]}
+          />
+        );
+      },
     },
   ];
 

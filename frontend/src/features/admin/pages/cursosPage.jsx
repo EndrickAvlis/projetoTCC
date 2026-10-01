@@ -5,11 +5,11 @@ import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
+import TableMenuActions from "../../../components/ui/TableMenuActions";
 
 import CursoModal from "../components/cursos/CursoModal";
 import PeriodoModal from "../components/cursos/PeriodoModal";
 import ConfirmarModal from "../../../components/ui/ConfirmarModal";
-import MenuAcoesCurso from "../components/cursos/MenuAcoesCurso";
 import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
 import { useCursos } from "../hooks/useCursos";
@@ -35,7 +35,6 @@ const CursosPage = () => {
 
   // UI da Tabela
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
-  const [cursoComMenuAberto, setCursoComMenuAberto] = React.useState(null);
 
   const { cursos, total, carregando, erro, recarregar } = useCursos({
     busca,
@@ -214,30 +213,34 @@ const CursosPage = () => {
         );
       },
     },
-
-    //*ações
     {
       key: "acoes",
       label: "Ações",
       headerClassName: "text-right",
       cellClassName: "text-right",
-
-      render: (curso) => {
-        return (
-          <MenuAcoesCurso
-            curso={curso}
-            aberto={cursoComMenuAberto === curso.id}
-            onAbrir={() => setCursoComMenuAberto(curso.id)}
-            onFechar={fecharMenuAcoes}
-            onAdicionarPeriodo={abrirModalPeriodo}
-            onEditarNome={abrirModalCurso}
-            onAlterarArquivamento={(cursoSelecionado) => {
-              setErroOperacao(null);
-              setCursoParaArquivamento(cursoSelecionado);
-            }}
-          />
-        );
-      },
+      render: (curso) => (
+        <TableMenuActions
+          labelAria={`Ações do curso ${curso.nome}`}
+          itens={[
+            !curso.arquivado && {
+              label: "Adicionar período",
+              icone: FiIcons.FiPlus,
+              onClick: () => abrirModalPeriodo(curso),
+            },
+            {
+              label: "Editar nome",
+              icone: FiIcons.FiEdit2,
+              onClick: () => abrirModalCurso(curso),
+            },
+            {
+              label: curso.arquivado ? "Desarquivar" : "Arquivar",
+              icone: curso.arquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
+              onClick: () => setCursoParaArquivamento(curso),
+              variante: curso.arquivado ? "success" : "danger",
+            },
+          ]}
+        />
+      ),
     },
   ];
 
