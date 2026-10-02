@@ -1,4 +1,4 @@
-import { formatarSenha } from "../../utils/formatters";
+import { formatarSenha } from "../../../../utils/formatters";
 
 const FilaGrid = ({ senhas, onSelecionarSenha, desabilitada = false }) => {
   const renderizarSenha = (senha) => (

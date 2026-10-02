@@ -2,7 +2,7 @@ import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
 import Alert from "../../../components/ui/Alert";
-import Button from "../../../components/ui/button";
+import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 
 import AlunosFiltros from "../components/alunos/AlunosFiltros";

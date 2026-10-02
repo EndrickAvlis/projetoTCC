@@ -1,6 +1,6 @@
 import * as FiIcons from "react-icons/fi";
 
-import Input from "../../../../../components/ui/input";
+import Input from "../../../../../components/ui/Input";
 
 const UniformeSelector = ({
     busca,

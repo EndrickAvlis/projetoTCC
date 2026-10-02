@@ -5,8 +5,8 @@ import { AuthProvider } from "./context/authContext";
 import RotaProtegida from "./components/routing/RotaProtegida";
 import LoginPage from "./pages/loginPage";
 import TriagemPage from "./features/postos/pages/triagemPage";
-import ApmPage from "./pages/ApmPage";
-import DocsPage from "./pages/DocsPage";
+// import ApmPage from "./pages/ApmPage";
+// import DocsPage from "./pages/DocsPage";
 import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import EmitirSenhaPage from "./pages/EmitirSenhaPage";
 import AdminLayout from "./features/admin/layout/adminLayout";
@@ -39,13 +39,13 @@ function App() {
                 <ReactRouter.Route path="/triagem" element={<TriagemPage />} />
               </ReactRouter.Route>
 
-              <ReactRouter.Route element={<RotaProtegida tela="apm" />}>
+              {/* <ReactRouter.Route element={<RotaProtegida tela="apm" />}>
                 <ReactRouter.Route path="/apm" element={<ApmPage />} />
               </ReactRouter.Route>
 
               <ReactRouter.Route element={<RotaProtegida tela="docs" />}>
                 <ReactRouter.Route path="/docs" element={<DocsPage />} />
-              </ReactRouter.Route>
+              </ReactRouter.Route> */}
 
               {/* Módulo Admin: Protegido EM BLOCO para quem tem permissão "admin" */}
               {/* Tanto admin quanto supervisor passam por aqui automaticamente! */}

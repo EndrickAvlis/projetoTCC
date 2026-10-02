@@ -1,4 +1,4 @@
-import { requisitarApi } from "./apiClient";
+import { requisitarApi } from "../../../services/apiClient";
 
 export const normalizarSenha = (senha) => {
   if (!senha) return null;

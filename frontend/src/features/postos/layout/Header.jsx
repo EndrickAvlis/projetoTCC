@@ -1,9 +1,9 @@
 // Cabeçalho do posto: mostra a sessão atual e permite encerrar o acesso.
 import { MdLogout } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { useAtendimento } from "../../hooks/useAtendimento";
-import { useAuth } from "../../context/authContext";
-import Button from "../ui/Button";
+import { useAtendimento } from "../../../context/atendimentoContext";
+import { useAuth } from "../../../context/authContext";
+import Button from "../../../components/ui/Button";
 
 const Header = () => {
   const navigate = useNavigate();

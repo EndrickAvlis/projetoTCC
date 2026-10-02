@@ -1,6 +1,6 @@
 import { useState } from "react";
 import logoEtec from "../assets/logoEtec.png";
-import { emitirSenha } from "../services/filaService";
+import { emitirSenha } from "../features/postos/services/filaService";
 import { formatarSenha } from "../utils/formatters";
 
 const EmitirSenhaPage = () => {

@@ -1,9 +1,4 @@
-import {
-  FiPlay,
-  FiRotateCw,
-  FiCheck,
-  FiClock,
-} from "react-icons/fi";
+import { FiPlay, FiRotateCw, FiCheck, FiClock } from "react-icons/fi";
 import Button from "../../../components/ui/Button";
 
 export const AtendimentoActions = ({
@@ -18,13 +13,8 @@ export const AtendimentoActions = ({
   onFinalizar,
   className = "",
 }) => {
-  const numeroSenha = senhaAtual ? (senhaAtual.numero ?? senhaAtual.codigo ?? "") : "";
-  const isPrioritaria = senhaAtual
-    ? Boolean(
-        senhaAtual.prioritaria ??
-          (senhaAtual.tipoSenha === true || senhaAtual.tipoSenha === "PREFERENCIAL")
-      )
-    : false;
+  const numeroSenha = senhaAtual?.codigo || "";
+  const isPrioritaria = Boolean(senhaAtual?.tipoSenha);
 
   const renderIdentificacao = () => {
     if (fase === "sem_senha" || !senhaAtual) {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useAtendimento } from "../../../hooks/useAtendimento";
+import { useAtendimento } from "../../../context/atendimentoContext";
 import { useAuth } from "../../../context/authContext";
 
 

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarCursosAdmin } from "../services/CursosService";
+import { listarCursosAdmin } from "../services/cursosService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useCursos = ({ busca = "", arquivado = false } = {}) => {

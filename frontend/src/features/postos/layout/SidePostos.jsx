@@ -1,8 +1,8 @@
 import { useState } from "react";
 import Button from "../../../components/ui/Button";
-import FilaGrid from "../../../components/Fila/FilaGrid";
-import HistoricoGrid from "../../../components/Fila/HistoricoGrid";
-import SenhaAtualCard from "../../../components/Fila/SenhaAtualCard";
+import FilaGrid from "../components/fila/FilaGrid";
+import HistoricoGrid from "../components/fila/HistoricoGrid";
+import SenhaAtualCard from "../components/fila/SenhaAtualCard";
 
 const SidePostos = ({
   pessoasEsperando,

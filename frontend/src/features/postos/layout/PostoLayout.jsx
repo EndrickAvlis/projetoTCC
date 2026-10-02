@@ -1,8 +1,8 @@
 import Alert from "../../../components/ui/Alert";
-import { useAtendimento } from "../../../hooks/useAtendimento";
-import { useFila } from "../../../hooks/useFila";
-import { useSenhaAtual } from "../../../hooks/useSenhaAtual";
-import Header from "../../../components/layout/Header";
+import { useAtendimento } from "../../../context/atendimentoContext";
+import { useFila } from "../hooks/useFila";
+import { useSenhaAtual } from "../hooks/useSenhaAtual";
+import Header from "./Header";
 import SidePostos from "./SidePostos";
 
 const PostoLayout = ({ etapa, children }) => {

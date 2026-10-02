@@ -8,11 +8,9 @@ const PendenciasGrid = ({
   className = "",
 }) => {
   const renderizarPendencia = (pendencia) => {
-    const isSelecionada = pendenciaSelecionada?.senha?.id === pendencia.senha.id;
-    const isPrioritaria = Boolean(
-      pendencia.senha.prioritaria ??
-        (pendencia.senha.tipoSenha === true || pendencia.senha.tipoSenha === "PREFERENCIAL")
-    );
+    const isSelecionada =
+      pendenciaSelecionada?.senha?.id === pendencia.senha.id;
+    const isPrioritaria = Boolean(pendencia.senha?.tipoSenha);
 
     return (
       <button
@@ -29,7 +27,9 @@ const PendenciasGrid = ({
           desabilitada ? "opacity-60 cursor-not-allowed" : "",
         ].join(" ")}
         disabled={desabilitada}
-        onClick={() => onSelecionarPendencia && onSelecionarPendencia(pendencia)}
+        onClick={() =>
+          onSelecionarPendencia && onSelecionarPendencia(pendencia)
+        }
         aria-label={`Selecionar pendência da senha ${pendencia.senha.codigo}`}
       >
         <div className="font-bold text-primary text-base leading-tight">

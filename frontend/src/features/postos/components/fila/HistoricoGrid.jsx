@@ -1,5 +1,4 @@
-// Grade visual somente leitura para as senhas cujo atendimento foi iniciado no posto.
-import { formatarSenha } from "../../utils/formatters";
+import { formatarSenha } from "../../../../utils/formatters";
 
 const HistoricoGrid = ({ senhas }) => {
   const renderizarSenha = (senha) => (
