@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as TriagemService from "../services/TriagemService";
-import { useAtendimento } from "../../../hooks/useAtendimento";
+import { useAtendimento } from "../../../context/atendimentoContext";
 
 export const useTriagem = () => {
   const {

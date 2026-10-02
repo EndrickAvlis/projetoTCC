@@ -93,3 +93,12 @@ export const AtendimentoProvider = ({ children }) => {
     </AtendimentoContext.Provider>
   );
 };
+
+export const useAtendimento = () => {
+  const context = React.useContext(AtendimentoContext);
+  if (!context) {
+    throw new Error("useAtendimento deve ser usado dentro de AtendimentoProvider.");
+  }
+  return context;
+};
+

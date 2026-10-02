@@ -16,7 +16,9 @@ export const useVendaApm = () => {
   const [itens, setItens] = React.useState([]);
   const [valorContribuicao, setValorContribuicao] = React.useState(0);
   const [armarioIncluido, setArmarioIncluido] = React.useState(false);
-  const [pagamentosSelecionados, setPagamentosSelecionados] = React.useState([]);
+  const [pagamentosSelecionados, setPagamentosSelecionados] = React.useState(
+    [],
+  );
   const [valoresPagamento, setValoresPagamento] = React.useState({});
 
   React.useEffect(() => {
@@ -56,9 +58,7 @@ export const useVendaApm = () => {
     [itens],
   );
   const total = arredondarValor(
-    totalUniformes +
-      valorContribuicao +
-      (armario.incluido ? armario.preco : 0),
+    totalUniformes + valorContribuicao + (armario.incluido ? armario.preco : 0),
   );
   const totalPago = arredondarValor(
     pagamentosSelecionados.reduce(

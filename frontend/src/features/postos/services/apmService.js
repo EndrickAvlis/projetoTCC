@@ -1,11 +1,10 @@
 // Serviço da APM: carrega catálogo e registra venda ou finalização sem venda.
-import { requisitarApi } from "./apiClient";
+import { requisitarApi } from "../../../services/apiClient";
 
 export const centavosParaReais = (centavos = 0) =>
   Math.round(Number(centavos)) / 100;
 
-export const reaisParaCentavos = (reais = 0) =>
-  Math.round(Number(reais) * 100);
+export const reaisParaCentavos = (reais = 0) => Math.round(Number(reais) * 100);
 
 const normalizarCatalogo = (resposta = {}) => ({
   uniformes: (resposta.uniformes ?? []).map((uniforme) => ({
@@ -24,18 +23,13 @@ export const carregarCatalogoVenda = async () =>
   normalizarCatalogo(await requisitarApi("/apm/catalogo-venda"));
 
 export const registrarVenda = (atendimentoId, venda) =>
-  requisitarApi(
-    `/atendimentos/${encodeURIComponent(atendimentoId)}/vendas`,
-    {
-      method: "POST",
-      body: venda,
-    },
-  );
+  requisitarApi(`/atendimentos/${encodeURIComponent(atendimentoId)}/vendas`, {
+    method: "POST",
+    body: venda,
+  });
 
 export const finalizarSemVenda = (atendimentoId) =>
   requisitarApi(
-    `/atendimentos/${encodeURIComponent(
-      atendimentoId,
-    )}/finalizacoes-sem-venda`,
+    `/atendimentos/${encodeURIComponent(atendimentoId)}/finalizacoes-sem-venda`,
     { method: "POST" },
   );

@@ -1,5 +1,5 @@
 // Serviço de atendimento: carrega detalhes e controla início/fim do histórico.
-import { requisitarApi } from "./apiClient";
+import { requisitarApi } from "../../../services/apiClient";
 import { normalizarSenha } from "./filaService";
 
 export const obterDetalheSenha = async (senhaId) => {

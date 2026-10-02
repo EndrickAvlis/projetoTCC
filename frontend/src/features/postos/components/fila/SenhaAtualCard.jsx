@@ -1,5 +1,5 @@
 // Cartão da senha em atendimento, separado da fila para acomodar ações futuras do atendimento.
-import { formatarSenha } from "../../utils/formatters";
+import { formatarSenha } from "../../../../utils/formatters";
 
 const SenhaAtualCard = ({ senha, onAlternarPrioridade, desabilitada = false }) => {
   if (!senha) return null;
