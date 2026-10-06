@@ -4,11 +4,11 @@ const senhaService = new SenhaService();
 
 const senhaResposta = (senha) => ({
   id: senha.idSenha,
-  codigo: senha.senhaCodigo,
+  numero: senha.senhaCodigo,
   emitidaEm: senha.dataHoraInicioSenha,
-  etapaAtual: senha.etapaSenha,
+  etapa: senha.etapaSenha,
   status: senha.statusSenha,
-  tipoSenha: senha.tipoSenha,
+  prioritaria: Boolean(senha.tipoSenha),
 });
 
 export const emitirSenha = async (_req, res) => {

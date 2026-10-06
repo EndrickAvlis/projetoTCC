@@ -1,24 +1,18 @@
-// Cabeçalho do posto: mostra a sessão atual e permite encerrar o acesso.
 import { MdLogout } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { useAtendimento } from "../../../context/atendimentoContext";
+import { useAtendimento } from "../context/atendimentoContext";
 import { useAuth } from "../../../context/authContext";
 import Button from "../../../components/ui/Button";
 
 const Header = () => {
   const navigate = useNavigate();
   const { logout, usuario } = useAuth();
-  const { limparAtendimentoExibido } = useAtendimento();
+  const { limparAtendimento } = useAtendimento();
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch {
-      // Mesmo sem resposta da API, os dados sensíveis devem sair da tela local.
-    } finally {
-      limparAtendimentoExibido();
-      navigate("/", { replace: true });
-    }
+    await logout();
+    limparAtendimento();
+    navigate("/", { replace: true });
   };
 
   return (

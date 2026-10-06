@@ -16,11 +16,11 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula. Nela, o a
     ▼ (POST /filas/chamadas)
 [em_atendimento] (reservada pelo guichê; abre HistoricoSenha)
     │
-    ▼ (POST /atendimentos - Iniciar Atendimento manual)
+    ▼ (POST /atendimento/iniciar - Iniciar Atendimento manual)
     │ Atendente busca/cadastra aluno e confere dados
     │
     ├──▶ SEM PENDÊNCIA:
-    │      POST /atendimentos/:id/finalizar
+    │      POST /atendimento/finalizar
     │      └── Senha muda para: status = 'aguardando', etapa = 'apm'
     │          HistoricoSenha atual é fechado com dataHoraFimHistorico
     │
@@ -94,7 +94,7 @@ model HistoricoSenha {
   etapaHistorico          String?   @db.VarChar(15)
   guicheHistorico         String?   @db.VarChar(20)
   dataHoraChamada         DateTime  // Preenchido no POST /filas/chamadas
-  dataHoraInicioHistorico DateTime? // Preenchido no POST /atendimentos (início manual)
+  dataHoraInicioHistorico DateTime? // Preenchido no POST /atendimento/iniciar (início manual)
   dataHoraFimHistorico    DateTime? // Preenchido na finalização ou ao salvar pendência
   ultimaRechamadaEm       DateTime?
   quantidadeRechamadas    Int       @default(0)
@@ -233,7 +233,7 @@ Chama a próxima senha da fila ou uma senha específica.
     "status": "em_atendimento",
     "tipoSenha": false
   },
-  "historico": {
+  "atendimento": {
     "id": 95,
     "chamadaEm": "2026-09-21T14:05:00Z",
     "iniciadaEm": null
@@ -245,7 +245,7 @@ Chama a próxima senha da fila ou uma senha específica.
 
 Recupera o atendimento atual do voluntário logado (para recuperação de tela em F5).
 
-- **Resposta `200 OK`:** Mesmo formato do `POST /filas/chamadas` ou `{ "senha": null, "historico": null }`.
+- **Resposta `200 OK`:** Mesmo formato do `POST /filas/chamadas` ou `{ "senha": null, "atendimento": null }`.
 
 #### `GET /filas/historico?etapa=triagem`
 
@@ -266,11 +266,11 @@ Lista chamadas realizadas hoje na Triagem (somente leitura).
 }
 ```
 
-#### `POST /filas/chamadas/:senhaId/rechamadas`
+#### `POST /atendimento/rechamar`
 
 Notifica o painel de chamadas (TV) para rechamar a senha atual.
 
-- **Corpo:** `{ "etapa": "triagem" }`
+- **Corpo:** `{ "senhaId": 15, "etapa": "triagem" }`
 - **Resposta `200 OK`:** `{ "message": "Senha chamada novamente.", "quantidadeRechamadas": 2 }`
 
 #### `PATCH /senhas/:senhaId/prioridade`
@@ -377,7 +377,7 @@ Retorna a lista de cursos ativos para os selects do formulário.
 
 ### 5.3. Atendimento, Pendências e Finalização
 
-#### `POST /atendimentos`
+#### `POST /atendimento/iniciar`
 
 Registra o início manual do atendimento.
 
@@ -395,6 +395,38 @@ Registra o início manual do atendimento.
 }
 ```
 
+#### `GET /atendimento/recuperar/:etapa`
+
+Recupera o atendimento em andamento para o atendente logado na etapa especificada (ex: `triagem`).
+
+- **Parâmetro de URL:** `etapa` (`triagem`, `apm`, `documentos`)
+- **Resposta `200 OK`:** Retorna o objeto de atendimento ativo com senha e aluno, ou `null` se livre.
+
+#### `POST /atendimento/rechamar`
+
+Rechama a senha atual no painel de TV para a etapa informada.
+
+- **Corpo:** `{ "senhaId": 15, "etapa": "triagem" }`
+- **Resposta `200 OK`:** `{ "message": "Senha chamada novamente.", "quantidadeRechamadas": 2 }`
+
+#### `POST /atendimento/cancelar`
+
+Cancela / pula o atendimento atual no guichê sem concluir a etapa.
+
+- **Corpo:** `{ "senhaId": 15 }`
+- **Resposta `200 OK`:** `{ "message": "Atendimento cancelado com sucesso." }`
+
+#### `POST /atendimento/finalizar`
+
+Conclui o atendimento da Triagem com sucesso (sem pendências).
+
+- **Corpo:** `{ "senhaId": 15 }`
+- **Regra Transacional:**
+  1. Validar que o atendimento possui aluno e matrícula vinculados.
+  2. Atualizar `Senha`: `etapa = 'apm'`, `status = 'aguardando'`, `pendenciaTriagem = null`.
+  3. Encerrar `HistoricoSenha` atual: `dataHoraFimHistorico = agora`.
+- **Resposta `200 OK`:** `{ "message": "Triagem finalizada.", "proximaEtapa": "apm" }`
+
 #### `POST /atendimentos/:atendimentoId/pendencias`
 
 Registra pendência documental na Triagem.
@@ -406,16 +438,6 @@ Registra pendência documental na Triagem.
   3. Manter `Senha.etapa = 'triagem'`.
   4. Encerrar `HistoricoSenha` atual: `dataHoraFimHistorico = agora`.
 - **Resposta `200 OK`:** `{ "message": "Pendência registrada na Triagem." }`
-
-#### `POST /atendimentos/:atendimentoId/finalizar`
-
-Conclui o atendimento da Triagem com sucesso (sem pendências).
-
-- **Regra Transacional:**
-  1. Validar que o atendimento possui aluno e matrícula vinculados.
-  2. Atualizar `Senha`: `etapa = 'apm'`, `status = 'aguardando'`, `pendenciaTriagem = null`.
-  3. Encerrar `HistoricoSenha` atual: `dataHoraFimHistorico = agora`.
-- **Resposta `200 OK`:** `{ "message": "Triagem finalizada.", "proximaEtapa": "apm" }`
 
 #### `GET /filas/pendencias?etapa=triagem`
 
@@ -463,7 +485,7 @@ Retoma uma senha pendente para continuidade do atendimento.
     "status": "em_atendimento",
     "tipoSenha": false
   },
-  "historico": {
+  "atendimento": {
     "id": 99,
     "chamadaEm": "2026-09-21T14:30:00Z",
     "iniciadaEm": null
@@ -481,7 +503,7 @@ As operações abaixo **devem** ser executadas dentro de `prisma.$transaction`:
 1. **Chamada de Senha (`POST /filas/chamadas`):** Garantir que duas requisições concorrentes não reservem a mesma senha.
 2. **Retomada de Pendência (`POST /filas/pendencias/:id/retomadas`):** Impedir que dois voluntários retomem a mesma pendência simultaneamente.
 3. **Salvar Pendência (`POST /atendimentos/:id/pendencias`):** Atualizar status da senha para `pendente`, gravar JSON de pendência e fechar histórico simultaneamente.
-4. **Finalizar Triagem (`POST /atendimentos/:id/finalizar`):** Encaminhar senha para `apm` em status `aguardando`, limpar JSON de pendência e fechar histórico simultaneamente.
+4. **Finalizar Triagem (`POST /atendimento/finalizar`):** Encaminhar senha para `apm` em status `aguardando`, limpar JSON de pendência e fechar histórico simultaneamente.
 5. **Vincular Aluno (`PUT /senhas/:id/aluno`):** Atualizar `Aluno`, `CursoAluno` e `Senha.codAluno` na mesma transação.
 
 ---

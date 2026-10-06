@@ -1,62 +1,32 @@
-import Alert from "../../../components/ui/Alert";
-import { useAtendimento } from "../../../context/atendimentoContext";
-import { useFila } from "../hooks/useFila";
-import { useSenhaAtual } from "../hooks/useSenhaAtual";
+import * as React from "react";
 import Header from "./Header";
 import SidePostos from "./SidePostos";
+import Alert from "../../../components/ui/Alert";
+import { useAtendimento } from "../context/atendimentoContext";
 
 const PostoLayout = ({ etapa, children }) => {
-  const { carregando, erro, setErro } = useAtendimento();
-  const {
-    senhasAguardando,
-    carregandoFila,
-    erroFila,
-    limparErroFila,
-    carregarFila,
-  } = useFila(etapa);
-  const { senhaAtual, chamarSenha, alterarPrioridade } = useSenhaAtual(etapa);
+  const { erro, setErro, carregando, recuperarAtendimentoAtivo } =
+    useAtendimento();
 
-  const handleSelecionarSenha = async (senhaSelecionada) => {
-    try {
-      await chamarSenha(senhaSelecionada.id);
-      await carregarFila({ silencioso: true });
-    } catch (erro) {
-      void erro;
+  React.useEffect(() => {
+    if (etapa) {
+      void recuperarAtendimentoAtivo(etapa);
     }
-  };
-
-  const handleAlternarPrioridade = async () => {
-    try {
-      await alterarPrioridade();
-    } catch (erro) {
-      void erro;
-    }
-  };
-
-  const ocupado = carregando || carregandoFila;
+  }, [etapa, recuperarAtendimentoAtivo]);
 
   return (
     <div className="flex h-screen" aria-label={`Posto de ${etapa}`}>
-      <SidePostos
-        pessoasEsperando={senhasAguardando.length}
-        senhasAguardando={senhasAguardando}
-        senhaAtual={senhaAtual}
-        onSelecionarSenha={handleSelecionarSenha}
-        onAlternarPrioridade={handleAlternarPrioridade}
-        carregando={ocupado}
-      />
+      <SidePostos etapa={etapa} />
+
       <div className="flex h-screen flex-1 flex-col overflow-hidden">
         <Header />
         <main className="flex flex-1 flex-col items-center justify-start gap-4 overflow-auto bg-page p-4">
-          {ocupado && <Alert type="info" message="Carregando atendimento..." />}
-          {(erro || erroFila) && (
+          {carregando && <Alert type="info" message="Carregando..." />}
+          {erro && (
             <Alert
               type="error"
-              message={erro ?? erroFila}
-              onClose={() => {
-                setErro(null);
-                limparErroFila();
-              }}
+              message={erro}
+              onClose={() => setErro(null)}
             />
           )}
           {children}

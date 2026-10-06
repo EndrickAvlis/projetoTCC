@@ -1,5 +1,5 @@
 import * as React from "react";
-import { buscarAlunos } from "../services/TriagemService";
+import { listarAlunos } from "../services/TriagemService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useBuscaAlunos = ({ limite = 5 } = {}) => {
@@ -26,14 +26,14 @@ export const useBuscaAlunos = ({ limite = 5 } = {}) => {
     setErro(null);
 
     try {
-      const res = await buscarAlunos(nome, limite);
+      const res = await listarAlunos(nome, limite);
       if (requisicaoId === requisicaoRef.current) {
-        setAlunos(res);
+        setAlunos(res.alunos);
       }
     } catch (error) {
       if (requisicaoId === requisicaoRef.current) {
         setAlunos([]);
-        setErro(error.message || "Erro ao buscar alunos");
+        setErro(error.message);
       }
     } finally {
       if (requisicaoId === requisicaoRef.current) {
@@ -43,7 +43,7 @@ export const useBuscaAlunos = ({ limite = 5 } = {}) => {
   }, [buscaDebounced, limite]);
 
   React.useEffect(() => {
-    void Promise.resolve().then(carregarAlunos);
+    carregarAlunos();
   }, [carregarAlunos]);
 
   const limparBusca = React.useCallback(() => {

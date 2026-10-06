@@ -4,10 +4,10 @@ const filaService = new FilaService();
 
 const senhaResposta = (senha) => ({
   id: senha.idSenha,
-  codigo: senha.senhaCodigo,
-  etapaAtual: senha.etapaSenha,
+  numero: senha.senhaCodigo,
+  etapa: senha.etapaSenha,
   status: senha.statusSenha,
-  tipoSenha: senha.tipoSenha,
+  prioritaria: Boolean(senha.tipoSenha)
 });
 
 export const listarFila = async (req, res) => {

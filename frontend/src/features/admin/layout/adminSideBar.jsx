@@ -1,7 +1,63 @@
-import * as AdminNavigation from "../constants/adminNavigation";
-import AdminLogoutButton from "./adminLogoutButton";
-import AdminNavItem from "./AdminNavItem";
+import * as React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import * as FiIcons from "react-icons/fi";
+import { useAuth } from "../../../context/authContext";
+import * as AdminNavigation from "../constants/adminNavigation";
+
+const AdminNavItem = ({ item, collapsed }) => {
+  const { label, path, icon: Icon } = item;
+
+  return (
+    <NavLink
+      to={path}
+      className={({ isActive }) =>
+        `flex items-center rounded-xl py-3 text-sm font-medium transition-colors ${
+          collapsed ? "justify-center px-0" : "gap-3 px-3"
+        } ${
+          isActive
+            ? "bg-admin-sidebar-active text-text-inverse"
+            : "text-admin-sidebar-text hover:bg-admin-sidebar-hover"
+        }`
+      }
+    >
+      <Icon size={19} className="shrink-0" />
+      {!collapsed && <span className="whitespace-nowrap">{label}</span>}
+    </NavLink>
+  );
+};
+
+const AdminLogoutButton = ({ collapsed }) => {
+  const [loggingOut, setLoggingOut] = React.useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+
+    try {
+      await logout();
+    } catch {
+    } finally {
+      navigate("/", { replace: true });
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleLogout}
+      disabled={loggingOut}
+      className={`flex items-center gap-3 w-full px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-muted rounded-md transition-colors ${
+        collapsed ? "justify-center" : ""
+      }`}
+      title="Sair"
+    >
+      <FiIcons.FiLogOut className="h-5 w-5 shrink-0" />
+      {!collapsed && <span className="text-sm font-medium">Sair</span>}
+    </button>
+  );
+};
 
 const AdminSideBar = ({ collapsed, onToggle }) => {
     return (

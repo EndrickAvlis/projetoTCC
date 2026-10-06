@@ -4,7 +4,7 @@ import { emitirSenha } from "../features/postos/services/filaService";
 import { formatarSenha } from "../utils/formatters";
 
 const EmitirSenhaPage = () => {
-  const [senhaEmitida, setSenhaEmitida] = useState(null);
+  const [senha, setSenha] = useState(null);
   const [emitindo, setEmitindo] = useState(false);
   const [erro, setErro] = useState(null);
 
@@ -15,8 +15,8 @@ const EmitirSenhaPage = () => {
       setEmitindo(true);
       setErro(null);
 
-      const senha = await emitirSenha();
-      setSenhaEmitida(senha);
+      const novaSenha = await emitirSenha();
+      setSenha(novaSenha);
     } catch (erro) {
       setErro(erro.message);
     } finally {
@@ -95,11 +95,14 @@ const EmitirSenhaPage = () => {
             </p>
 
             <p className="mt-2 text-6xl font-extrabold leading-none text-text-primary sm:text-8xl">
-              {senhaEmitida ? formatarSenha(senhaEmitida.numero) : ""}
+              {senha ? formatarSenha(senha.numero) : ""}
             </p>
           </section>
           {erro && (
-            <p role="alert" className="mt-4 text-lg font-semibold text-status-danger">
+            <p
+              role="alert"
+              className="mt-4 text-lg font-semibold text-status-danger"
+            >
               {erro}
             </p>
           )}

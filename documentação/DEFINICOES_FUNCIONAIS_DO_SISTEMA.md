@@ -399,16 +399,56 @@ GET /filas?etapa=triagem
 - registrar voluntário, posto, guichê e horário da chamada;
 - enviar a chamada ao painel.
 
-### Atendimento — `/atendimentos`
+### Atendimento — `/atendimento`
 
 | Método e rota | Controller | Service | Função |
 |---|---|---|---|
-| `POST /atendimentos` | `iniciarAtendimento` | `registrarInicioAtendimento` | Registra início no histórico atual |
-| `POST /atendimentos/:id/finalizar` | `finalizarAtendimento` | `concluirAtendimento` | Fecha histórico e avança/finaliza senha |
+| `POST /atendimento/iniciar` | `iniciarAtendimento` | `registrarInicioAtendimento` | Registra início no histórico atual |
+| `GET /atendimento/recuperar/:etapa` | `recuperarAtendimento` | `buscarAtendimentoEmAndamento` | Recupera atendimento ativo no guichê por etapa |
+| `POST /atendimento/rechamar` | `rechamarSenha` | `registrarRechamada` | Reenvia a chamada ao painel de TV |
+| `POST /atendimento/finalizar` | `finalizarAtendimento` | `concluirAtendimento` | Fecha histórico e avança/finaliza senha |
+| `POST /atendimento/cancelar` | `cancelarAtendimento` | `cancelarAtendimento` | Cancela / pula atendimento sem concluir ações |
 | `GET /atendimentos/:id` | `consultarAtendimento` | `buscarAtendimentoPorId` | Retorna atendimento e senha |
 | `PUT /senhas/:senhaId/aluno` | `vincularAlunoSenha` | `salvarAlunoNaTriagem` | Vincula aluno e matrícula à senha |
 
-Corpo para iniciar:
+Corpo para iniciar (`POST /atendimento/iniciar`):
+
+```json
+{
+  "senhaId": 15
+}
+```
+
+Resposta de iniciar (`200 OK`):
+
+```json
+{
+  "atendimento": {
+    "id": 95,
+    "senhaId": 15,
+    "iniciadoEm": "2026-09-21T14:10:00Z"
+  }
+}
+```
+
+Corpo para rechamar (`POST /atendimento/rechamar`):
+
+```json
+{
+  "senhaId": 15,
+  "etapa": "triagem"
+}
+```
+
+Corpo para finalizar (`POST /atendimento/finalizar`):
+
+```json
+{
+  "senhaId": 15
+}
+```
+
+Corpo para cancelar / pular (`POST /atendimento/cancelar`):
 
 ```json
 {
