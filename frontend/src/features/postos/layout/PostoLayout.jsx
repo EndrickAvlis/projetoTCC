@@ -22,13 +22,13 @@ const PostoLayout = ({ etapa, children }) => {
         <Header />
         <main className="flex flex-1 flex-col items-center justify-start gap-4 overflow-auto bg-page p-4">
           {carregando && <Alert type="info" message="Carregando..." />}
-          {erro && (
+          {/* {erro && (
             <Alert
               type="error"
               message={erro}
               onClose={() => setErro(null)}
             />
-          )}
+          )} */}
           {children}
         </main>
       </div>

@@ -14,13 +14,13 @@ export const useFila = (etapa) => {
       try {
         if (!silencioso) setCarregandoFila(true);
 
-        const [aguardando, chamadas] = await Promise.all([
+        const [aguardando, /*chamadas*/] = await Promise.all([
           listarFila(etapa),
-          listarChamadasHoje(etapa),
+          // listarChamadasHoje(etapa),
         ]);
 
         setSenhasAguardando(aguardando);
-        setSenhasChamadasHoje(chamadas);
+        // setSenhasChamadasHoje(chamadas);
         setErro(null);
       } catch (erro) {
         setErro(erro.message);

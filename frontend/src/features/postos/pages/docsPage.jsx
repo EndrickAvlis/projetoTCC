@@ -1,16 +1,12 @@
-// TODO: Esta tela será reformulada na branch feature/docs
-/*
 import PostoLayout from "../layout/PostoLayout";
-import DocsPanel from "../components/docs/DocsPanel";
+import DocsMain from "../components/docs/DocsMain";
 
-const DocsPage = () => (
-  <PostoLayout etapa="docs">
-    <DocsPanel />
-  </PostoLayout>
-);
+const DocsPage = () => {
+    return (
+        <PostoLayout etapa="docs">
+            <DocsMain />
+        </PostoLayout>
+    );
+};
 
 export default DocsPage;
-*/
-const DocsPage = () => null;
-export default DocsPage;
-
