@@ -1,44 +1,45 @@
 import * as React from "react";
-import { listarCursosAdmin } from "../services/cursosService";
+import { listarUsuarios } from "../services/UsuariosService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
-export const useCursos = ({ busca = "", arquivado = false } = {}) => {
+export const useUsuarios = ({ busca = "", tipo = "", status = "" } = {}) => {
   const buscaDebounced = useDebounce(busca);
-  const [cursos, setCursos] = React.useState([]);
+  const [usuarios, setUsuarios] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
   const [erro, setErro] = React.useState(null);
 
-  const carregarCursos = React.useCallback(async () => {
+  const carregarUsuarios = React.useCallback(async () => {
     setCarregando(true);
     setErro(null);
 
     try {
-      const res = await listarCursosAdmin({
+      const res = await listarUsuarios({
         busca: buscaDebounced,
-        arquivado,
+        tipo,
+        status,
       });
-      
-      setCursos(res.cursos ?? []);
-      setTotal(res.total ?? 0);
+
+      setUsuarios(res?.usuarios ?? []);
+      setTotal(res?.total ?? 0);
     } catch (error) {
-      setCursos([]);
+      setUsuarios([]);
       setTotal(0);
       setErro(error.message);
     } finally {
       setCarregando(false);
     }
-  }, [buscaDebounced, arquivado]);
+  }, [buscaDebounced, tipo, status]);
 
   React.useEffect(() => {
-    void Promise.resolve().then(carregarCursos);
-  }, [carregarCursos]);
+    void Promise.resolve().then(carregarUsuarios);
+  }, [carregarUsuarios]);
 
   return {
-    cursos,
+    usuarios,
     total,
     carregando,
     erro,
-    recarregar: carregarCursos,
+    recarregar: carregarUsuarios,
   };
 };

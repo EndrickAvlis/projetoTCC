@@ -78,15 +78,20 @@ const id = z.coerce.number().int("O ID deve ser um número inteiro.").positive("
 
 export const listarCursosSchema = z.object({
   query: z.object({
-    busca: z.string().trim().optional().default(""),
-arquivado: z
-  .enum(["true", "false"], {
-    error: "O filtro arquivado deve ser true ou false.",
-  })
-  .optional()
-  .transform((valor) =>
-    valor === undefined ? undefined : valor === "true",
-  ),
+    busca: z
+      .string()
+      .trim()
+      .max(100, "A busca deve ter no máximo 100 caracteres")
+      .optional()
+      .default(""),
+    arquivado: z
+      .enum(["true", "false"], {
+        error: "O filtro arquivado deve ser true ou false.",
+      })
+      .optional()
+      .transform((valor) =>
+        valor === undefined ? undefined : valor === "true",
+      ),
   }),
 });
 

@@ -6,9 +6,11 @@ export const listarVoluntarios = async (req, res) => {
   const voluntarios = await voluntarioService.listar(req.validado.query);
 
   return res.status(200).json({
-    mensagem: voluntarios,
+    usuarios: voluntarios,
+    total: voluntarios.length,
   });
 };
+
 
 export const criarVoluntario = async (req, res) => {
   const voluntario = await voluntarioService.criar(req.validado.body);
