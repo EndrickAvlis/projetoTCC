@@ -1,4 +1,4 @@
-// Funções reutilizáveis para exibir CPF e valores monetários no padrão brasileiro.
+
 
 export const formatarMoeda = (valor = 0) =>
   new Intl.NumberFormat("pt-BR", {

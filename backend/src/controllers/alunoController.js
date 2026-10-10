@@ -4,13 +4,18 @@ const alunoService = new AlunoService();
 
 const mapearAluno = (aluno) => ({
   id: aluno.idAluno,
-  cpf: aluno.cpfAluno,
-  ano: aluno.anoAluno,
   nome: aluno.nomeAluno,
+  status: aluno.statusAluno,
+  cidade: aluno.cidadeAluno,
+  sexo: aluno.sexoAluno,
+  escolaridadePublica: aluno.escolaridadePublica,
   cursos:
     aluno.cursosAluno?.map((item) => ({
-      id: item.curso.idCurso,
-      nome: item.curso.nomeCurso,
+      id: item.curso?.idCurso,
+      nome: item.curso?.nomeCurso,
+      periodo: item.periodo,
+      classificacao: item.classificacao,
+      statusMatricula: item.statusMatricula,
     })) ?? [],
 });
 

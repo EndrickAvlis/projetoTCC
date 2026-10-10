@@ -1,362 +1,130 @@
-# Tela do Posto de Triagem — Guia de Implementação e Contratos
+# Especificação Técnica do Back-end — Posto de Triagem (`TELA_TRIAGEM`)
 
-Este documento é a especificação técnica e funcional da tela do posto de Triagem do SIGA Phila (`/triagem`). Ele define a arquitetura do frontend, os modelos do banco de dados, os contratos da API e as regras de negócio para a implementação do backend.
+## 1. Visão Geral do Fluxo
 
----
+A Triagem é o primeiro posto de atendimento presencial da matrícula:
+1. **Identificação do Aluno:** O atendente busca o aluno já existente (`GET /alunos`) ou cadastra um novo candidato (`POST /alunos`), utilizando a lista de cursos disponíveis (`GET /cursos`).
+2. **Persistência dos Dados (`PUT /senhas/:senhaId/aluno`):** Os dados preenchidos no formulário (dados pessoais do aluno e dados da matrícula em curso/período/ano) são persistidos e vinculados à senha em atendimento antes do encerramento.
+3. **Desfecho sem Pendência:** Se a documentação estiver completa, o frontend executa `POST /atendimentos/finalizar` (ver [`ATENDIMENTO.md`]), que encerra o histórico da senha e a encaminha para a fila da `apm`.
+4. **Desfecho com Pendência (`POST /atendimentos/:atendimentoId/pendencias`):** Se faltar qualquer documento obrigatório, o atendente seleciona os itens faltantes e salva a pendência. A senha assume `status = 'pendente'` e o guichê é liberado.
+5. **Gestão e Retomada de Pendências:** A aba de pendências monitora as senhas pendentes da etapa (`GET /filas/pendencias?etapa=triagem`). Ao retornar com os documentos, a senha é retomada diretamente pelo atendente através da rota de atendimento (`POST /atendimento/retomar`).
 
-## 1. Visão Geral e Fluxo da Senha
-
-A Triagem é o primeiro posto de atendimento presencial da matrícula. Nela, o atendente chama a senha, identifica/cadastra o aluno, confere os dados do curso e registra pendências documentais se houver.
-
-### Fluxo de Estados da Senha:
-
-```text
-[aguardando] (na fila da Triagem)
-    │
-    ▼ (POST /filas/chamadas)
-[em_atendimento] (reservada pelo guichê; abre HistoricoSenha)
-    │
-    ▼ (POST /atendimento/iniciar - Iniciar Atendimento manual)
-    │ Atendente busca/cadastra aluno e confere dados
-    │
-    ├──▶ SEM PENDÊNCIA:
-    │      POST /atendimento/finalizar
-    │      └── Senha muda para: status = 'aguardando', etapa = 'apm'
-    │          HistoricoSenha atual é fechado com dataHoraFimHistorico
-    │
-    └──▶ COM PENDÊNCIA DOCUMENTAL:
-           POST /atendimentos/:id/pendencias (ao menos 1 documento marcado)
-           └── Senha muda para: status = 'pendente', etapa = 'triagem'
-               Grava pendenciaTriagem = { documentos: [...], registradaEm }
-               HistoricoSenha atual é fechado
-               │
-               ▼ (POST /filas/pendencias/:senhaId/retomadas)
-               Retomada direta: volta para status = 'em_atendimento'
-               Abre NOVO HistoricoSenha (não retorna para a fila geral de aguardando)
-```
+> **Nota:** As rotas universais de ciclo de atendimento (`iniciar`, `recuperar`, `rechamar`, `finalizar` e `cancelar`) são comuns a todos os postos operacionais e estão especificadas em [`ATENDIMENTO.md`](./ATENDIMENTO.md).
 
 ---
 
-## 2. Arquitetura do Frontend (`features/postos`)
+## 2. Leitura de Cursos (`GET /cursos`)
 
-O código do frontend está estruturado sob `frontend/src/features/postos/`:
+* **Rota:** `GET /cursos`
+* **Autenticação:** Obrigatória (`atendente`, `supervisor`, `admin`)
+* **Finalidade:** Alimentar os seletores de curso e validar os períodos do formulário da triagem.
 
-```text
-frontend/src/features/postos/
-├── components/
-│   └── triagem/
-│       ├── BuscarAlunos.jsx          # Busca operacional por nome com autocomplete e novo cadastro
-│       ├── DadosAlunoForm.jsx        # Formulário dos dados do aluno e curso/ano/período
-│       ├── DetalhePendencia.jsx      # Painel lateral com dados da pendência e botão Retomar
-│       ├── DocumentosPendentes.jsx   # Accordion colapsável com checkboxes e botão Salvar Pendência
-│       ├── PendenciasGrid.jsx        # Grade de senhas pendentes da Triagem
-│       └── TriagemMain.jsx           # Orquestrador com abas "Atendimento atual" e "Senhas pendentes"
-├── constants/
-│   └── triagem.js                    # Constantes de documentos, fases de atendimento e opções
-├── hooks/
-│   ├── useBuscaAlunos.js             # Busca por nome com debounce e controle por useRef
-│   ├── usePendencias.js              # Listagem, polling de 5s, seleção e retomada de pendências
-│   └── useTriagem.js                 # Ciclo de vida do posto, início, salvar dados, finalizar e pendência
-├── layout/
-│   ├── AtendimentoActions.jsx        # Faixa superior de identificação e ações (Rechamar, Iniciar, Finalizar)
-│   ├── PostoLayout.jsx               # Estrutura compartilhada entre os postos (SidePostos + Header + miolo)
-│   └── SidePostos.jsx                # Barra lateral de fila/histórico e senha atual
-├── pages/
-│   └── triagemPage.jsx               # Rota /triagem (PostoLayout envolvendo TriagemMain)
-└── services/
-    └── TriagemService.js             # Funções de chamada HTTP baseadas em apiClient
-```
-
----
-
-## 3. Alterações Necessárias no Banco de Dados (`schema.prisma`)
-
-### 3.1. Modelo `Senha`
-
-Adicionar campo JSON opcional para armazenar pendências documentais:
-
-```prisma
-model Senha {
-  // campos existentes...
-  pendenciaTriagem Json?   // Formato: { "documentos": ["RG_CIN", "FOTO"], "registradaEm": DateTime }
-}
-```
-
-### 3.2. Modelo `HistoricoSenha`
-
-Distinguir o momento da chamada do início manual e controlar rechamadas:
-
-```prisma
-model HistoricoSenha {
-  idHistorico             Int       @id @default(autoincrement())
-  codSenha                Int
-  codVoluntario           Int
-  etapaHistorico          String?   @db.VarChar(15)
-  guicheHistorico         String?   @db.VarChar(20)
-  dataHoraChamada         DateTime  // Preenchido no POST /filas/chamadas
-  dataHoraInicioHistorico DateTime? // Preenchido no POST /atendimento/iniciar (início manual)
-  dataHoraFimHistorico    DateTime? // Preenchido na finalização ou ao salvar pendência
-  ultimaRechamadaEm       DateTime?
-  quantidadeRechamadas    Int       @default(0)
-
-  senha      Senha      @relation(fields: [codSenha], references: [idSenha])
-  voluntario Voluntario @relation(fields: [codVoluntario], references: [idVoluntario])
-}
-```
-
-### 3.3. Modelo `Aluno`
-
-Remover CPF da Triagem e suportar candidatos importados e cadastro manual:
-
-```prisma
-enum StatusAluno {
-  CANDIDATO
-  ATIVO
-  ARQUIVADO
-}
-
-model Aluno {
-  idAluno             Int          @id @default(autoincrement())
-  numeroInscricao     String?      @db.VarChar(30)
-  nomeAluno           String       @db.VarChar(100)
-  escolaridadePublica Boolean?
-  cidadeAluno         String?      @db.VarChar(100)
-  sexoAluno           String?      @db.VarChar(20)
-  statusAluno         StatusAluno  @default(CANDIDATO)
-  anoProcesso         Int?
-  semestreProcesso    Int?
-
-  cursosAluno CursoAluno[]
-  senhas      Senha[]
-
-  @@index([nomeAluno])
-  @@index([statusAluno, nomeAluno])
-}
-```
-
-### 3.4. Modelo `CursoAluno`
-
-Adicionar ano escolar e status da matrícula:
-
-```prisma
-enum StatusMatricula {
-  PENDENTE
-  ATIVA
-}
-
-model CursoAluno {
-  codCurso        Int
-  codAluno        Int
-  classificacao   Int?
-  statusMatricula StatusMatricula @default(PENDENTE)
-  periodo         Periodo
-  anoEscolar      Int             // Valores válidos: 1, 2 ou 3
-
-  curso Curso @relation(fields: [codCurso], references: [idCurso])
-  aluno Aluno @relation(fields: [codAluno], references: [idAluno])
-
-  @@id([codCurso, codAluno])
-}
-```
-
----
-
-## 4. Constantes Oficiais e Enums
-
-### Documentos da Triagem (`DOCUMENTOS_TRIAGEM`):
-
-As únicas 5 chaves estáveis aceitas pelo sistema são:
-
-- `RG_CIN`: RG/CIN
-- `CPF_CIN`: CPF/CIN
-- `FOTO`: Foto 3x4
-- `ESCOLARIDADE_PUBLICA`: Comprovação de escolaridade pública
-- `HISTORICO_ENSINO_FUNDAMENTAL`: Histórico do Ensino Fundamental
-
-### Fases do Atendimento (`FASE_ATENDIMENTO`):
-
-- `sem_senha`: Nenhuma senha reservada no posto.
-- `chamada`: Senha reservada (`em_atendimento`), mas início manual ainda não clicado.
-- `iniciada`: Atendimento iniciado, formulário liberado para edição e busca.
-
-### Valores de Seleção:
-
-- `anoEscolar`: `1`, `2`, `3`
-- `escolaridadePublica`: `true` (Sim), `false` (Não), `null` (Não informado)
-- `sexo`: `"M"` (Masculino), `"F"` (Feminino), `"OUTRO"` (Outro)
-
----
-
-## 5. Contratos da API (Guia de Endpoints para o Backend)
-
-Todas as rotas requerem autenticação (`Bearer <token>`). O backend obtém `idVoluntario` e `guiche` da sessão/token.
-
-### 5.1. Fila e Chamadas
-
-#### `GET /filas?etapa=triagem`
-
-Lista senhas aguardando na Triagem.
-
-- **Ordenação obrigatória:** 1º Prioritárias (`tipoSenha = true`), 2º `dataHoraEmissaoSenha` crescente, 3º `idSenha` crescente.
-- **Resposta `200 OK`:**
-
+### Contrato de Resposta (HTTP 200):
 ```json
 {
-  "senhas": [
+  "cursos": [
     {
-      "id": 15,
-      "codigo": 42,
-      "etapaAtual": "triagem",
-      "status": "aguardando",
-      "tipoSenha": false,
-      "emitidaEm": "2026-09-21T14:00:00Z"
+      "id": 1,
+      "nome": "Desenvolvimento de Sistemas",
+      "periodos": [
+        { "id": 1, "periodo": "manha", "vagasTotais": 40, "matriculaAtiva": true },
+        { "id": 2, "periodo": "tarde", "vagasTotais": 40, "matriculaAtiva": true }
+      ]
     }
   ],
   "total": 1
 }
 ```
 
-#### `POST /filas/chamadas`
-
-Chama a próxima senha da fila ou uma senha específica.
-
-- **Corpo (opcional):** `{ "etapa": "triagem", "senhaId": 15 }` (se omitir `senhaId`, chama a próxima da fila automaticamente).
-- **Regra:** Se o atendente já possui uma senha em atendimento, responder `409 ATENDIMENTO_ATIVO_EXISTENTE`. Se a senha já foi chamada por outro guichê, responder `409 SENHA_INDISPONIVEL`.
-- **Resposta `200 OK`:**
-
-```json
-{
-  "senha": {
-    "id": 15,
-    "codigo": 42,
-    "etapaAtual": "triagem",
-    "status": "em_atendimento",
-    "tipoSenha": false
-  },
-  "atendimento": {
-    "id": 95,
-    "chamadaEm": "2026-09-21T14:05:00Z",
-    "iniciadaEm": null
-  }
-}
-```
-
-#### `GET /filas/atual?etapa=triagem`
-
-Recupera o atendimento atual do voluntário logado (para recuperação de tela em F5).
-
-- **Resposta `200 OK`:** Mesmo formato do `POST /filas/chamadas` ou `{ "senha": null, "atendimento": null }`.
-
-#### `GET /filas/historico?etapa=triagem`
-
-Lista chamadas realizadas hoje na Triagem (somente leitura).
-
-- **Resposta `200 OK`:**
-
-```json
-{
-  "senhas": [
-    {
-      "id": 15,
-      "codigo": 42,
-      "tipoSenha": false,
-      "chamadaEm": "2026-09-21T14:05:00Z"
-    }
-  ]
-}
-```
-
-#### `POST /atendimento/rechamar`
-
-Notifica o painel de chamadas (TV) para rechamar a senha atual.
-
-- **Corpo:** `{ "senhaId": 15, "etapa": "triagem" }`
-- **Resposta `200 OK`:** `{ "message": "Senha chamada novamente.", "quantidadeRechamadas": 2 }`
-
-#### `PATCH /senhas/:senhaId/prioridade`
-
-Alterna a prioridade da senha em atendimento.
-
-- **Corpo:** `{ "tipoSenha": true }` (ou `false`)
-- **Resposta `200 OK`:** `{ "id": 15, "tipoSenha": true }`
-
 ---
 
-### 5.2. Alunos e Formulário da Triagem
+## 3. Busca Operacional de Candidatos (`GET /alunos`)
 
-#### `GET /alunos?nome=...&limite=10`
+* **Rota:** `GET /alunos`
+* **Autenticação:** Obrigatória
+* **Finalidade:** Busca rápida por nome com autocomplete para preencher os dados cadastrais do candidato e suas matrículas pré-existentes.
 
-Pesquisa operacional por nome (ignora maiúsculas/minúsculas e acentos). Exclui alunos com status `ARQUIVADO`.
+### Parâmetros de Consulta (Query Params):
+* `nome` (string, obrigatório, mín: 2 caracteres): termo de busca parcial (insensível a maiúsculas/minúsculas).
+* `limite` (inteiro, opcional, padrão: 10): quantidade máxima de registros retornados.
 
-- **Resposta `200 OK`:**
-
+### Contrato de Resposta (HTTP 200):
 ```json
 {
   "alunos": [
     {
       "id": 9,
       "nome": "Mariane Trindade",
-      "numeroInscricao": "001234",
-      "situacao": "CANDIDATO",
-      "escolaridadePublica": true,
       "cidade": "Orindiúva",
       "sexo": "F",
+      "escolaridadePublica": true,
       "matriculas": [
         {
-          "cursoId": 3,
+          "cursoId": 1,
           "curso": "Desenvolvimento de Sistemas",
           "classificacao": 1,
           "periodo": "manha",
-          "anoEscolar": 1,
-          "situacao": "PENDENTE"
+          "anoEscolar": 1
         }
       ]
     }
-  ]
+  ],
+  "total": 1
 }
 ```
 
-#### `POST /alunos`
+---
 
-Cadastro manual rápido de aluno não encontrado na pesquisa.
+## 4. Cadastro Manual de Aluno (`POST /alunos`)
 
-- **Corpo:**
+* **Rota:** `POST /alunos`
+* **Autenticação:** Obrigatória
+* **Finalidade:** Cadastrar um novo candidato diretamente pela triagem caso o aluno não conste na base importada do vestibulinho.
 
+### Entrada (Payload):
 ```json
 {
   "nome": "João da Silva",
-  "numeroInscricao": null,
-  "escolaridadePublica": null,
   "cidade": "Orindiúva",
   "sexo": "M",
-  "matricula": {
-    "cursoId": 3,
-    "classificacao": null,
-    "periodo": "manha",
-    "anoEscolar": 1
+  "escolaridadePublica": true
+}
+```
+
+### Resposta (HTTP 201):
+```json
+{
+  "aluno": {
+    "id": 15,
+    "nome": "João da Silva",
+    "cidade": "Orindiúva",
+    "sexo": "M",
+    "escolaridadePublica": true,
+    "matriculas": []
   }
 }
 ```
 
-- **Resposta `201 Created`:** Retorna o aluno criado no mesmo formato da busca.
+---
 
-#### `PUT /senhas/:senhaId/aluno`
+## 5. Salvar e Vincular Aluno à Senha (`PUT /senhas/:senhaId/aluno`)
 
-Salva e vincula os dados confirmados do aluno à senha em atendimento.
+* **Rota:** `PUT /senhas/:senhaId/aluno`
+* **Autenticação:** Obrigatória
+* **Finalidade:** Salvar os dados editados do aluno, atualizar/criar a matrícula (`CursoAluno`) e associar o `alunoId` à senha em atendimento antes de finalizar ou salvar pendência.
 
-- **Corpo:**
-
+### Entrada (Payload):
 ```json
 {
   "alunoId": 9,
   "dadosAluno": {
     "nome": "Mariane Trindade",
-    "escolaridadePublica": true,
     "cidade": "Orindiúva",
-    "sexo": "F"
+    "sexo": "F",
+    "escolaridadePublica": true
   },
   "matricula": {
-    "cursoId": 3,
+    "cursoId": 1,
     "classificacao": 1,
     "periodo": "manha",
     "anoEscolar": 1
@@ -364,131 +132,149 @@ Salva e vincula os dados confirmados do aluno à senha em atendimento.
 }
 ```
 
-- **Regra:** Atualiza `Aluno`, atualiza ou vincula `CursoAluno` e define `Senha.codAluno = alunoId` em transação.
-- **Resposta `200 OK`:** `{ "message": "Dados vinculados à senha com sucesso." }`
+### Passo a Passo da Transação no Back-end (`prisma.$transaction`):
+1. **Validação da Senha:** Verificar se `senhaId` existe e pertence ao atendimento do voluntário logado.
+2. **Aluno (Criar ou Atualizar):**
+   - Se `alunoId` for fornecido: atualizar dados em `Aluno` (`nomeAluno`, `cidadeAluno`, `sexoAluno`, `escolaridadePublica`).
+   - Se `alunoId` for nulo: criar novo registro em `Aluno` com os dados enviados.
+3. **Matrícula (`CursoAluno`):**
+   - Atualizar ou inserir (`upsert`) registro em `CursoAluno` com `codCurso`, `codAluno`, `periodo`, `anoEscolar` e `classificacao`.
+4. **Vínculo na Senha:**
+   - Atualizar `Senha`: definir `codAluno = aluno.idAluno`.
 
-#### `GET /cursos`
-
-Retorna a lista de cursos ativos para os selects do formulário.
-
-- **Resposta `200 OK`:** `[{ "id": 3, "nome": "Desenvolvimento de Sistemas" }]`
-
----
-
-### 5.3. Atendimento, Pendências e Finalização
-
-#### `POST /atendimento/iniciar`
-
-Registra o início manual do atendimento.
-
-- **Corpo:** `{ "senhaId": 15 }`
-- **Regra:** Atualiza o `HistoricoSenha` aberto definindo `dataHoraInicioHistorico = agora`.
-- **Resposta `200 OK`:**
-
+### Contrato de Resposta (HTTP 200):
 ```json
 {
-  "atendimento": {
-    "id": 95,
-    "senhaId": 15,
-    "iniciadoEm": "2026-09-21T14:10:00Z"
-  }
+  "mensagem": "Dados do aluno e matrícula vinculados à senha com sucesso.",
+  "alunoId": 9
 }
 ```
 
-#### `GET /atendimento/recuperar/:etapa`
+---
 
-Recupera o atendimento em andamento para o atendente logado na etapa especificada (ex: `triagem`).
+## 6. Listagem de Senhas Pendentes (`GET /filas/pendencias`)
 
-- **Parâmetro de URL:** `etapa` (`triagem`, `apm`, `documentos`)
-- **Resposta `200 OK`:** Retorna o objeto de atendimento ativo com senha e aluno, ou `null` se livre.
+* **Rota:** `GET /filas/pendencias?etapa=triagem`
+* **Autenticação:** Obrigatória
+* **Finalidade:** Listar todas as senhas que estão no estado `pendente` na etapa de triagem.
 
-#### `POST /atendimento/rechamar`
-
-Rechama a senha atual no painel de TV para a etapa informada.
-
-- **Corpo:** `{ "senhaId": 15, "etapa": "triagem" }`
-- **Resposta `200 OK`:** `{ "message": "Senha chamada novamente.", "quantidadeRechamadas": 2 }`
-
-#### `POST /atendimento/cancelar`
-
-Cancela / pula o atendimento atual no guichê sem concluir a etapa.
-
-- **Corpo:** `{ "senhaId": 15 }`
-- **Resposta `200 OK`:** `{ "message": "Atendimento cancelado com sucesso." }`
-
-#### `POST /atendimento/finalizar`
-
-Conclui o atendimento da Triagem com sucesso (sem pendências).
-
-- **Corpo:** `{ "senhaId": 15 }`
-- **Regra Transacional:**
-  1. Validar que o atendimento possui aluno e matrícula vinculados.
-  2. Atualizar `Senha`: `etapa = 'apm'`, `status = 'aguardando'`, `pendenciaTriagem = null`.
-  3. Encerrar `HistoricoSenha` atual: `dataHoraFimHistorico = agora`.
-- **Resposta `200 OK`:** `{ "message": "Triagem finalizada.", "proximaEtapa": "apm" }`
-
-#### `POST /atendimentos/:atendimentoId/pendencias`
-
-Registra pendência documental na Triagem.
-
-- **Corpo:** `{ "documentos": ["RG_CIN", "FOTO"] }`
-- **Regra Transacional:**
-  1. Validar que ao menos 1 documento válido foi enviado.
-  2. Atualizar `Senha`: `status = 'pendente'`, `pendenciaTriagem = { documentos, registradaEm: agora }`.
-  3. Manter `Senha.etapa = 'triagem'`.
-  4. Encerrar `HistoricoSenha` atual: `dataHoraFimHistorico = agora`.
-- **Resposta `200 OK`:** `{ "message": "Pendência registrada na Triagem." }`
-
-#### `GET /filas/pendencias?etapa=triagem`
-
-Lista todas as senhas que estão no estado `pendente` na Triagem.
-
-- **Resposta `200 OK`:**
-
+### Resposta (HTTP 200):
 ```json
 {
   "pendencias": [
     {
-      "senha": { "id": 15, "codigo": 42, "tipoSenha": false },
-      "aluno": { "id": 9, "nome": "Mariane Trindade" },
+      "senha": {
+        "id": 15,
+        "codigo": 42,
+        "tipoSenha": false
+      },
+      "aluno": {
+        "id": 9,
+        "nome": "Mariane Trindade"
+      },
       "matricula": {
         "curso": "Desenvolvimento de Sistemas",
         "periodo": "manha",
         "anoEscolar": 1
       },
       "documentos": ["RG_CIN", "FOTO"],
-      "registradaEm": "2026-09-21T14:15:00Z"
+      "registradaEm": "2026-10-09T20:15:00.000Z"
     }
   ],
   "total": 1
 }
 ```
 
-#### `POST /filas/pendencias/:senhaId/retomadas`
+---
 
-Retoma uma senha pendente para continuidade do atendimento.
+## 7. Registro de Pendência Documental (`POST /atendimentos/:atendimentoId/pendencias`)
 
-- **Corpo:** `{ "etapa": "triagem" }`
-- **Regra Transacional:**
-  1. Validar que o voluntário não possui outra senha ativa (se possuir, responder `409 ATENDIMENTO_ATIVO_EXISTENTE`).
-  2. Validar que a senha está `status: pendente` e `etapa: triagem`.
-  3. Atualizar `Senha`: `status = 'em_atendimento'`.
-  4. Criar NOVO `HistoricoSenha` vinculado ao voluntário e guichê com `dataHoraChamada = agora`.
-- **Resposta `200 OK`:**
+* **Rota:** `POST /atendimentos/:atendimentoId/pendencias`
+* **Autenticação:** Obrigatória
+* **Finalidade:** Registrar a pendência documental da triagem quando faltam documentos obrigatórios, liberando o guichê para novas chamadas.
 
+### Chaves de Documentos Válidas (`DOCUMENTOS_TRIAGEM`):
+* `RG_CIN`: RG / Carteira de Identidade Nacional
+* `CPF_CIN`: CPF / Carteira de Identidade Nacional
+* `FOTO`: Foto 3x4
+* `ESCOLARIDADE_PUBLICA`: Comprovação de Escolaridade Pública
+* `HISTORICO_ENSINO_FUNDAMENTAL`: Histórico Escolar do Ensino Fundamental
+
+### Entrada (Payload):
 ```json
 {
+  "documentos": ["RG_CIN", "FOTO"]
+}
+```
+
+### Passo a Passo da Transação no Back-end (`prisma.$transaction`):
+1. **Validações Prévias:**
+   - Validar se `documentos` é um array não-vazio contendo apenas chaves válidas permitidas.
+   - Localizar o atendimento (`HistoricoSenha`) pelo `atendimentoId` e conferir se está ativo e pertence ao voluntário solicitante.
+2. **Atualização da Senha:**
+   - Atualizar `Senha`:
+     - `statusSenha = 'pendente'`
+     - `etapaSenha = 'triagem'`
+     - `pendenciaTriagem = { documentos, registradaEm: new Date() }`
+3. **Fechamento do Histórico:**
+   - Atualizar `HistoricoSenha`: `dataHoraFimHistorico = new Date()`.
+
+### Contrato de Resposta (HTTP 200):
+```json
+{
+  "mensagem": "Pendência documental registrada com sucesso."
+}
+```
+
+---
+
+## 8. Retomada de Atendimento Pendente (`POST /atendimento/retomar`)
+
+* **Rota:** `POST /atendimento/retomar`
+* **Autenticação:** Obrigatória
+* **Finalidade:** Retomar uma senha pendente quando o aluno retorna com os documentos faltantes, alocando-a imediatamente no guichê do atendente.
+
+### Contrato de Entrada (Payload):
+```json
+{
+  "senhaId": 15,
+  "etapa": "triagem"
+}
+```
+
+### Passo a Passo da Transação no Back-end (`prisma.$transaction`):
+1. **Validações Prévias:**
+   - Validar se o voluntário solicitante já possui outro atendimento ativo (se sim, rejeitar com `409 Conflict`).
+   - Validar se a senha existe, está com `statusSenha = 'pendente'` e `etapaSenha = 'triagem'`.
+2. **Reserva da Senha:**
+   - Atualizar `Senha`:
+     - `statusSenha = 'em_atendimento'`
+3. **Abertura de Novo Histórico:**
+   - Criar novo registro em `HistoricoSenha`:
+     - `codSenha = senha.idSenha`
+     - `codVoluntario = voluntarioAutenticado.idVoluntario`
+     - `etapaHistorico = 'triagem'`
+     - `dataHoraChamada = new Date()`
+     - `dataHoraInicioHistorico = new Date()`
+
+### Contrato de Resposta (HTTP 200):
+```json
+{
+  "mensagem": "Atendimento retomado com sucesso.",
   "senha": {
     "id": 15,
     "codigo": 42,
-    "etapaAtual": "triagem",
+    "tipoSenha": false,
+    "etapa": "triagem",
     "status": "em_atendimento",
-    "tipoSenha": false
+    "aluno": {
+      "id": 9,
+      "nome": "Mariane Trindade"
+    }
   },
   "atendimento": {
-    "id": 99,
-    "chamadaEm": "2026-09-21T14:30:00Z",
-    "iniciadaEm": null
+    "id": 102,
+    "iniciadoEm": "2026-10-09T20:30:00.000Z"
   },
   "documentos": ["RG_CIN", "FOTO"]
 }
@@ -496,31 +282,15 @@ Retoma uma senha pendente para continuidade do atendimento.
 
 ---
 
-## 6. Regras de Atomicidade e Transações Obrigatórias
+## 9. Matriz Consolidada de Erros e Validações da Triagem
 
-As operações abaixo **devem** ser executadas dentro de `prisma.$transaction`:
-
-1. **Chamada de Senha (`POST /filas/chamadas`):** Garantir que duas requisições concorrentes não reservem a mesma senha.
-2. **Retomada de Pendência (`POST /filas/pendencias/:id/retomadas`):** Impedir que dois voluntários retomem a mesma pendência simultaneamente.
-3. **Salvar Pendência (`POST /atendimentos/:id/pendencias`):** Atualizar status da senha para `pendente`, gravar JSON de pendência e fechar histórico simultaneamente.
-4. **Finalizar Triagem (`POST /atendimento/finalizar`):** Encaminhar senha para `apm` em status `aguardando`, limpar JSON de pendência e fechar histórico simultaneamente.
-5. **Vincular Aluno (`PUT /senhas/:id/aluno`):** Atualizar `Aluno`, `CursoAluno` e `Senha.codAluno` na mesma transação.
-
----
-
-## 7. Códigos de Erro Padronizados
-
-| HTTP | Código                        | Descrição                                                        |
-| ---- | ----------------------------- | ---------------------------------------------------------------- |
-| 400  | `DADOS_INVALIDOS`             | Corpo ou parâmetros da requisição ausentes ou mal formatados     |
-| 401  | `NAO_AUTENTICADO`             | Token JWT ausente, inválido ou expirado                          |
-| 403  | `ACESSO_NEGADO`               | Usuário sem permissão para operar no posto de Triagem            |
-| 404  | `SENHA_NAO_ENCONTRADA`        | Identificador da senha não existe                                |
-| 404  | `ALUNO_NAO_ENCONTRADO`        | Aluno não localizado pelo ID                                     |
-| 404  | `ATENDIMENTO_NAO_ENCONTRADO`  | Histórico do atendimento não encontrado                          |
-| 409  | `SENHA_INDISPONIVEL`          | Senha já chamada por outro guichê ou fora da fila                |
-| 409  | `ATENDIMENTO_ATIVO_EXISTENTE` | Atendente já possui uma senha em atendimento                     |
-| 409  | `PENDENCIA_INDISPONIVEL`      | Senha pendente já retomada por outro atendente                   |
-| 409  | `DOCUMENTOS_PENDENTES`        | Tentativa de finalizar atendimento contendo documentos pendentes |
-| 422  | `DOCUMENTO_INVALIDO`          | Chave de documento fora das 5 permitidas                         |
-| 422  | `CURSO_PERIODO_INVALIDO`      | Combinação de curso e período inexistente                        |
+| Cenário | Status HTTP | Código / Mensagem |
+| :--- | :---: | :--- |
+| Nenhum documento informado na pendência | `400 Bad Request` | `Selecione ao menos um documento faltante.` |
+| Chave de documento inválida | `422 Unprocessable` | `Documento informado não é reconhecido pela Triagem.` |
+| Atendente já possui atendimento ativo ao tentar retomar | `409 Conflict` | `Você já possui outro atendimento em andamento nesta etapa.` |
+| Senha pendente já retomada por outro atendente | `409 Conflict` | `Esta senha pendente já foi retomada por outro guichê.` |
+| Senha não encontrada | `404 Not Found` | `Senha não encontrada.` |
+| Atendimento não encontrado ou não pertence ao usuário | `403 Forbidden` | `Atendimento não encontrado ou não autorizado.` |
+| Aluno inexistente ao vincular | `404 Not Found` | `Aluno não encontrado.` |
+| Curso inexistente ou inativo | `404 Not Found` | `Curso selecionado não encontrado.` |

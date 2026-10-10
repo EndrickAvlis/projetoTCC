@@ -11,22 +11,14 @@ const nomeAluno = z
   .min(1, "Informe o nome do aluno.")
   .max(100, "O nome deve ter no máximo 100 caracteres.");
 
-const cpfAluno = z
-  .string({ error: "Informe o CPF do aluno." })
-  .trim()
-  .min(1, "Informe o CPF do aluno.")
-  .max(15, "O CPF deve ter no máximo 15 caracteres.");
-
-const anoAluno = z.coerce
-  .number({ error: "Informe o ano do aluno." })
-  .int("O ano deve ser um número inteiro.")
-  .positive("O ano deve ser maior que zero.");
-
 export const criarAlunoSchema = z.object({
   body: z.object({
-    cpf: cpfAluno,
-    ano: anoAluno,
     nome: nomeAluno,
+    anoProcesso: z.coerce.number().int().positive().optional(),
+    semestreProcesso: z.coerce.number().int().positive().optional(),
+    escolaridadePublica: z.boolean().optional().default(false),
+    cidade: z.string().trim().max(100).optional(),
+    sexo: z.string().trim().max(20).optional(),
   }),
 });
 

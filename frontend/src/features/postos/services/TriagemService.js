@@ -1,6 +1,5 @@
 import { requisitarApi } from "../../../services/apiClient";
 
-//Alunos
 export const listarAlunos = (nome, limite = 10) => {
   const query = new URLSearchParams({ nome, limite: String(limite) });
   return requisitarApi(`/alunos?${query.toString()}`);
@@ -18,10 +17,8 @@ export const salvarAluno = (senhaId, payload) =>
     body: payload,
   });
 
-//Cursos
 export const listarCursos = () => requisitarApi("/cursos");
 
-//Pendências
 export const listarPendencias = () =>
   requisitarApi("/filas/pendencias?etapa=triagem");
 
@@ -34,11 +31,8 @@ export const registrarPendencia = (atendimentoId, documentos) =>
     },
   );
 
-export const retomarPendencia = (senhaId) =>
-  requisitarApi(
-    `/filas/pendencias/${encodeURIComponent(senhaId)}/retomadas`,
-    {
-      method: "POST",
-      body: { etapa: "triagem" },
-    },
-  );
+export const retomarPendencia = (senhaId, etapa = "triagem") =>
+  requisitarApi("/atendimento/retomar", {
+    method: "POST",
+    body: { senhaId, etapa },
+  });

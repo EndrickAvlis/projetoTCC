@@ -10,13 +10,14 @@ import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import EmitirSenhaPage from "./pages/EmitirSenhaPage";
 import AdminLayout from "./features/admin/layout/adminLayout";
 import DashboardPage from "./features/admin/pages/dashboardPage";
-import FilasPage from "./features/admin/pages/filasPage";
+import PostosPage from "./features/admin/pages/postosPage";
 import AlunosPage from "./features/admin/pages/alunosPage";
 import CursosPage from "./features/admin/pages/cursosPage";
 import ProdutosPage from "./features/admin/pages/produtosPage";
 import RelatoriosPage from "./features/admin/pages/relatoriosPage";
 import UsuariosPage from "./features/admin/pages/usuariosPage";
 import ConfiguracoesPage from "./features/admin/pages/configuracoesPage";
+import Testes from "./testes";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
       <AuthProvider>
         <ReactRouter.Routes>
           {/* 1. Rotas Públicas */}
+          <ReactRouter.Route path="/testes" element={<Testes />} />
           <ReactRouter.Route path="/" element={<LoginPage />} />
           <ReactRouter.Route
             path="/emitir-senha"
@@ -59,7 +61,7 @@ function App() {
               <ReactRouter.Route path="admin" element={<AdminLayout />}>
                 <ReactRouter.Route index element={<ReactRouter.Navigate to="dashboard" replace />} />
                 <ReactRouter.Route path="dashboard" element={<DashboardPage />} />
-                <ReactRouter.Route path="filas" element={<FilasPage />} />
+                <ReactRouter.Route path="postos" element={<PostosPage />} />
                 <ReactRouter.Route path="alunos" element={<AlunosPage />} />
                 <ReactRouter.Route path="cursos" element={<CursosPage />} />
                 <ReactRouter.Route path="produtos" element={<ProdutosPage />} />
