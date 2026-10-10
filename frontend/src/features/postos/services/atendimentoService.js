@@ -1,32 +1,32 @@
 import { requisitarApi } from "../../../services/apiClient";
 
 export const iniciarAtendimento = async (senhaId) => {
-  return requisitarApi("/atendimento/iniciar", {
+  return requisitarApi("/atendimentos/iniciar", {
     method: "POST",
     body: { senhaId },
   });
 };
 
 export const recuperarAtendimento = async (etapa) => {
-  return requisitarApi(`/atendimento/recuperar/${encodeURIComponent(etapa)}`);
+  return requisitarApi(`/atendimentos/recuperar/${encodeURIComponent(etapa)}`);
 };
 
 export const rechamarSenha = async (senhaId, etapa) => {
-  return requisitarApi("/atendimento/rechamar", {
+  return requisitarApi("/atendimentos/rechamar", {
     method: "POST",
     body: { senhaId, etapa },
   });
 };
 
 export const finalizarAtendimento = async (senhaId) => {
-  return requisitarApi("/atendimento/finalizar", {
+  return requisitarApi("/atendimentos/finalizar", {
     method: "POST",
     body: { senhaId },
   });
 };
 
 export const cancelarAtendimento = async (senhaId) => {
-  return requisitarApi("/atendimento/cancelar", {
+  return requisitarApi("/atendimentos/cancelar", {
     method: "POST",
     body: { senhaId },
   });
