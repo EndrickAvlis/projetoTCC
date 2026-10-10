@@ -20,8 +20,8 @@ const PostoLayout = ({ etapa, children }) => {
 
       <div className="flex h-screen flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex flex-1 flex-col items-center justify-start gap-4 overflow-auto bg-page p-4">
-          {carregando && <Alert type="info" message="Carregando..." />}
+        <main className="flex flex-1 flex-col items-stretch justify-start gap-4 overflow-y-auto overflow-x-hidden bg-page p-4">
+          {/* {carregando && <Alert type="info" message="Carregando..." />} */}
           {/* {erro && (
             <Alert
               type="error"

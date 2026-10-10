@@ -32,7 +32,7 @@ const SidePostos = ({ etapa }) => {
   const ocupado = carregando || carregandoFila;
 
   return (
-    <aside className="flex h-screen w-80 shrink-0 flex-col border-r border-border bg-surface">
+    <aside className="flex h-screen w-75 shrink-0 flex-col border-r border-border bg-surface">
       <div className="flex flex-col items-center justify-center gap-1 border-b border-border bg-page p-4">
         <p className="text-[0.9rem] font-medium uppercase tracking-wide text-text-secondary">
           Senhas aguardando
