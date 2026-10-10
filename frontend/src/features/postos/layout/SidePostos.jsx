@@ -3,26 +3,43 @@ import Button from "../../../components/ui/Button";
 import FilaGrid from "../components/fila/FilaGrid";
 import HistoricoGrid from "../components/fila/HistoricoGrid";
 import SenhaAtualCard from "../components/fila/SenhaAtualCard";
+import { useAtendimento } from "../context/atendimentoContext";
+import { useFila } from "../hooks/useFila";
 
-const SidePostos = ({
-  pessoasEsperando,
-  senhasAguardando,
-  senhasChamadasHoje = [],
-  senhaAtual,
-  onSelecionarSenha,
-  onAlternarPrioridade,
-  carregando,
-}) => {
+const SidePostos = ({ etapa }) => {
   const [visualizacao, setVisualizacao] = useState("aguardando");
   const exibindoHistorico = visualizacao === "historico";
 
+  const {
+    senhaAtual,
+    chamarSenha,
+    alterarPrioridade,
+    carregando,
+  } = useAtendimento();
+
+  const {
+    senhasAguardando,
+    senhasChamadasHoje,
+    carregandoFila,
+    carregarFila,
+  } = useFila(etapa);
+
+  const handleSelecionarSenha = async (senhaSelecionada) => {
+    await chamarSenha(senhaSelecionada.id, etapa);
+    await carregarFila({ silencioso: true });
+  };
+
+  const ocupado = carregando || carregandoFila;
+
   return (
-    <aside className="flex h-screen w-80 shrink-0 flex-col border-r border-border bg-surface">
+    <aside className="flex h-screen w-75 shrink-0 flex-col border-r border-border bg-surface">
       <div className="flex flex-col items-center justify-center gap-1 border-b border-border bg-page p-4">
         <p className="text-[0.9rem] font-medium uppercase tracking-wide text-text-secondary">
           Senhas aguardando
         </p>
-        <p className="text-3xl font-bold text-primary">{pessoasEsperando}</p>
+        <p className="text-3xl font-bold text-primary">
+          {senhasAguardando.length}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2 border-b border-border p-3">
@@ -46,8 +63,8 @@ const SidePostos = ({
         {!exibindoHistorico && (
           <SenhaAtualCard
             senha={senhaAtual}
-            onAlternarPrioridade={onAlternarPrioridade}
-            desabilitada={carregando}
+            onAlternarPrioridade={alterarPrioridade}
+            desabilitada={ocupado}
           />
         )}
 
@@ -60,8 +77,8 @@ const SidePostos = ({
         ) : (
           <FilaGrid
             senhas={senhasAguardando}
-            onSelecionarSenha={onSelecionarSenha}
-            desabilitada={carregando || Boolean(senhaAtual)}
+            onSelecionarSenha={handleSelecionarSenha}
+            desabilitada={ocupado || Boolean(senhaAtual)}
           />
         )}
       </div>

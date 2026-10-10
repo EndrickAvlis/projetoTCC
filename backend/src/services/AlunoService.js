@@ -7,24 +7,21 @@ export default class AlunoService extends BaseService {
     super(prisma.aluno, "idAluno");
   }
 
-  async cadastrarAluno({ cpf, ano, nome }) {
-    const alunoExistente = await prisma.aluno.findFirst({
-      where: {
-        cpfAluno: cpf.trim(),
-      },
-    });
-
-    if (alunoExistente) {
-      throw new AppError("Aluno já cadastrado.", {
-        status: 409,
-        code: "ALUNO_JA_CADASTRADO",
-      });
-    }
-
+  async cadastrarAluno({
+    nome,
+    anoProcesso,
+    semestreProcesso,
+    escolaridadePublica,
+    cidade,
+    sexo,
+  }) {
     return super.criar({
-      cpfAluno: cpf.trim(),
-      anoAluno: ano,
       nomeAluno: nome.trim(),
+      escolaridadePublica: Boolean(escolaridadePublica),
+      cidadeAluno: cidade?.trim() || null,
+      sexoAluno: sexo?.trim() || null,
+      anoProcesso: anoProcesso || null,
+      semestreProcesso: semestreProcesso || null,
     });
   }
 

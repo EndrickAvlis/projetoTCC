@@ -1,34 +1,131 @@
-// Seleção das formas de pagamento e divisão do valor total entre elas.
-import InputMoeda from "../ui/InputMoeda";
-import { formatarMoeda } from "../../utils/formatters";
+import { FiPlus, FiX } from "react-icons/fi";
+import InputMoeda from "../../../../components/ui/InputMoeda";
+import { formatarMoeda } from "../../../../utils/formatters";
 
-const nomePagamentos = { pix: "Pix", dinheiro: "Dinheiro", debito: "Débito", credito: "Crédito" };
+const NOMES_FORMAS = {
+  pix: "Pix",
+  dinheiro: "Dinheiro",
+  debito: "Débito",
+  credito: "Crédito",
+};
 
-const FormasPagamento = ({ formas, pagamentosSelecionados, valores, diferencaPagamento, onAlternarForma, onAlterarValor, disabled = false }) => (
-  <section className="bg-surface border border-border rounded-lg p-5 space-y-5">
-    <div>
-      <h2 className="text-section font-semibold text-primary">Formas de pagamento</h2>
-      <p className="text-sm text-text-secondary">Selecione uma ou mais formas e informe o valor de cada uma.</p>
+const FormasPagamento = ({
+  formas = ["pix", "dinheiro", "debito", "credito"],
+  pagamentosSelecionados = [],
+  valores = {},
+  totalCompra = 0,
+  diferencaPagamento = 0,
+  onAlternarForma,
+  onAlterarValor,
+  disabled = false,
+}) => {
+  const semValor = totalCompra <= 0;
+  const desabilitadoGeral = disabled || semValor;
+  return (
+    <div className="flex flex-col gap-3 pb-7">
+      <div>
+        <h4 className="text-xs uppercase tracking-wider text-text-primary font-bold">
+          Formas de Pagamento
+        </h4>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {formas.map((forma) => {
+          const selecionada = pagamentosSelecionados.includes(forma);
+          return (
+            <div
+              key={forma}
+              onClick={() => {
+                if (!desabilitadoGeral && !selecionada) {
+                  onAlternarForma(forma);
+                }
+              }}
+              className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-1.5 transition-all ${
+                desabilitadoGeral
+                  ? "cursor-not-allowed opacity-50 bg-page border-border"
+                  : selecionada
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-2xs"
+                    : "cursor-pointer border-border bg-page hover:border-primary/40 hover:bg-surface-muted"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`h-2 w-2 rounded-full transition-colors ${
+                    selecionada ? "bg-primary" : "bg-border-strong"
+                  }`}
+                />
+                <span className="text-xs font-bold text-text-primary">
+                  {NOMES_FORMAS[forma] || forma}
+                </span>
+              </div>
+
+              {selecionada ? (
+                <div
+                  className="flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="w-28">
+                    <InputMoeda
+                      aria-label={`Valor pago em ${NOMES_FORMAS[forma]}`}
+                      placeholder="0,00"
+                      valor={valores[forma] || 0}
+                      onChange={(val) => onAlterarValor(forma, val)}
+                      disabled={desabilitadoGeral}
+                      size="sm"
+                      inputClassName="text-right py-1 text-base h-7"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    title={`Remover ${NOMES_FORMAS[forma] || forma}`}
+                    aria-label={`Remover ${NOMES_FORMAS[forma] || forma}`}
+                    disabled={desabilitadoGeral}
+                    onClick={() => onAlternarForma(forma)}
+                    className="p-1 text-text-secondary hover:text-status-danger transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    <FiX className="text-sm" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={desabilitadoGeral}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!desabilitadoGeral) onAlternarForma(forma);
+                  }}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-text-secondary hover:text-primary transition-colors cursor-pointer disabled:cursor-not-allowed px-2 py-1 rounded hover:bg-primary/5"
+                >
+                  <FiPlus className="text-xs" />
+                  <span>Adicionar</span>
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="pt-1 text-xs">
+        {semValor ? (
+          <p className="text-text-secondary">
+            Adicione itens ao carrinho para registrar o pagamento.
+          </p>
+        ) : diferencaPagamento > 0 ? (
+          <p className="font-bold text-status-danger">
+            Faltam {formatarMoeda(diferencaPagamento)} para bater o total.
+          </p>
+        ) : diferencaPagamento < 0 ? (
+          <p className="font-bold text-status-warning">
+            Excede em {formatarMoeda(Math.abs(diferencaPagamento))}.
+          </p>
+        ) : (
+          <p className="font-bold text-status-success">
+            Pagamento total atingido.
+          </p>
+        )}
+      </div>
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-3">
-      {formas.map((forma) => {
-        const selecionada = pagamentosSelecionados.includes(forma);
-        return <div key={forma} className="space-y-2">
-          <label className="flex items-center gap-2 font-medium text-text-primary cursor-pointer">
-            <input type="checkbox" checked={selecionada} disabled={disabled} onChange={() => onAlternarForma(forma)} className="h-4 w-4 accent-primary" />
-            {nomePagamentos[forma]}
-          </label>
-          {selecionada && <div className="flex items-center gap-2 max-w-70">
-            <span className="text-sm text-text-secondary">R$</span>
-            <InputMoeda aria-label={`Valor pago em ${nomePagamentos[forma]}`} placeholder="0,00" valor={valores[forma] || 0} disabled={disabled} size="sm" onChange={(valorTotal) => onAlterarValor(forma, valorTotal)} />
-          </div>}
-        </div>;
-      })}
-    </div>
-    {diferencaPagamento > 0 && <p className="font-medium text-status-danger">Faltam {formatarMoeda(diferencaPagamento)}</p>}
-    {diferencaPagamento < 0 && <p className="font-medium text-status-danger">Pagamento excede em {formatarMoeda(Math.abs(diferencaPagamento))}</p>}
-    {diferencaPagamento === 0 && <p className="font-medium text-status-success">Pagamento completo.</p>}
-  </section>
-);
+  );
+};
 
 export default FormasPagamento;

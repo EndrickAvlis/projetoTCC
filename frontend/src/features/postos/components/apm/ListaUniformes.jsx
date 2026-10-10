@@ -1,56 +1,142 @@
-// Tabela dos uniformes selecionados e controles de quantidade e retirada.
-import Button from "../ui/Button";
-import * as IoIcons from "react-icons/io";
-import { formatarMoeda } from "../../utils/formatters";
+import { FiPlus, FiMinus, FiTrash2 } from "react-icons/fi";
+import DataTable from "../../../../components/ui/DataTable";
+import Button from "../../../../components/ui/Button";
+import { formatarMoeda } from "../../../../utils/formatters";
 
-const ListaUniformes = ({ itens, onAlterarComprada, onAlterarRetirada, onExcluir, disabled = false }) => {
-  if (!itens.length) return null;
+const ListaUniformes = ({
+  items = [],
+  onAlterarComprada,
+  onAlterarRetirada,
+  onExcluir,
+  disabled = false,
+}) => {
+  if (items.length === 0) return null;
+
+  const colunas = [
+    {
+      key: "tamanho",
+      label: "Tamanho",
+      cellClassName: "font-semibold text-text-primary",
+      render: (item) => {
+        const pendente = item.quantidadeComprada - item.quantidadeRetirada;
+
+        return (
+          <div className="flex items-center gap-2">
+            <span>{item.tamanho}</span>
+            {pendente > 0 && (
+              <span className="rounded-sm bg-status-warning-bg px-1.5 py-0.5 text-xs font-semibold text-status-warning whitespace-nowrap">
+                {pendente} {pendente === 1 ? "pendente" : "pendentes"}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "preco",
+      label: "Preço",
+      cellClassName: "text-text-secondary",
+      render: (item) => formatarMoeda(item.preco),
+    },
+    {
+      key: "quantidadeComprada",
+      label: "Qtd. Comprada",
+      headerClassName: "text-center",
+      cellClassName: "text-center",
+      render: (item) => (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={disabled || item.quantidadeComprada <= 1}
+            onClick={() => onAlterarComprada(item.id, -1)}
+            aria-label="Diminuir compra"
+          >
+            <FiMinus />
+          </Button>
+          <span className="min-w-6 text-center font-bold text-text-primary">
+            {item.quantidadeComprada}
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={disabled}
+            onClick={() => onAlterarComprada(item.id, 1)}
+            aria-label="Aumentar compra"
+          >
+            <FiPlus />
+          </Button>
+        </div>
+      ),
+    },
+    {
+      key: "quantidadeRetirada",
+      label: "Qtd. Retirada",
+      headerClassName: "text-center",
+      cellClassName: "text-center",
+      render: (item) => {
+        const limiteRetirada = Math.min(item.quantidadeComprada, item.estoque);
+
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={disabled || item.quantidadeRetirada <= 0}
+              onClick={() => onAlterarRetirada(item.id, -1)}
+              aria-label="Diminuir retirada"
+            >
+              <FiMinus />
+            </Button>
+            <span className="min-w-6 text-center font-bold text-text-primary">
+              {item.quantidadeRetirada}
+            </span>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={disabled || item.quantidadeRetirada >= limiteRetirada}
+              onClick={() => onAlterarRetirada(item.id, 1)}
+              aria-label="Aumentar retirada"
+            >
+              <FiPlus />
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
+      key: "subtotal",
+      label: "Subtotal",
+      cellClassName: "font-semibold text-primary",
+      render: (item) => formatarMoeda(item.preco * item.quantidadeComprada),
+    },
+    {
+      key: "acoes",
+      label: "Ação",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (item) => (
+        <Button
+          variant="danger"
+          size="sm"
+          disabled={disabled}
+          onClick={() => onExcluir(item.id)}
+          aria-label={`Excluir ${item.tamanho}`}
+        >
+          <FiTrash2 />
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <section className="bg-surface border border-border rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-185 text-sm">
-          <thead className="bg-surface-muted text-primary text-left">
-            <tr>
-              <th className="p-3">Tamanho</th>
-              <th className="p-3">Preço unit.</th>
-              <th className="p-3">Qtd. comprada</th>
-              <th className="p-3">Qtd. retirada</th>
-              <th className="p-3">Subtotal</th>
-              <th className="p-3"><span className="sr-only">Excluir</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {itens.map((item) => {
-              const limiteRetirada = Math.min(item.quantidadeComprada, item.estoque);
-              const pendente = item.quantidadeComprada - item.quantidadeRetirada;
-              return (
-                <tr key={item.id} className="border-t border-border">
-                  <td className="p-3 font-semibold">{item.tamanho}</td>
-                  <td className="p-3">{formatarMoeda(item.preco)}</td>
-                  <td className="p-3"><ControleQuantidade valor={item.quantidadeComprada} onDiminuir={() => onAlterarComprada(item.id, -1)} onAumentar={() => onAlterarComprada(item.id, 1)} desabilitarDiminuir={disabled || item.quantidadeComprada <= 1} disabled={disabled} /></td>
-                  <td className="p-3">
-                    <ControleQuantidade valor={item.quantidadeRetirada} onDiminuir={() => onAlterarRetirada(item.id, -1)} onAumentar={() => onAlterarRetirada(item.id, 1)} desabilitarDiminuir={disabled || item.quantidadeRetirada <= 0} desabilitarAumentar={disabled || item.quantidadeRetirada >= limiteRetirada} disabled={disabled} />
-                    {pendente > 0 && <p className="mt-1 text-xs text-status-warning">{pendente} pendente(s)</p>}
-                  </td>
-                  <td className="p-3 font-semibold">{formatarMoeda(item.preco * item.quantidadeComprada)}</td>
-                  <td className="p-3 text-right"><Button variant="danger" size="sm" disabled={disabled} onClick={() => onExcluir(item.id)} aria-label={`Excluir uniforme tamanho ${item.tamanho}`}><IoIcons.IoMdTrash size={18} /></Button></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <DataTable
+      columns={colunas}
+      data={items}
+      getRowKey={(item) => item.id}
+      alturaMaxima="none"
+    />
   );
 };
-
-const ControleQuantidade = ({ valor, onDiminuir, onAumentar, desabilitarDiminuir, desabilitarAumentar, disabled }) => (
-  <div className="flex items-center gap-2">
-    <Button size="sm" variant="secondary" disabled={disabled || desabilitarDiminuir} onClick={onDiminuir} aria-label="Diminuir quantidade"><IoIcons.IoMdRemove /></Button>
-    <span className="min-w-5 text-center">{valor}</span>
-    <Button size="sm" variant="secondary" disabled={disabled || desabilitarAumentar} onClick={onAumentar} aria-label="Aumentar quantidade"><IoIcons.IoMdAdd /></Button>
-  </div>
-);
 
 export default ListaUniformes;

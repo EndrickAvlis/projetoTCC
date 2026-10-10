@@ -1,35 +1,20 @@
-// Serviço da APM: carrega catálogo e registra venda ou finalização sem venda.
 import { requisitarApi } from "../../../services/apiClient";
 
-export const centavosParaReais = (centavos = 0) =>
-  Math.round(Number(centavos)) / 100;
+export const listarProdutos = async () => {
+  const [resUniformes, resArmario] = await Promise.all([
+    requisitarApi("/produtos?tipo=uniforme&arquivado=false"),
+    requisitarApi("/produtos/armario").catch(() => ({ armario: null })),
+  ]);
 
-export const reaisParaCentavos = (reais = 0) => Math.round(Number(reais) * 100);
+  return {
+    uniformes: resUniformes.uniformes,
+    armario: resArmario.armario,
+  };
+};
 
-const normalizarCatalogo = (resposta = {}) => ({
-  uniformes: (resposta.uniformes ?? []).map((uniforme) => ({
-    ...uniforme,
-    preco: centavosParaReais(uniforme.precoCentavos),
-  })),
-  armario: {
-    ...(resposta.armario ?? {}),
-    permitido: Boolean(resposta.armario?.permitido),
-    preco: centavosParaReais(resposta.armario?.precoCentavos),
-    estoque: resposta.armario?.estoque ?? 0,
-  },
-});
-
-export const carregarCatalogoVenda = async () =>
-  normalizarCatalogo(await requisitarApi("/apm/catalogo-venda"));
-
-export const registrarVenda = (atendimentoId, venda) =>
-  requisitarApi(`/atendimentos/${encodeURIComponent(atendimentoId)}/vendas`, {
+export const registrarVenda = async (senhaId, compra) => {
+  return requisitarApi("/atendimentos/apm/finalizar", {
     method: "POST",
-    body: venda,
+    body: { senhaId, compra },
   });
-
-export const finalizarSemVenda = (atendimentoId) =>
-  requisitarApi(
-    `/atendimentos/${encodeURIComponent(atendimentoId)}/finalizacoes-sem-venda`,
-    { method: "POST" },
-  );
+};

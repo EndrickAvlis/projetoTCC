@@ -1,4 +1,3 @@
-// Tela de login: envia credenciais e registra a sessão retornada pela API.
 import { useState } from "react";
 import * as FaIcons from "react-icons/fa";
 import { useNavigate } from "react-router-dom";

@@ -81,12 +81,24 @@ model Contribuicao {
   compra Compra @relation(fields: [codCompra], references: [idCompra])
 }
 
+enum StatusAluno {
+  CANDIDATO
+  ATIVO
+  ARQUIVADO
+}
+
+enum StatusMatricula {
+  PENDENTE
+  ATIVA
+}
+
 model Curso {
   idCurso   Int     @id @default(autoincrement())
   nomeCurso String  @db.VarChar(100)
+  codigoCsv String? @unique @db.VarChar(50)
   arquivado Boolean @default(false)
 
-  periodos PeriodoCurso[]
+  periodos    PeriodoCurso[]
   cursosAluno CursoAluno[]
 }
 
@@ -103,10 +115,14 @@ model PeriodoCurso {
 }
 
 model Aluno {
-  idAluno   Int    @id @default(autoincrement()) 
-  cpfAluno  String @db.VarChar(15)
-  anoAluno  Int
-  nomeAluno String @db.VarChar(100)
+  idAluno             Int          @id @default(autoincrement())
+  nomeAluno           String       @db.VarChar(100)
+  escolaridadePublica Boolean      @default(false)
+  cidadeAluno         String?      @db.VarChar(100)
+  sexoAluno           String?      @db.VarChar(20)
+  statusAluno         StatusAluno  @default(CANDIDATO)
+  anoProcesso         Int?
+  semestreProcesso    Int?
 
   compras     Compra[]
   cursosAluno CursoAluno[]
@@ -114,11 +130,14 @@ model Aluno {
 }
 
 model CursoAluno {
-  codCurso  Int
-  codAluno  Int
+  codCurso        Int
+  codAluno        Int
+  classificacao   Int?
+  statusMatricula StatusMatricula @default(PENDENTE)
+  periodo         Periodo?
 
-  curso Curso @relation(fields: [codCurso], references: [idCurso])
-  aluno Aluno @relation(fields: [codAluno], references: [idAluno])
+  curso           Curso           @relation(fields: [codCurso], references: [idCurso])
+  aluno           Aluno           @relation(fields: [codAluno], references: [idAluno])
 
   @@id([codCurso, codAluno])
 }

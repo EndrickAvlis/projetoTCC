@@ -1,6 +1,6 @@
 import * as React from "react";
 import { FiChevronDown, FiChevronUp, FiFileText } from "react-icons/fi";
-import Button from "../../../../components/ui/button";
+import Button from "../../../../components/ui/Button";
 import { DOCUMENTOS_TRIAGEM } from "../../constants/triagem";
 
 export const DocumentosPendentes = ({

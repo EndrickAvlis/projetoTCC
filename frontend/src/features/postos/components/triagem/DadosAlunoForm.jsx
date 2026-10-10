@@ -1,5 +1,5 @@
 import * as React from "react";
-import Input from "../../../../components/ui/input";
+import Input from "../../../../components/ui/Input";
 import Select from "../../../../components/ui/Select";
 import {
   OPCOES_ANO_ESCOLAR,

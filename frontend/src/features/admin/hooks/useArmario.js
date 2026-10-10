@@ -12,7 +12,7 @@ export const useArmario = () => {
 
     try {
       const res = await buscarArmario();
-      setArmario(res.produto ?? null);
+      setArmario(res.armario ?? null);
     } catch (error) {
       if (error.code === "ARMARIO_NAO_CONFIGURADO") {
         setArmario(null);

@@ -1,4 +1,3 @@
-// Tela apresentada quando o perfil autenticado não possui acesso à rota.
 import { Link } from "react-router-dom";
 
 const AcessoNegadoPage = () => (

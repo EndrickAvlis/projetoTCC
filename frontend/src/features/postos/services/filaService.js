@@ -1,59 +1,41 @@
 import { requisitarApi } from "../../../services/apiClient";
 
-export const normalizarSenha = (senha) => {
-  if (!senha) return null;
-
-  return {
-    ...senha,
-    id: senha.id ?? senha.idSenha,
-    numero: senha.codigo ?? senha.senhaCodigo ?? "",
-    etapa: senha.etapaAtual ?? senha.etapaSenha,
-    prioritaria: Boolean(senha.tipoSenha),
-  };
-};
-// Busca as senhas aguardando da etapa que está aberta no posto.
 export const listarFila = async (etapa) => {
-  const resposta = await requisitarApi(
-    `/filas?etapa=${encodeURIComponent(etapa)}`,
+  const res = await requisitarApi(
+    `/filas?etapa=${encodeURIComponent(etapa)}`
   );
-  return (resposta?.senhas ?? resposta ?? []).map(normalizarSenha);
+  return res.senhas;
 };
 
-// Busca as senhas chamadas no dia atual exclusivamente para a etapa solicitada.
 export const listarChamadasHoje = async (etapa) => {
-  const resposta = await requisitarApi(
-    `/filas/historico?etapa=${encodeURIComponent(etapa)}`,
+  const res = await requisitarApi(
+    `/filas/historico?etapa=${encodeURIComponent(etapa)}`
   );
-  return (resposta?.senhas ?? resposta ?? []).map(normalizarSenha);
+  return res.senhas;
 };
 
-// Reserva a senha escolhida pelo atendente; o backend valida a etapa e a concorrência.
-export const chamarSenhaSelecionada = async (senhaId, etapa) => {
-  const resposta = await requisitarApi("/filas/chamadas", {
+export const chamarSenha = async (senhaId, etapa) => {
+  const res = await requisitarApi("/filas/chamadas", {
     method: "POST",
-    body: JSON.stringify({ senhaId, etapa }),
+    body: { senhaId, etapa },
   });
-  return normalizarSenha(resposta?.senha ?? resposta);
+  return res.senha;
 };
 
-// Atualiza a prioridade persistente da senha atualmente atendida.
-export const atualizarPrioridadeSenha = async (senhaId, tipoSenha) => {
-  const resposta = await requisitarApi(
+export const alterarPrioridade = async (senhaId, tipoSenha) => {
+  const res = await requisitarApi(
     `/senhas/${encodeURIComponent(senhaId)}/prioridade`,
     {
       method: "PATCH",
-      body: JSON.stringify({ tipoSenha }),
-    },
+      body: { tipoSenha },
+    }
   );
-  return normalizarSenha(resposta?.senha ?? resposta);
+  return res.senha;
 };
 
-// Emite uma nova senha no banco
 export const emitirSenha = async () => {
-  const resposta = await requisitarApi("/senhas", {
+  const res = await requisitarApi("/senhas", {
     method: "POST",
-    autenticada: false,
   });
-
-  return normalizarSenha(resposta.senha);
+  return res.senha;
 };

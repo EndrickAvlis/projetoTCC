@@ -1,26 +1,34 @@
-// Serviço de atendimento: carrega detalhes e controla início/fim do histórico.
 import { requisitarApi } from "../../../services/apiClient";
-import { normalizarSenha } from "./filaService";
 
-export const obterDetalheSenha = async (senhaId) => {
-  const resposta = await requisitarApi(
-    `/senhas/${encodeURIComponent(senhaId)}/detalhe`,
-  );
-
-  return {
-    ...resposta,
-    senha: normalizarSenha(resposta?.senha),
-  };
+export const iniciarAtendimento = async (senhaId) => {
+  return requisitarApi("/atendimento/iniciar", {
+    method: "POST",
+    body: { senhaId },
+  });
 };
 
-export const iniciarAtendimento = (senhaId) =>
-  requisitarApi("/atendimentos", {
-    method: "POST",
-    body: senhaId,
-  });
+export const recuperarAtendimento = async (etapa) => {
+  return requisitarApi(`/atendimento/recuperar/${encodeURIComponent(etapa)}`);
+};
 
-export const finalizarAtendimento = (atendimentoId) =>
-  requisitarApi(
-    `/atendimentos/${encodeURIComponent(atendimentoId)}/finalizacoes`,
-    { method: "POST" },
-  );
+export const rechamarSenha = async (senhaId, etapa) => {
+  return requisitarApi("/atendimento/rechamar", {
+    method: "POST",
+    body: { senhaId, etapa },
+  });
+};
+
+export const finalizarAtendimento = async (senhaId) => {
+  return requisitarApi("/atendimento/finalizar", {
+    method: "POST",
+    body: { senhaId },
+  });
+};
+
+export const cancelarAtendimento = async (senhaId) => {
+  return requisitarApi("/atendimento/cancelar", {
+    method: "POST",
+    body: { senhaId },
+  });
+};
+

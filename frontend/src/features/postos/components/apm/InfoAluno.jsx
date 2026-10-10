@@ -1,26 +1,33 @@
-// Identificação resumida do aluno atendido no posto APM.
 const InfoAluno = ({ aluno }) => {
-  const cursoComAno = [aluno.ano && `${aluno.ano}º`, aluno.curso]
-    .filter(Boolean)
-    .join(" ");
-  const identificacaoAcademica = [cursoComAno, aluno.periodo]
+  const detalhesCurso = [
+    aluno?.curso,
+    aluno?.ano && `${aluno.ano}º ano`,
+    aluno?.periodo,
+  ]
     .filter(Boolean)
     .join(" — ");
 
   return (
-    <section className="bg-surface-muted border border-border-strong rounded-lg p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" aria-label="Informações do aluno">
-      <DadoAluno titulo="Nome" valor={aluno.nome || "Aluno não identificado"} />
-      <DadoAluno titulo="Curso" valor={identificacaoAcademica || "—"} />
-      <DadoAluno titulo="CPF" valor={aluno.cpf || "—"} />
-    </section>
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+      <div>
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+          Aluno sendo atendido
+        </span>
+        <h2 className="text-lg font-bold text-text-primary">
+          {aluno?.nome || "Aluno não identificado"}
+        </h2>
+      </div>
+
+      <div className="text-right">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+          Curso e Período
+        </span>
+        <p className="text-sm font-medium text-text-primary">
+          {detalhesCurso || "Não informado"}
+        </p>
+      </div>
+    </div>
   );
 };
-
-const DadoAluno = ({ titulo, valor }) => (
-  <div>
-    <p className="text-sm text-text-secondary">{titulo}</p>
-    <p className="font-semibold text-text-primary">{valor}</p>
-  </div>
-);
 
 export default InfoAluno;

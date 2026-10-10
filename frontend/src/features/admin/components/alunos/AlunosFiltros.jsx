@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as FiIcons from 'react-icons/fi';
-import Input from "../../../../components/ui/input"
-import Select from "../../../../components/ui/select"
-import Button from "../../../../components/ui/button"
+import Input from "../../../../components/ui/Input"
+import Select from "../../../../components/ui/Select"
+import Button from "../../../../components/ui/Button"
 
 const OPCOES = [
     { valor: "ATIVO", label: "Ativos" },

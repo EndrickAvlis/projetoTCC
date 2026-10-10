@@ -83,7 +83,7 @@ export const alterarEstoqueSchema = z.object({
 
 export const buscarArmarioSchema = z.object({});
 
-export const listarProdutoSchema = z.object({
+export const listarUniformesSchema = z.object({
   query: z.object({
     busca: z.string().trim().optional().default(""),
     tipo: z

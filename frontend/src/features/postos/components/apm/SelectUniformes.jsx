@@ -1,49 +1,48 @@
-// Seletor usado para adicionar uniformes disponíveis no catálogo à venda.
 import { useState } from "react";
-import { IoMdAdd } from "react-icons/io";
+import { FiPlus } from "react-icons/fi";
 import Select from "../../../../components/ui/Select";
 import Button from "../../../../components/ui/Button";
 import { formatarMoeda } from "../../../../utils/formatters";
 
 const SelectUniformes = ({ uniformes = [], onAdicionar, disabled = false }) => {
   const [uniformeSelecionado, setUniformeSelecionado] = useState("");
-  const options = uniformes.map((uniforme) => ({
-    value: uniforme.id,
-    label: `${uniforme.tamanho} — ${formatarMoeda(uniforme.preco)} (estoque: ${uniforme.estoque})`,
+
+  const options = uniformes.map((unifome) => ({
+    value: String(unifome.id),
+    label: `${unifome.nome} — ${formatarMoeda(unifome.preco)} (Estoque: ${unifome.quantidade})`,
   }));
 
-  const adicionar = () => {
+  const handleAdicionar = () => {
     if (!uniformeSelecionado) return;
-    onAdicionar(uniformeSelecionado);
+    onAdicionar(Number(uniformeSelecionado));
     setUniformeSelecionado("");
   };
 
   return (
-    <section className="bg-surface border border-border rounded-lg p-5 space-y-4">
-      <div>
-        <h2 className="text-section font-semibold text-primary">Uniformes</h2>
-        <p className="text-sm text-text-secondary">Itens sem estoque também podem ser vendidos e ficam pendentes para retirada.</p>
-      </div>
+    <div className="flex flex-col gap-2">
       <div className="flex flex-col sm:flex-row gap-3">
         <Select
           aria-label="Selecionar uniforme"
           value={uniformeSelecionado}
-          onChange={(event) => setUniformeSelecionado(event.target.value)}
+          onChange={(e) => setUniformeSelecionado(e.target.value)}
           options={options}
-          placeholder="Selecionar uniforme..."
+          placeholder="Selecione um tamanho de uniforme..."
           disabled={disabled}
           className="flex-1"
           size="md"
         />
         <Button
-          onClick={adicionar}
+          onClick={handleAdicionar}
           disabled={disabled || !uniformeSelecionado}
-          leftIcon={<IoMdAdd size={18} />}
+          rightIcon={<FiPlus />}
         >
           Adicionar
         </Button>
       </div>
-    </section>
+      <p className="text-xs text-text-secondary">
+        Itens com quantidade superior ao estoque ficarão registrados como pendentes de retirada.
+      </p>
+    </div>
   );
 };
 

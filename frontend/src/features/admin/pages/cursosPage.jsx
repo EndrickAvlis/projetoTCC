@@ -153,8 +153,6 @@ const CursosPage = () => {
         </div>
       ),
     },
-
-    //*periodo
     {
       key: "periodos",
       label: "Períodos",

@@ -1,123 +1,14 @@
-# Tela de Alunos
+# Especificação Técnica do Back-end — Gestão e Importação de Alunos (`TELA_ALUNOS`)
 
-## Objetivo
+## 1. Visão Geral do Fluxo
 
-A tela administrativa de Alunos deve importar a lista de classificação da ETEC,
-cadastrar os candidatos e permitir a consulta dos registros importados.
+O módulo administrativo de alunos atende a dois propósitos principais:
+1. **Importação em Lote:** O frontend processa a lista CSV do Vestibulinho, associa os cursos pendentes e dispara `POST /admin/alunos/importar` para persistir os candidatos e atualizar os códigos dos cursos em transação atômica.
+2. **Consulta e Filtros Paginados:** O frontend consome `GET /admin/alunos` enviando parâmetros de busca, curso, situação e paginação (10 itens por página).
 
-Rota da tela: `/admin/alunos`.
+---
 
-## Interface
-
-A tela deve conter:
-
-- total de alunos ativos;
-- botão **Importar lista de classificação**;
-- pesquisa por nome;
-- filtro por curso;
-- filtro por situação do aluno: candidato, ativo ou arquivado;
-- tabela com 10 registros por página;
-- paginação, sem rolagem infinita.
-
-O filtro inicial deve mostrar somente alunos ativos.
-
-### Colunas da tabela
-
-- nome do aluno;
-- curso;
-- classificação;
-- cidade;
-- situação do aluno;
-- situação da matrícula.
-
-A listagem, a pesquisa e os filtros devem ser processados pelo backend. A resposta
-deve retornar somente os 10 registros da página solicitada e o total encontrado.
-
-## Importação do CSV
-
-Antes de importar, o administrador deve informar:
-
-- ano do processo seletivo;
-- semestre do processo seletivo.
-
-Somente a primeira opção de curso será importada.
-
-### Campos utilizados
-
-| Campo do CSV | Destino |
-|---|---|
-| `NR_INSCRICAO` | `Aluno.numeroInscricao` |
-| `NOME` | `Aluno.nomeAluno` |
-| `ESCOLARIDADE` | `Aluno.escolaridadePublica` |
-| `CIDADE` | `Aluno.cidadeAluno` |
-| `SEXO` | `Aluno.sexoAluno` |
-| `CLASSIFICACAO` | `CursoAluno.classificacao` |
-| `COD_CURSO` | reconhecimento por `Curso.codigoCsv` |
-| `HABILITACAO` | nome apresentado durante a associação do curso |
-| `PERIODO` | `CursoAluno.periodo` |
-
-`numeroInscricao` deve ser armazenado como texto. Espaços e apóstrofos adicionados
-pelo CSV devem ser removidos sem eliminar zeros à esquerda.
-
-`ESCOLARIDADE` deve converter `SIM` para `true` e `NÃO` para `false`.
-
-`CLASSIFICACAO` pode ser nula.
-
-Registros cuja habilitação seja `TREINEIRO` não devem ser importados.
-
-CPF, RG, nascimento, endereço, telefone, e-mail e qualquer outra coluna não
-listada nesta especificação devem ser ignorados e não podem ser armazenados.
-
-O importador deve aceitar arquivo CSV separado por ponto e vírgula e tratar as
-codificações UTF-8 e Windows-1252.
-
-## Associação de cursos
-
-Antes de confirmar a importação, o sistema deve agrupar os códigos de curso
-encontrados no arquivo.
-
-- Se `COD_CURSO` corresponder a `Curso.codigoCsv`, o curso será reconhecido.
-- Se o código não for reconhecido, o administrador deverá associá-lo a um curso
-  existente.
-- A importação não pode ser confirmada enquanto houver curso sem associação.
-- Depois da associação, o código deve ser salvo em `Curso.codigoCsv`.
-- Se o código externo mudar, o administrador deverá fazer uma nova associação.
-
-Um curso não deve ser criado automaticamente a partir do texto do CSV. Quando o
-curso ainda não existir, ele deve ser cadastrado na tela de Cursos antes da
-associação.
-
-## Confirmação da importação
-
-Ao confirmar a importação, para cada registro válido o sistema deve:
-
-1. criar o aluno com `statusAluno = CANDIDATO`;
-2. criar o vínculo `CursoAluno` com `statusMatricula = PENDENTE`;
-3. salvar a classificação e o período no vínculo com o curso.
-
-Todas as criações devem ocorrer em uma transação. Se houver erro não tratado,
-nenhum registro do arquivo deve ser salvo.
-
-Ao final, a tela deve informar:
-
-- quantidade importada;
-- quantidade ignorada por ser treineiro;
-- quantidade ignorada por duplicidade;
-- quantidade inválida.
-
-## Prevenção de duplicidades
-
-Uma mesma inscrição não pode ser importada mais de uma vez no mesmo processo
-seletivo.
-
-```prisma
-@@unique([numeroInscricao, anoProcesso, semestreProcesso])
-```
-
-Registros que violem essa restrição devem ser ignorados e contabilizados como
-duplicados, sem interromper os demais registros válidos.
-
-## Situações e transições
+## 2. Alterações no Banco de Dados (`schema.prisma`)
 
 ```prisma
 enum StatusAluno {
@@ -130,64 +21,194 @@ enum StatusMatricula {
   PENDENTE
   ATIVA
 }
+
+enum Periodo {
+  manha
+  tarde
+  noite
+  integral
+  online
+}
+
+model Aluno {
+  idAluno             Int          @id @default(autoincrement())
+  nomeAluno           String       @db.VarChar(100)
+  escolaridadePublica Boolean      @default(false)
+  cidadeAluno         String       @db.VarChar(100)
+  sexoAluno           String       @db.VarChar(20)
+  statusAluno         StatusAluno  @default(CANDIDATO)
+  anoProcesso         Int
+  semestreProcesso    Int
+
+  compras     Compra[]
+  cursosAluno CursoAluno[]
+  senhas      Senha[]
+}
+
+model CursoAluno {
+  codCurso        Int
+  codAluno        Int
+  classificacao   Int?
+  statusMatricula StatusMatricula @default(PENDENTE)
+  periodo         Periodo
+
+  curso Curso @relation(fields: [codCurso], references: [idCurso])
+  aluno Aluno @relation(fields: [codAluno], references: [idAluno])
+
+  @@id([codCurso, codAluno])
+}
+
+model Curso {
+  idCurso   Int     @id @default(autoincrement())
+  nomeCurso String  @db.VarChar(100)
+  codigoCsv String? @unique @db.VarChar(30)
+  arquivado Boolean @default(false)
+
+  periodos    PeriodoCurso[]
+  cursosAluno CursoAluno[]
+}
 ```
 
-Fluxo principal:
+---
+
+## 3. Listagem de Alunos (`GET /admin/alunos`)
+
+* **Rota:** `GET /admin/alunos`
+* **Autenticação:** Obrigatória (`admin`)
+
+### Parâmetros de Query:
+| Parâmetro | Tipo | Padrão | Descrição |
+| :--- | :---: | :---: | :--- |
+| `nome` | String | `""` | Busca textual parcial por nome do aluno |
+| `cursoId` | Number | `""` | Filtra por ID do curso |
+| `status` | String | `"ATIVO"` | Filtra por `ATIVO`, `CANDIDATO` ou `ARQUIVADO` |
+| `pagina` | Number | `1` | Página atual |
+| `limite` | Number | `10` | Quantidade de registros por página |
+
+### Contrato de Resposta (HTTP 200):
+```json
+{
+  "total": 45,
+  "totalAtivos": 24,
+  "pagina": 1,
+  "limite": 10,
+  "alunos": [
+    {
+      "idAluno": 1,
+      "nomeAluno": "Ana Beatriz Silva",
+      "cidadeAluno": "São José do Rio Preto",
+      "statusAluno": "ATIVO",
+      "cursoAluno": {
+        "periodo": "noite",
+        "classificacao": 1,
+        "statusMatricula": "ATIVA",
+        "curso": {
+          "idCurso": 1,
+          "nomeCurso": "Desenvolvimento de Sistemas"
+        }
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 4. Importação de Lista de Classificação (`POST /admin/alunos/importar`)
+
+* **Rota:** `POST /admin/alunos/importar`
+* **Autenticação:** Obrigatória (`admin`)
+* **Finalidade:** Atualizar o `codigoCsv` dos cursos associados, cadastrar candidatos com situação `CANDIDATO` e matrícula `PENDENTE` em transação atômica (`prisma.$transaction`).
+
+### Contrato de Entrada (Payload enviado pelo Frontend):
+```json
+{
+  "anoProcesso": 2026,
+  "semestreProcesso": 2,
+  "mapeamentoCursos": [
+    { "codigoCsv": "4124", "idCurso": 1 }
+  ],
+  "candidatos": [
+    {
+      "nomeAluno": "Ana Beatriz Silva",
+      "escolaridadePublica": true,
+      "cidadeAluno": "São José do Rio Preto",
+      "sexoAluno": "FEMININO",
+      "codigoCursoCsv": "4124",
+      "classificacao": 1,
+      "periodo": "NOITE"
+    }
+  ]
+}
+```
+
+---
+
+## 5. Passo a Passo da Transação no Back-end (`prisma.$transaction`)
+
+Ao receber `POST /admin/alunos/importar`, o `AlunoService` executa em transação única atômica:
 
 ```text
-Importação do CSV
-  -> Aluno CANDIDATO
-  -> Matrícula PENDENTE
-  -> Triagem seleciona o candidato
-  -> Docs confirma a matrícula
-  -> Aluno ATIVO
-  -> Matrícula ATIVA
+[ Recebe Payload ]
+       │
+       ▼
+1. Validações Prévias
+   ├── Validar anoProcesso (2000–2100) e semestreProcesso (1 ou 2)
+   ├── Validar se todos os idCurso em mapeamentoCursos existem
+   └── Validar se todo codigoCursoCsv dos candidatos está mapeado
+       │
+       ▼
+2. Atualização dos Cursos (Model: Curso)
+   └── Para cada item em mapeamentoCursos:
+         └── Atualizar codigoCsv na tabela Curso
+       │
+       ▼
+3. Consulta de Duplicidades no Banco (Model: Aluno)
+   └── Buscar candidatos já existentes para o mesmo processo seletivo:
+         WHERE anoProcesso = X AND semestreProcesso = Y AND nomeAluno IN (...)
+       │
+       ▼
+4. Inserção de Alunos e Matrículas (Model: Aluno + CursoAluno)
+   └── Para cada candidato no lote:
+         ├── Se candidato já existe no banco ou se repete no arquivo:
+         │     └── Incrementar duplicados e ignorar
+         └── Se válida:
+               ├── Inserir Aluno (statusAluno = 'CANDIDATO')
+               ├── Inserir CursoAluno (statusMatricula = 'PENDENTE', periodo, classificacao)
+               └── Incrementar importados
 ```
 
-A confirmação em Docs deve atualizar o aluno e a matrícula na mesma transação.
+---
 
-## Alterações no banco de dados
+## 6. Contrato de Resposta (HTTP 201)
 
-### `Aluno`
+```json
+{
+  "importados": 45,
+  "treineiros": 0,
+  "duplicados": 2,
+  "invalidos": 0
+}
+```
 
-- `idAluno`;
-- `numeroInscricao`;
-- `nomeAluno`;
-- `escolaridadePublica`;
-- `cidadeAluno`;
-- `sexoAluno`;
-- `statusAluno`;
-- `anoProcesso`;
-- `semestreProcesso`.
+---
 
-O campo de CPF não deve existir.
+## 7. Demais Endpoints de Alunos
 
-### `CursoAluno`
+### 7.1. Consulta por ID (`GET /admin/alunos/:id`)
+* **Resposta (HTTP 200):** Retorna o objeto completo do aluno e seu `cursoAluno`.
 
-Acrescentar:
+### 7.2. Alteração de Situação (`PATCH /admin/alunos/:id/status`)
+* **Body:** `{ "statusAluno": "ATIVO", "statusMatricula": "ATIVA" }`
+* **Resposta (HTTP 200):** Retorna o registro atualizado.
 
-- `classificacao`, inteiro opcional;
-- `statusMatricula`;
-- `periodo`.
+---
 
-### `Curso`
+## 8. Matriz de Erros e Validações (`POST /admin/alunos/importar`)
 
-Acrescentar:
-
-- `codigoCsv`, texto opcional e único.
-
-O enum utilizado por `periodo` deve aceitar `MANHA`, `TARDE`, `NOITE`, `INTEGRAL`
-e `ONLINE`.
-
-Nenhuma tabela nova será criada para esta funcionalidade.
-
-## Critérios de conclusão
-
-- O administrador consegue validar e importar um CSV.
-- Cursos desconhecidos precisam ser associados antes da confirmação.
-- Apenas os campos autorizados são armazenados.
-- Candidatos e matrículas são criados com as situações corretas.
-- Reimportar a mesma inscrição não cria duplicidade.
-- A tabela mostra no máximo 10 registros por página.
-- Pesquisa, filtros e paginação funcionam em conjunto.
-- A confirmação em Docs ativa o aluno e a matrícula.
+| Cenário | Status HTTP | Mensagem de Retorno |
+| :--- | :---: | :--- |
+| Curso mapeado não existe no banco | `400 Bad Request` | `Curso ID {x} informado no mapeamento não existe.` |
+| Código de curso do candidato sem mapeamento | `400 Bad Request` | `Código de curso {x} não possui mapeamento associado.` |
+| Ano ou semestre inválidos | `400 Bad Request` | `Ano ou semestre do processo seletivo inválidos.` |
+| Falha crítica de banco / transação | `500 Internal Server Error` | `Erro ao importar lista de classificação.` |

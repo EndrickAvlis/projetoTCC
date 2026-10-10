@@ -19,7 +19,7 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
         arquivado,
       });
 
-      setUniformes(res.produtos ?? []);
+      setUniformes(res.uniformes ?? []);
       setTotal(res.total ?? 0);
     } catch (error) {
       setUniformes([]);
