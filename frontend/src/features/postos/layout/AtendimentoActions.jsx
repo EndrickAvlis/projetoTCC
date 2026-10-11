@@ -15,7 +15,7 @@ export const AtendimentoActions = ({
 
   return (
     <div
-      className={`flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-surface p-4 shadow-xs ${className}`}
+      className={`flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-surface/30 backdrop-blur p-4 shadow-xs sticky top-0 z-10 ${className}`}
     >
       <div className="flex items-center">
         {!senhaAtual ? (
