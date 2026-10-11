@@ -19,7 +19,10 @@ const ApmMain = () => {
 
   const handleFinalizar = async () => {
     if (venda.totalCompra > 0) {
-      await ApmService.registrarVenda(senhaAtual.id, venda.gerarPayload());
+      await ApmService.registrarVenda({
+        codAluno: dadosAluno.id,
+        ...venda.payload(),
+      });
     }
     await finalizar();
     venda.limparVenda();
@@ -27,22 +30,15 @@ const ApmMain = () => {
 
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* 1. Barra de Ações Fixa no Topo */}
       <AtendimentoActions
         podeFinalizar={venda.podeFinalizar}
         textoFinalizar="Finalizar Compra"
         onFinalizar={handleFinalizar}
       />
-
       {venda.erro && <Alert type="error" message={venda.erro} />}
-
-      {/* 2. Área Central: Formulário Principal (Esquerda) + Checkout (Direita) */}
       <div className="w-full min-w-0 flex flex-col lg:flex-row gap-5 items-stretch">
-        {/* Formulário Principal (Esquerda) */}
         <div className="flex-1 min-w-0 w-full bg-surface rounded-lg border border-border p-5 shadow-xs flex flex-col gap-5">
           <InfoAluno aluno={dadosAluno} />
-
-          {/* Seção Avulsos (Armário e Contribuição) */}
           <div className="flex flex-col md:flex-row gap-4 w-full">
             <ArmarioVenda
               armario={venda.armario}
@@ -55,8 +51,6 @@ const ApmMain = () => {
               disabled={desabilitado}
             />
           </div>
-
-          {/* Seção Uniformes */}
           <div className="flex flex-col gap-4 border-t border-border pt-4">
             <h3 className="font-semibold text-text-primary">Uniformes</h3>
             <SelectUniformes
@@ -73,8 +67,6 @@ const ApmMain = () => {
             />
           </div>
         </div>
-
-        {/* 3. Coluna Direita (Checkout Integrado: Resumo + Pagamento) */}
         <div className="w-full lg:w-80 shrink-0 bg-surface rounded-lg border border-border p-4 shadow-xs flex flex-col gap-3">
           <ResumoCompra
             aluno={dadosAluno}
@@ -83,7 +75,6 @@ const ApmMain = () => {
             contribuicao={venda.contribuicao}
             totalCompra={venda.totalCompra}
           />
-
           <div className="border-t border-border pt-3 mt-auto">
             <FormasPagamento
               formas={venda.formasPagamento}

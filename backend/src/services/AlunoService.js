@@ -29,15 +29,22 @@ export default class AlunoService extends BaseService {
     return super.listar(
       nome.trim()
         ? {
-            nomeAluno: {
-              contains: nome.trim(),
-              mode: "insensitive",
-            },
-          }
+          nomeAluno: {
+            contains: nome.trim(),
+            mode: "insensitive",
+          },
+        }
         : {},
       {
         orderBy: {
           nomeAluno: "asc",
+        },
+        include: {
+          cursosAluno: {
+            include: {
+              curso: true,
+            },
+          },
         },
       },
     );
@@ -81,12 +88,9 @@ export default class AlunoService extends BaseService {
       });
     }
 
-    return super.atualizar(
-      id,
-      {
-        nomeAluno: nome.trim(),
-      },
-    );
+    return super.atualizar(id, {
+      nomeAluno: nome.trim(),
+    });
   }
 
   async vincularAlunoCurso(alunoId, cursoId) {

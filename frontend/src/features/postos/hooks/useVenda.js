@@ -179,7 +179,7 @@ export const useVenda = () => {
     setValores(VALORES_INICIAIS);
   };
 
-  const gerarPayload = () => ({
+  const payload = () => ({
     itens: items.map((item) => ({
       produtoId: item.id,
       quantidade: item.quantidadeComprada,
@@ -219,7 +219,7 @@ export const useVenda = () => {
     diferencaPagamento,
     podeFinalizar,
     limparVenda,
-    gerarPayload,
+    payload,
     listarProdutos,
   };
 };

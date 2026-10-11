@@ -1,13 +1,15 @@
-import FilaService from "../services/FilaService.js";
-
+import FilaService from "../services/filaService.js";
+import { mapearAluno } from "./alunoController.js";
 const filaService = new FilaService();
+
+
 
 const senhaResposta = (senha) => ({
   id: senha.idSenha,
   numero: senha.senhaCodigo,
   etapa: senha.etapaSenha,
   status: senha.statusSenha,
-  prioritaria: Boolean(senha.tipoSenha)
+  prioritaria: Boolean(senha.tipoSenha),
 });
 
 export const listarFila = async (req, res) => {
@@ -25,6 +27,10 @@ export const chamarSenha = async (req, res) => {
   const senha = await filaService.chamarSenhaSelecionada(senhaId, etapa);
 
   return res.json({
-    senha: senhaResposta(senha),
+    senha: {
+      ...senhaResposta(senha),
+      aluno: senha.aluno ? mapearAluno(senha.aluno) : null,
+    },
   });
 };
+

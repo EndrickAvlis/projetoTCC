@@ -12,9 +12,9 @@ export const listarProdutos = async () => {
   };
 };
 
-export const registrarVenda = async (senhaId, compra) => {
-  return requisitarApi("/atendimentos/apm/finalizar", {
+export const registrarVenda = async (dadosCompra) => {
+  return requisitarApi("/compras", {
     method: "POST",
-    body: { senhaId, compra },
+    body: dadosCompra,
   });
 };

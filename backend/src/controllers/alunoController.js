@@ -2,22 +2,27 @@ import AlunoService from "../services/AlunoService.js";
 
 const alunoService = new AlunoService();
 
-const mapearAluno = (aluno) => ({
-  id: aluno.idAluno,
-  nome: aluno.nomeAluno,
-  status: aluno.statusAluno,
-  cidade: aluno.cidadeAluno,
-  sexo: aluno.sexoAluno,
-  escolaridadePublica: aluno.escolaridadePublica,
-  cursos:
-    aluno.cursosAluno?.map((item) => ({
-      id: item.curso?.idCurso,
-      nome: item.curso?.nomeCurso,
-      periodo: item.periodo,
-      classificacao: item.classificacao,
-      statusMatricula: item.statusMatricula,
-    })) ?? [],
-});
+export const mapearAluno = (aluno) => {
+  if (!aluno) return null;
+
+  return {
+    id: aluno.idAluno,
+    nome: aluno.nomeAluno,
+    status: aluno.statusAluno,
+    cidade: aluno.cidadeAluno,
+    sexo: aluno.sexoAluno,
+    escolaridadePublica: aluno.escolaridadePublica,
+    matriculas:
+      aluno.cursosAluno?.map((item) => ({
+        cursoId: item.curso?.idCurso,
+        curso: item.curso?.nomeCurso,
+        periodo: item.periodo,
+        classificacao: item.classificacao,
+        statusMatricula: item.statusMatricula,
+      })) ?? [],
+  };
+};
+
 
 export const criarAluno = async (req, res) => {
   const aluno = await alunoService.cadastrarAluno(req.validado.body);

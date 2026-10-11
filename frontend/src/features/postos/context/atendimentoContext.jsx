@@ -6,6 +6,7 @@ const AtendimentoContext = React.createContext(null);
 
 export const AtendimentoProvider = ({ children }) => {
   const [senhaAtual, setSenhaAtual] = React.useState(null);
+  const [dadosAluno, setDadosAluno] = React.useState(null);
   const [atendimentoAtual, setAtendimentoAtual] = React.useState(null);
   const [carregando, setCarregando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
@@ -20,6 +21,7 @@ export const AtendimentoProvider = ({ children }) => {
   const limparAtendimento = React.useCallback(() => {
     setSenhaAtual(null);
     setAtendimentoAtual(null);
+    setDadosAluno(null);
     setErro(null);
     setCarregando(false);
   }, []);
@@ -27,6 +29,7 @@ export const AtendimentoProvider = ({ children }) => {
   const definirAtendimento = React.useCallback((senha, atendimento = null) => {
     setSenhaAtual(senha);
     setAtendimentoAtual(atendimento);
+    setDadosAluno(senha?.aluno ?? null);
   }, []);
 
   const chamarSenha = React.useCallback(
@@ -173,6 +176,8 @@ export const AtendimentoProvider = ({ children }) => {
     setSenhaAtual,
     atendimentoAtual,
     setAtendimentoAtual,
+    dadosAluno,
+    setDadosAluno,
     fase,
     carregando,
     setCarregando,

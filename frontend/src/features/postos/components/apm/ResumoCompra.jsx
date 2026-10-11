@@ -23,10 +23,11 @@ const ResumoCompra = ({
       </div>
 
       <div className="text-xs">
-        <span className="text-text-secondary uppercase font-semibold text-[11px]">Aluno</span>
+        <span className="text-text-secondary uppercase font-semibold text-[11px]">
+          Aluno
+        </span>
         <p className="font-bold text-text-primary truncate">
-            Endrick Silva Souza
-          {/* {aluno?.nome || "Não identificado"} */}
+          {aluno?.nome || "Não identificado"}
         </p>
       </div>
 
@@ -34,13 +35,20 @@ const ResumoCompra = ({
         <div>
           <div className="flex justify-between text-xs font-semibold text-text-secondary border-t border-border/50 pt-1.5">
             <span>Uniformes</span>
-            <span className="text-text-primary">{formatarMoeda(totalUniformes)}</span>
+            <span className="text-text-primary">
+              {formatarMoeda(totalUniformes)}
+            </span>
           </div>
           {items.map((item) => {
             const pendente = item.quantidadeComprada - item.quantidadeRetirada;
             return (
-              <div key={item.id} className="mt-1 pl-2 text-xs text-text-primary">
-                <span className="font-semibold">{item.tamanho}:</span> {item.quantidadeComprada}x ({item.quantidadeRetirada} retirado{item.quantidadeRetirada === 1 ? "" : "s"})
+              <div
+                key={item.id}
+                className="mt-1 pl-2 text-xs text-text-primary"
+              >
+                <span className="font-semibold">{item.tamanho}:</span>{" "}
+                {item.quantidadeComprada}x ({item.quantidadeRetirada} retirado
+                {item.quantidadeRetirada === 1 ? "" : "s"})
                 {pendente > 0 && (
                   <span className="block text-[11px] font-semibold text-status-warning">
                     {pendente} {pendente === 1 ? "pendente" : "pendentes"}
@@ -54,14 +62,18 @@ const ResumoCompra = ({
         {armario?.incluido && (
           <div className="flex justify-between text-xs font-semibold text-text-secondary border-t border-border/50 pt-1.5">
             <span>Armário</span>
-            <span className="text-text-primary">{formatarMoeda(armario.preco)}</span>
+            <span className="text-text-primary">
+              {formatarMoeda(armario.preco)}
+            </span>
           </div>
         )}
 
         {contribuicao > 0 && (
           <div className="flex justify-between text-xs font-semibold text-text-secondary border-t border-border/50 pt-1.5">
             <span>Contribuição</span>
-            <span className="text-text-primary font-semibold">{formatarMoeda(contribuicao)}</span>
+            <span className="text-text-primary font-semibold">
+              {formatarMoeda(contribuicao)}
+            </span>
           </div>
         )}
       </div>

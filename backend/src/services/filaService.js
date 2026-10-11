@@ -25,9 +25,7 @@ export default class FilaService extends BaseService {
       {
         select: senhaFilaSelect,
         orderBy: {
-          //tipoSenha: "desc",
           dataHoraInicioSenha: "asc",
-          //idSenha: "asc",
         },
       },
     );
@@ -54,7 +52,15 @@ export default class FilaService extends BaseService {
         where: {
           idSenha: senhaId,
         },
-        select: senhaFilaSelect,
+        include: {
+          aluno: {
+            include: {
+              cursosAluno: {
+                include: { curso: true },
+              },
+            },
+          },
+        },
       });
     });
 
