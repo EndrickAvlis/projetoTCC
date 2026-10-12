@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as produtosController from "../controllers/ProdutosController.js";
+import * as produtosController from "../controllers/produtoController.js";
 
 import * as produtos from "../schemas/SchemaProdutos.js";
 

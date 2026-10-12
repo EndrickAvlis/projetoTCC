@@ -1,4 +1,4 @@
-import AlunoService from "../services/AlunoService.js";
+import AlunoService from "../services/alunoService.js";
 
 const alunoService = new AlunoService();
 

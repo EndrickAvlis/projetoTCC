@@ -7,7 +7,7 @@ import Button from "../../../../../components/ui/Button";
 import ArmarioModal from "./ArmarioModal";
 
 import { useArmario } from "../../../hooks/useArmario";
-import * as produtoService from "../../../services/ProdutosService";
+import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
 
 const SecaoArmarios = () => {

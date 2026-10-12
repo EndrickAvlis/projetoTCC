@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarCursosAdmin } from "../services/cursosService";
+import { listarCursosAdmin } from "../services/cursoService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useCursos = ({ busca = "", arquivado = false } = {}) => {
@@ -18,7 +18,7 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
         busca: buscaDebounced,
         arquivado,
       });
-      
+
       setCursos(res.cursos ?? []);
       setTotal(res.total ?? 0);
     } catch (error) {

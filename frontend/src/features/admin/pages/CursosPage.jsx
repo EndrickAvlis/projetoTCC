@@ -13,7 +13,7 @@ import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
 import { useCursos } from "../hooks/useCursos";
-import * as cursoService from "../services/cursosService";
+import * as cursoService from "../services/cursoService";
 
 const CursosPage = () => {
   const [busca, setBusca] = React.useState("");

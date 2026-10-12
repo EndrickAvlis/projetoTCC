@@ -2,7 +2,7 @@ import * as React from "react";
 import { FiClock, FiAlertCircle } from "react-icons/fi";
 import { useAtendimento } from "../../context/atendimentoContext";
 import { usePendencias } from "../../hooks/usePendencias";
-import * as TriagemService from "../../services/TriagemService";
+import * as TriagemService from "../../services/triagemService";
 import AtendimentoActions from "../../layout/AtendimentoActions";
 import BuscarAlunos from "./BuscarAlunos";
 import DadosAlunoForm from "./DadosAlunoForm";

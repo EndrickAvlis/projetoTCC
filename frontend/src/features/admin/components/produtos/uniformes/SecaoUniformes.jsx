@@ -13,7 +13,7 @@ import MovimentarEstoqueModal from "./MovimentarEstoqueModal";
 import UniformeSelector from "./UniformeSelector";
 
 import { useUniformes } from "../../../hooks/useUniformes";
-import * as produtoService from "../../../services/ProdutosService";
+import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
 
 const SecaoUniformes = () => {

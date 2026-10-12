@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarAlunosAdmin } from "../services/AlunosService";
+import { listarAlunosAdmin } from "../services/alunoService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useAlunos = ({

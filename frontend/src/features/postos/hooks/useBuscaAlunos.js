@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarAlunos } from "../services/TriagemService";
+import { listarAlunos } from "../services/triagemService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useBuscaAlunos = ({ limite = 5 } = {}) => {

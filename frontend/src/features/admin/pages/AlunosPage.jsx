@@ -10,7 +10,7 @@ import TableMenuActions from "../../../components/ui/TableMenuActions";
 import AlunosFiltros from "../components/alunos/AlunosFiltros";
 import ImportarAlunosModal from "../components/alunos/importacao/ImportarAlunosModal";
 
-import * as AlunosService from "../services/AlunosService";
+import * as AlunosService from "../services/alunoService";
 import { useAlunos } from "../hooks/useAlunos";
 import { useCursos } from "../hooks/useCursos";
 

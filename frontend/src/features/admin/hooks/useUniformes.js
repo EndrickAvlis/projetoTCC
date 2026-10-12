@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarUniformesAdmin } from "../services/ProdutosService";
+import { listarUniformesAdmin } from "../services/produtoService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useUniformes = ({ busca = "", arquivado = false } = {}) => {

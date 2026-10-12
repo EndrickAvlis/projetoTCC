@@ -4,7 +4,7 @@ import "dotenv/config";
 import filaRoutes from "./routes/filaRoutes.js";
 import senhaRouter from "./routes/senhaRoutes.js";
 import cursoRoutes from "./routes/cursoRoutes.js";
-import voluntarioRoutes from "./routes/voluntarioRoutes.js";
+import voluntarioRoutes from "./routes/usuarioRoutes.js";
 import produtosRoutes from "./routes/produtosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import alunoRoutes from "./routes/alunoRoutes.js";

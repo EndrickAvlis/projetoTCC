@@ -1,5 +1,5 @@
 import prisma from "../config/prisma.js";
-import BaseService from "./BaseService.js";
+import BaseService from "./baseService.js";
 import AppError from "../errors/AppError.js";
 
 const formatarNome = (texto) =>

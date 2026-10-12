@@ -1,7 +1,7 @@
 import * as React from "react";
 import Modal from "../../../../../components/ui/Modal";
 import { useCursos } from "../../../hooks/useCursos";
-import * as AlunosService from "../../../services/AlunosService";
+import * as AlunosService from "../../../services/alunoService";
 import UploadCsv from "./UploadCsv";
 import MapeamentoCursos from "./MapeamentoCursos";
 import ResultadoImportacao from "./ResultadoImportacao";
