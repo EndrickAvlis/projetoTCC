@@ -17,6 +17,8 @@ alunoRoutes.get(
   alunoController.listarAlunos,
 );
 
+alunoRoutes.get("/cidades", alunoController.listarCidades);
+
 alunoRoutes.get(
   "/:id",
   validarRequisicao(alunos.consultarAlunoSchema),
@@ -33,6 +35,12 @@ alunoRoutes.post(
   "/:id/matriculas",
   validarRequisicao(alunos.adicionarMatriculaSchema),
   alunoController.adicionarMatricula,
+);
+
+alunoRoutes.post(
+  "/importar",
+  validarRequisicao(alunos.importarAlunosSchema),
+  alunoController.importarAlunos,
 );
 
 export default alunoRoutes;

@@ -4,6 +4,7 @@ const criarUrlAluno = (alunoId) => `/alunos/${encodeURIComponent(alunoId)}`;
 
 export const listarAlunosAdmin = ({
   busca = "",
+  cidade = "",
   cursoId = "",
   status = "ATIVO",
   pagina = 1,
@@ -14,12 +15,17 @@ export const listarAlunosAdmin = ({
   const buscaLimpa = busca.trim();
   if (buscaLimpa) params.set("nome", buscaLimpa);
   if (cursoId) params.set("cursoId", cursoId);
+  if (cidade) params.set("cidade", cidade);
   if (status) params.set("status", status);
   if (pagina) params.set("pagina", pagina);
   if (limite) params.set("limite", limite);
 
   const query = params.toString();
   return requisitarApi(`/alunos${query ? `?${query}` : ""}`);
+};
+
+export const listarCidadesAlunos = () => {
+  return requisitarApi("/alunos/cidades");
 };
 
 export const consultarAluno = (alunoId) => {
@@ -33,20 +39,9 @@ export const atualizarDadosAluno = (alunoId, dados) => {
   });
 };
 
-export const alterarStatusAluno = (
-  alunoId,
-  { status, statusMatricula } = {},
-) => {
-  return requisitarApi(`${criarUrlAluno(alunoId)}/status`, {
-    method: "PATCH",
-    body: { status, statusMatricula },
-  });
-};
-
 export const importarAlunos = ({
   anoProcesso,
   semestreProcesso,
-  mapeamentoCursos,
   candidatos,
 }) => {
   return requisitarApi("/alunos/importar", {
@@ -54,7 +49,6 @@ export const importarAlunos = ({
     body: {
       anoProcesso,
       semestreProcesso,
-      mapeamentoCursos,
       candidatos,
     },
   });

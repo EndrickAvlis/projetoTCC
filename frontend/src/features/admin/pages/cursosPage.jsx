@@ -49,7 +49,6 @@ const CursosPage = () => {
   };
   const abrirModalCurso = (curso = null) => {
     setErroOperacao(null);
-    fecharMenuAcoes();
     setCursoEmEdicao(curso);
     setModalCursoAberto(true);
   };
@@ -80,7 +79,6 @@ const CursosPage = () => {
   };
   const abrirModalPeriodo = (curso, periodo = null) => {
     setErroOperacao(null);
-    fecharMenuAcoes();
     setModalPeriodo({ curso, periodo });
   };
   const handleSalvarPeriodo = async (dados) => {
@@ -134,9 +132,6 @@ const CursosPage = () => {
     setCursoExpandido((cursoAtual) =>
       cursoAtual === cursoId ? null : cursoId,
     );
-  };
-  const fecharMenuAcoes = () => {
-    setCursoComMenuAberto(null);
   };
 
   const columnsCurso = [

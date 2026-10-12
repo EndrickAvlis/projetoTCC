@@ -1,4 +1,5 @@
 import { FiPlay, FiRotateCw, FiCheck, FiClock } from "react-icons/fi";
+import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import { formatarSenha } from "../../../utils/formatters";
 import { useAtendimento } from "../context/atendimentoContext";
@@ -43,9 +44,9 @@ export const AtendimentoActions = ({
                   Senha {formatarSenha(senhaAtual.numero)}
                 </span>
                 {senhaAtual.prioritaria && (
-                  <span className="rounded-full bg-status-warning-bg px-2.5 py-0.5 text-xs font-semibold text-status-warning border border-status-warning/30">
+                  <Badge variant="warning" size="sm">
                     Prioritária
-                  </span>
+                  </Badge>
                 )}
               </div>
             </div>
