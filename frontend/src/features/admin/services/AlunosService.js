@@ -1,6 +1,6 @@
 import { requisitarApi } from "../../../services/apiClient";
 
-const criarUrlAluno = (alunoId) => `/admin/alunos/${encodeURIComponent(alunoId)}`;
+const criarUrlAluno = (alunoId) => `/alunos/${encodeURIComponent(alunoId)}`;
 
 export const listarAlunosAdmin = ({
   busca = "",
@@ -19,7 +19,7 @@ export const listarAlunosAdmin = ({
   if (limite) params.set("limite", limite);
 
   const query = params.toString();
-  return requisitarApi(`/admin/alunos${query ? `?${query}` : ""}`);
+  return requisitarApi(`/alunos${query ? `?${query}` : ""}`);
 };
 
 export const consultarAluno = (alunoId) => {
@@ -49,7 +49,7 @@ export const importarAlunos = ({
   mapeamentoCursos,
   candidatos,
 }) => {
-  return requisitarApi("/admin/alunos/importar", {
+  return requisitarApi("/alunos/importar", {
     method: "POST",
     body: {
       anoProcesso,

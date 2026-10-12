@@ -20,8 +20,43 @@ enum Periodo {
   online
 }
 
+enum StatusAluno {
+  CANDIDATO
+  ATIVO
+  ARQUIVADO
+}
 
+enum StatusMatricula {
+  PENDENTE
+  ATIVA
+}
 
+enum EtapaSenha {
+  triagem
+  apm
+  docs
+}
+
+enum StatusSenha {
+  aguardando
+  em_atendimento
+  pendente
+  finalizada
+  cancelada
+}
+
+enum StatusItem {
+  retirado
+  pendente
+  parcial
+}
+
+enum TipoPagamento {
+  pix
+  dinheiro
+  debito
+  credito
+}
 
 model Produto {
   idProduto         Int     @id @default(autoincrement())
@@ -52,10 +87,10 @@ model Compra {
 model ItemCompra {
   codProduto             Int
   codCompra              Int
-  precoUnitario          Decimal @db.Decimal(5, 2)
+  precoUnitario          Decimal    @db.Decimal(5, 2)
   quantidadeItem         Int
   quantidadeRetiradaItem Int
-  statusItem             String  @db.VarChar(20)
+  statusItem             StatusItem
 
   produto Produto @relation(fields: [codProduto], references: [idProduto])
   compra  Compra  @relation(fields: [codCompra], references: [idCompra])
@@ -64,10 +99,10 @@ model ItemCompra {
 }
 
 model Pagamento {
-  idPagamento    Int     @id @default(autoincrement())
+  idPagamento    Int           @id @default(autoincrement())
   codCompra      Int
-  valorPagamento Decimal @db.Decimal(6, 2)
-  tipoPagamento  String  @db.VarChar(30)
+  valorPagamento Decimal       @db.Decimal(6, 2)
+  tipoPagamento  TipoPagamento
 
   compra Compra @relation(fields: [codCompra], references: [idCompra])
 }
@@ -84,9 +119,10 @@ model Contribuicao {
 model Curso {
   idCurso   Int     @id @default(autoincrement())
   nomeCurso String  @db.VarChar(100)
+  codigoCsv String? @unique @db.VarChar(50)
   arquivado Boolean @default(false)
 
-  periodos PeriodoCurso[]
+  periodos    PeriodoCurso[]
   cursosAluno CursoAluno[]
 }
 
@@ -103,10 +139,14 @@ model PeriodoCurso {
 }
 
 model Aluno {
-  idAluno   Int    @id @default(autoincrement()) 
-  cpfAluno  String @db.VarChar(15)
-  anoAluno  Int
-  nomeAluno String @db.VarChar(100)
+  idAluno             Int          @id @default(autoincrement())
+  nomeAluno           String       @db.VarChar(100)
+  escolaridadePublica Boolean      @default(false)
+  cidadeAluno         String?      @db.VarChar(100)
+  sexoAluno           String?      @db.VarChar(20)
+  statusAluno         StatusAluno  @default(CANDIDATO)
+  anoProcesso         Int?
+  semestreProcesso    Int?
 
   compras     Compra[]
   cursosAluno CursoAluno[]
@@ -114,24 +154,27 @@ model Aluno {
 }
 
 model CursoAluno {
-  codCurso  Int
-  codAluno  Int
+  codCurso        Int
+  codAluno        Int
+  classificacao   Int?
+  statusMatricula StatusMatricula @default(PENDENTE)
+  periodo         Periodo?
 
-  curso Curso @relation(fields: [codCurso], references: [idCurso])
-  aluno Aluno @relation(fields: [codAluno], references: [idAluno])
+  curso           Curso           @relation(fields: [codCurso], references: [idCurso])
+  aluno           Aluno           @relation(fields: [codAluno], references: [idAluno])
 
   @@id([codCurso, codAluno])
 }
 
 model Senha {
-  idSenha             Int       @id @default(autoincrement())
+  idSenha             Int          @id @default(autoincrement())
   codAluno            Int?
   senhaCodigo         Int    
   dataHoraInicioSenha DateTime
   dataHoraFimSenha    DateTime?
-  etapaSenha          String    @db.VarChar(15)
-  tipoSenha           Boolean   @default(false)
-  statusSenha         String    @db.VarChar(20)
+  etapaSenha          EtapaSenha
+  tipoSenha           Boolean      @default(false)
+  statusSenha         StatusSenha
   documentosPendentes Json?
 
   aluno      Aluno?           @relation(fields: [codAluno], references: [idAluno])
@@ -143,17 +186,17 @@ model Voluntario {
   nomeVoluntario   String         @db.VarChar(100)
   senhaVoluntario  String         @db.VarChar(255)
   tipoVoluntario   TipoVoluntario @default(admin)
-  statusVoluntario String         @db.VarChar(20)
+  statusVoluntario Boolean        @default(true)
 
   compras    Compra[]
   historicos HistoricoSenha[]
 }
 
 model HistoricoSenha {
-  idHistorico             Int       @id @default(autoincrement())
+  idHistorico             Int         @id @default(autoincrement())
   codSenha                Int
   codVoluntario           Int
-  etapaHistorico          String?   @db.VarChar(15)
+  etapaHistorico          EtapaSenha?
   dataHoraInicioHistorico DateTime
   dataHoraFimHistorico    DateTime?
 

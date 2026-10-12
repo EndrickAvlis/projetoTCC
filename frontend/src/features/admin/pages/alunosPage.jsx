@@ -2,7 +2,7 @@ import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
 import Alert from "../../../components/ui/Alert";
-import Button from "../../../components/ui/button";
+import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 
 import AlunosFiltros from "../components/alunos/AlunosFiltros";
@@ -108,13 +108,7 @@ const AlunosPage = () => {
       key: "nomeAluno",
       label: "Nome do Aluno",
       render: (aluno) => (
-        <div className="space-y-0.5">
-          <p className="font-semibold text-text-primary">{aluno.nomeAluno}</p>
-          <p className="font-mono text-xs text-text-secondary">
-            Inscrição:{" "}
-            <span className="text-text-primary">{aluno.numeroInscricao}</span>
-          </p>
-        </div>
+        <p className="font-semibold text-text-primary">{aluno.nomeAluno}</p>
       ),
     },
     {

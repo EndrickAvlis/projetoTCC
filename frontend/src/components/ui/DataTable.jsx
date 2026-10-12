@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
-import Button from "./button";
+import Button from "./Button";
 
 const gerarTokensPagina = (atual, totalPaginas) => {
   if (totalPaginas <= 7) {
@@ -46,7 +46,10 @@ const DataTable = ({
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-      <div className="overflow-auto" style={{ maxHeight: temPaginacao ? "none" : alturaMaxima }}>
+      <div
+        className="overflow-auto"
+        style={{ maxHeight: temPaginacao ? "none" : alturaMaxima }}
+      >
         <table className="min-w-full text-left">
           <thead className="bg-primary/3">
             <tr>
@@ -136,7 +139,11 @@ const DataTable = ({
                   size="sm"
                   variant={ehPaginaAtual ? "primary" : "secondary"}
                   onClick={() => onPaginaChange(token)}
-                  className={!ehPaginaAtual ? "bg-transparent hover:bg-surface-muted text-text-secondary" : ""}
+                  className={
+                    !ehPaginaAtual
+                      ? "bg-transparent hover:bg-surface-muted text-text-secondary"
+                      : ""
+                  }
                 >
                   {token}
                 </Button>

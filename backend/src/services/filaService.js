@@ -52,7 +52,15 @@ export default class FilaService extends BaseService {
         where: {
           idSenha: senhaId,
         },
-        select: senhaFilaSelect,
+        include: {
+          aluno: {
+            include: {
+              cursosAluno: {
+                include: { curso: true },
+              },
+            },
+          },
+        },
       });
     });
 

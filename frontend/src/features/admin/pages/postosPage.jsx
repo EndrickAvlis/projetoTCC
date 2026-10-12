@@ -1,5 +1,5 @@
 const PostosPage = () => {
-  return <div>Postos</div>;
+  return <h1>Postos</h1>;
 };
 
 export default PostosPage;

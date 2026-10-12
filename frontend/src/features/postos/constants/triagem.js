@@ -17,7 +17,7 @@ export const DOCUMENTOS_TRIAGEM = [
 export const OPCOES_ESCOLARIDADE_PUBLICA = [
   { value: "true", label: "Sim" },
   { value: "false", label: "Não" },
-  { value: "null", label: "Não informado" },
+  { value: "", label: "Não informado" },
 ];
 
 export const OPCOES_ANO_ESCOLAR = [

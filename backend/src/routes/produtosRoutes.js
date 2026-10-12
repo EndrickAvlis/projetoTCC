@@ -9,7 +9,7 @@ const produtosRoutes = Router();
 
 produtosRoutes.post("/",validarRequisicao(produtos.criarProdutoSchema),produtosController.criarProdutoAdmin,);
 
-produtosRoutes.get("/",validarRequisicao(produtos.listarProdutoSchema), produtosController.listarProdutosAdmin,);
+produtosRoutes.get("/",validarRequisicao(produtos.listarUniformesSchema), produtosController.listarUniformes,);
 
 produtosRoutes.get("/armario",produtosController.buscarConfiguracaoArmario,);
 

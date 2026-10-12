@@ -24,10 +24,11 @@ export const criarVoluntarioSchema = z.object({
         .default("atendente"),
 
     status: z
-        .string()
-        .min(1, "O status é obrigatório.")
-        .max(20)
-        .default("ativo")
+        .union([
+            z.boolean(),
+            z.enum(["ativo", "inativo", "true", "false"]).transform(v => v === "ativo" || v === "true")
+        ])
+        .default(true),
 });
 
 export const buscarVoluntarioSchema = z.object({
@@ -55,9 +56,10 @@ export const buscarVoluntarioSchema = z.object({
         .optional(),
 
     status: z
-        .string()
-        .max(20)
-        .default("ativo")
+        .union([
+            z.boolean(),
+            z.enum(["ativo", "inativo", "true", "false"]).transform(v => v === "ativo" || v === "true")
+        ])
         .optional()
 })
 

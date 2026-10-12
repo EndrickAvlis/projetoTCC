@@ -1,14 +1,16 @@
 import * as React from "react";
 import { FiClock, FiAlertCircle } from "react-icons/fi";
-import { useTriagem } from "../../hooks/useTriagem";
+import { useAtendimento } from "../../context/atendimentoContext";
 import { usePendencias } from "../../hooks/usePendencias";
-import { listarCursos } from "../../services/TriagemService";
+import * as TriagemService from "../../services/TriagemService";
 import AtendimentoActions from "../../layout/AtendimentoActions";
 import BuscarAlunos from "./BuscarAlunos";
 import DadosAlunoForm from "./DadosAlunoForm";
 import DocumentosPendentes from "./DocumentosPendentes";
 import PendenciasGrid from "./PendenciasGrid";
 import DetalhePendencia from "./DetalhePendencia";
+import Tabs from "../../../../components/ui/Tabs";
+import Alert from "../../../../components/ui/Alert";
 
 const DADOS_INICIAIS = {
   nome: "",
@@ -18,22 +20,55 @@ const DADOS_INICIAIS = {
   ano: "1",
   cidade: "",
   sexo: "",
-  escolaridadePublica: "null",
+  escolaridadePublica: "",
 };
+
+const alunoParaForm = (aluno) => {
+  const matricula = aluno?.matriculas?.[0] || {};
+
+  return {
+    nome: aluno?.nome || "",
+    cidade: aluno?.cidade || "",
+    sexo: aluno?.sexo || "",
+    escolaridadePublica: aluno?.escolaridadePublica ?? "",
+    classificacao: matricula.classificacao ?? "",
+    curso: matricula.cursoId ? String(matricula.cursoId) : "",
+    periodo: matricula.periodo || "",
+    ano: String(matricula.anoEscolar || "1"),
+  };
+};
+
+const formParaPayload = (dados, alunoId) => ({
+  alunoId,
+  dadosAluno: {
+    nome: dados.nome.trim(),
+    cidade: dados.cidade.trim() || null,
+    sexo: dados.sexo || null,
+    escolaridadePublica:
+      dados.escolaridadePublica === ""
+        ? null
+        : String(dados.escolaridadePublica) === "true",
+  },
+  matricula: {
+    cursoId: Number(dados.curso),
+    classificacao: dados.classificacao ? Number(dados.classificacao) : null,
+    periodo: dados.periodo,
+    anoEscolar: Number(dados.ano),
+  },
+});
 
 export const TriagemMain = () => {
   const {
     fase,
     senhaAtual,
-    iniciar,
-    salvarDados,
+    atendimentoAtual,
+    carregando,
+    erro,
     finalizar,
-    salvarPendencia,
-    rechamar,
-    definirSenhaChamada,
-    carregando: carregandoTriagem,
-    erro: erroTriagem,
-  } = useTriagem();
+    limparAtendimento,
+    setCarregando,
+    setErro,
+  } = useAtendimento();
 
   const {
     pendencias,
@@ -41,6 +76,7 @@ export const TriagemMain = () => {
     pendenciaSelecionada,
     selecionarPendencia,
     retomar,
+    //isso deve realmente ser assim?
     carregando: carregandoPendencias,
     erro: erroPendencias,
   } = usePendencias();
@@ -49,25 +85,26 @@ export const TriagemMain = () => {
   const [cursos, setCursos] = React.useState([]);
   const [alunoId, setAlunoId] = React.useState(null);
   const [dadosAluno, setDadosAluno] = React.useState(DADOS_INICIAIS);
-  const [documentosSelecionados, setDocumentosSelecionados] = React.useState([]);
+  const [documentosSelecionados, setDocumentosSelecionados] = React.useState(
+    [],
+  );
 
   React.useEffect(() => {
-    listarCursos().then(setCursos).catch(() => setCursos([]));
+    const carregarCursos = async () => {
+      try {
+        const res = await TriagemService.listarCursos();
+        setCursos(res.cursos);
+      } catch {
+        setCursos([]);
+      }
+    };
+
+    carregarCursos();
   }, []);
 
   const handleSelecionarAluno = (aluno) => {
-    const matricula = aluno.matriculas?.[0];
-    setAlunoId(aluno.id ?? null);
-    setDadosAluno({
-      nome: aluno.nome || "",
-      classificacao: matricula?.classificacao ? String(matricula.classificacao) : "",
-      curso: matricula?.cursoId ? String(matricula.cursoId) : "",
-      periodo: matricula?.periodo || "",
-      ano: matricula?.anoEscolar ? String(matricula.anoEscolar) : "1",
-      cidade: aluno.cidade || "",
-      sexo: aluno.sexo || "",
-      escolaridadePublica: aluno.escolaridadePublica !== null ? String(aluno.escolaridadePublica) : "null",
-    });
+    setAlunoId(aluno.id);
+    setDadosAluno(alunoParaForm(aluno));
   };
 
   const handleLimparFormulario = () => {
@@ -80,115 +117,97 @@ export const TriagemMain = () => {
     setDadosAluno((prev) => ({ ...prev, [campo]: valor }));
   };
 
-  const montarPayload = () => ({
-    alunoId,
-    dadosAluno: {
-      nome: dadosAluno.nome.trim(),
-      escolaridadePublica:
-        dadosAluno.escolaridadePublica === "true"
-          ? true
-          : dadosAluno.escolaridadePublica === "false"
-            ? false
-            : null,
-      cidade: dadosAluno.cidade.trim() || null,
-      sexo: dadosAluno.sexo || null,
-    },
-    matricula: {
-      cursoId: Number(dadosAluno.curso),
-      classificacao: dadosAluno.classificacao ? Number(dadosAluno.classificacao) : null,
-      periodo: dadosAluno.periodo,
-      anoEscolar: Number(dadosAluno.ano),
-    },
-  });
-
   const handleSalvarPendencia = async () => {
-    if (documentosSelecionados.length === 0) return;
-    if (dadosAluno.nome.trim() && dadosAluno.curso) {
-      await salvarDados(montarPayload());
+    if (documentosSelecionados.length === 0 || !atendimentoAtual) return;
+
+    try {
+      setCarregando(true);
+      setErro(null);
+
+      if (dadosAluno.nome.trim() && dadosAluno.curso) {
+        await TriagemService.salvarAluno(
+          senhaAtual.id,
+          formParaPayload(dadosAluno, alunoId),
+        );
+      }
+
+      await TriagemService.registrarPendencia(
+        atendimentoAtual.id,
+        documentosSelecionados,
+      );
+
+      limparAtendimento();
+      handleLimparFormulario();
+    } catch (error) {
+      setErro(error.message);
+    } finally {
+      setCarregando(false);
     }
-    await salvarPendencia(documentosSelecionados);
-    handleLimparFormulario();
   };
 
   const handleFinalizar = async () => {
-    await salvarDados(montarPayload());
-    await finalizar();
-    handleLimparFormulario();
+    try {
+      setCarregando(true);
+      setErro(null);
+
+      await TriagemService.salvarAluno(
+        senhaAtual.id,
+        formParaPayload(dadosAluno, alunoId),
+      );
+
+      await finalizar();
+      handleLimparFormulario();
+    } catch (error) {
+      setErro(error.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
   const handleRetomar = async (senhaId) => {
     const res = await retomar(senhaId);
-    if (res?.senha) {
-      definirSenhaChamada(res.senha);
-    }
-    if (res?.documentos) {
+    if (res.documentos) {
       setDocumentosSelecionados(res.documentos);
     }
     setAbaAtiva("atendimento");
   };
 
-  const podeFinalizar =
+  const podeFinalizar = Boolean(
     fase === "iniciada" &&
-    Boolean(dadosAluno.nome.trim()) &&
-    Boolean(dadosAluno.curso) &&
-    Boolean(dadosAluno.periodo) &&
-    Boolean(dadosAluno.ano) &&
-    documentosSelecionados.length === 0;
+    dadosAluno.nome.trim() &&
+    dadosAluno.curso &&
+    dadosAluno.periodo &&
+    dadosAluno.ano &&
+    documentosSelecionados.length === 0,
+  );
+
+  const abasTriagem = [
+    { id: "atendimento", label: "Atendimento atual", icone: FiClock },
+    {
+      id: "pendencias",
+      label: "Senhas pendentes",
+      icone: FiAlertCircle,
+      badge: totalPendencias,
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto p-4 md:p-6">
-      <div className="flex border-b border-border gap-1">
-        <button
-          type="button"
-          onClick={() => setAbaAtiva("atendimento")}
-          className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm transition-colors border-b-2 cursor-pointer ${
-            abaAtiva === "atendimento"
-              ? "border-primary text-primary"
-              : "border-transparent text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <FiClock className="h-4 w-4" />
-          <span>Atendimento atual</span>
-        </button>
+      <Tabs
+        itens={abasTriagem}
+        ativo={abaAtiva}
+        onSelecionar={setAbaAtiva}
+        ariaLabel="Abas da triagem"
+      />
 
-        <button
-          type="button"
-          onClick={() => setAbaAtiva("pendencias")}
-          className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm transition-colors border-b-2 cursor-pointer ${
-            abaAtiva === "pendencias"
-              ? "border-primary text-primary"
-              : "border-transparent text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <FiAlertCircle className="h-4 w-4" />
-          <span>Senhas pendentes</span>
-          <span
-            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-              totalPendencias > 0
-                ? "bg-status-warning-bg text-status-warning border-status-warning/30"
-                : "bg-surface-muted text-text-secondary border-border"
-            }`}
-          >
-            {totalPendencias}
-          </span>
-        </button>
-      </div>
-
-      {(erroTriagem || erroPendencias) && (
-        <div className="p-3 text-sm text-status-danger bg-status-danger-bg rounded-md border border-status-danger/30">
-          {erroTriagem || erroPendencias}
-        </div>
+      {(erro || erroPendencias) && (
+        <Alert type="error" message={erro || erroPendencias} />
       )}
 
       {abaAtiva === "atendimento" && (
         <div className="flex flex-col gap-6">
           <AtendimentoActions
-            senhaAtual={senhaAtual}
-            fase={fase}
-            carregando={carregandoTriagem}
             podeFinalizar={podeFinalizar}
-            onIniciar={iniciar}
-            onRechamar={rechamar}
             onFinalizar={handleFinalizar}
           />
 
@@ -213,7 +232,7 @@ export const TriagemMain = () => {
                 documentosSelecionados={documentosSelecionados}
                 onChange={setDocumentosSelecionados}
                 onSalvarPendencia={handleSalvarPendencia}
-                salvando={carregandoTriagem}
+                salvando={carregando}
                 disabled={fase !== "iniciada"}
               />
             </div>

@@ -1,12 +1,12 @@
 import { requisitarApi } from "../../../services/apiClient";
 
 const criarUrlProduto = (produtoId) =>
-  `/admin/produtos/${encodeURIComponent(produtoId)}`;
+  `/produtos/${encodeURIComponent(produtoId)}`;
 
 const alterarStatusProduto = (produtoId, status) =>
   requisitarApi(`${criarUrlProduto(produtoId)}/status`, {
     method: "PATCH",
-    body: status,
+    body: { status },
   });
 
 export const listarUniformesAdmin = ({
@@ -24,11 +24,11 @@ export const listarUniformesAdmin = ({
     params.set("busca", buscaLimpa);
   }
 
-  return requisitarApi(`/admin/produtos?${params.toString()}`);
+  return requisitarApi(`/produtos?${params.toString()}`);
 };
 
 export const criarUniforme = (dados) =>
-  requisitarApi("/admin/produtos", {
+  requisitarApi("/produtos", {
     method: "POST",
     body: {
       ...dados,
@@ -36,8 +36,8 @@ export const criarUniforme = (dados) =>
     },
   });
 
-export const criarConfiguracaoArmario = (dados) =>
-  requisitarApi("/admin/produtos", {
+export const criarArmario = (dados) =>
+  requisitarApi("/produtos", {
     method: "POST",
     body: {
       ...dados,
@@ -61,10 +61,10 @@ export const alterarEstoqueUniforme = (produtoId, alteracao) =>
     body: alteracao,
   });
 
-export const buscarConfiguracaoArmario = () =>
-  requisitarApi("/admin/produtos/armario");
+export const buscarArmario = () =>
+  requisitarApi("/produtos/armario");
 
-export const atualizarConfiguracaoArmario = (produtoId, dados) =>
+export const atualizarArmario = (produtoId, dados) =>
   requisitarApi(criarUrlProduto(produtoId), {
     method: "PATCH",
     body: dados,
