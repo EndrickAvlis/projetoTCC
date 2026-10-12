@@ -1,4 +1,4 @@
-import SenhaService from "../services/SenhaService.js";
+import SenhaService from "../services/senhaService.js";
 
 const senhaService = new SenhaService();
 

@@ -27,7 +27,7 @@ const DataTable = ({
   getRowKey,
   emptyMessage = "Nenhum registro encontrado.",
   alturaMaxima = "28rem",
-  // Props de Paginação (Opcionais)
+  alturaMinima,
   pagina,
   limite = 10,
   total,
@@ -39,16 +39,16 @@ const DataTable = ({
 
   const inicio = totalRegistros === 0 ? 0 : (pagina - 1) * limite + 1;
   const fim = Math.min(pagina * limite, totalRegistros);
-  const tokens = React.useMemo(
-    () => (temPaginacao ? gerarTokensPagina(pagina, totalPaginas) : []),
-    [temPaginacao, pagina, totalPaginas],
-  );
+  const tokens = temPaginacao ? gerarTokensPagina(pagina, totalPaginas) : [];
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
       <div
         className="overflow-auto"
-        style={{ maxHeight: temPaginacao ? "none" : alturaMaxima }}
+        style={{
+          maxHeight: temPaginacao ? "none" : alturaMaxima,
+          minHeight: alturaMinima,
+        }}
       >
         <table className="min-w-full text-left">
           <thead className="bg-primary/3">

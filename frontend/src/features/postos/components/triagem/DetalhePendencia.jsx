@@ -1,4 +1,5 @@
 import { FiAlertCircle, FiClock, FiFileText } from "react-icons/fi";
+import Badge from "../../../../components/ui/Badge";
 import Button from "../../../../components/ui/Button";
 import { DOCUMENTOS_TRIAGEM } from "../../constants/triagem";
 import { formatarHora, formatarSenha } from "../../../../utils/formatters";
@@ -52,9 +53,9 @@ export const DetalhePendencia = ({
         </div>
 
         {prioritaria && (
-          <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-status-warning-bg text-status-warning border border-status-warning/30">
+          <Badge variant="warning" size="md">
             Prioritária
-          </span>
+          </Badge>
         )}
       </div>
 
@@ -94,9 +95,9 @@ export const DetalhePendencia = ({
           <span className="text-xs text-text-secondary font-semibold uppercase tracking-wider">
             Documentos faltantes
           </span>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-status-danger-bg text-status-danger border border-status-danger/30">
+          <Badge variant="danger" size="sm">
             {documentos.length}
-          </span>
+          </Badge>
         </div>
 
         <ul className="flex flex-col gap-1.5">

@@ -1,4 +1,5 @@
 import { formatarSenha } from "../../../../utils/formatters";
+import Badge from "../../../../components/ui/Badge";
 
 const PendenciasGrid = ({
   pendencias = [],
@@ -48,9 +49,9 @@ const PendenciasGrid = ({
         <h3 className="font-semibold text-text-primary text-base">
           Senhas pendentes
         </h3>
-        <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-surface-muted text-text-secondary border border-border">
+        <Badge variant="neutral" size="sm">
           {pendencias.length}
-        </span>
+        </Badge>
       </div>
 
       {pendencias.length === 0 ? (

@@ -2,6 +2,7 @@ import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
 import Alert from "../../../../../components/ui/Alert";
+import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import DataTable from "../../../../../components/ui/DataTable";
 import TableMenuActions from "../../../../../components/ui/TableMenuActions";
@@ -12,7 +13,7 @@ import MovimentarEstoqueModal from "./MovimentarEstoqueModal";
 import UniformeSelector from "./UniformeSelector";
 
 import { useUniformes } from "../../../hooks/useUniformes";
-import * as produtoService from "../../../services/ProdutosService";
+import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
 
 const SecaoUniformes = () => {
@@ -145,15 +146,13 @@ const SecaoUniformes = () => {
       render: (uniforme) => {
         const isArquivado = uniforme.status === "arquivado";
         return (
-          <span
-            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-              isArquivado
-                ? "bg-disabled-bg text-text-secondary"
-                : "bg-status-success-bg text-status-success"
-            }`}
+          <Badge
+            variant={isArquivado ? "neutral" : "success"}
+            dot
+            size="sm"
           >
             {isArquivado ? "Arquivado" : "Ativo"}
-          </span>
+          </Badge>
         );
       },
     },

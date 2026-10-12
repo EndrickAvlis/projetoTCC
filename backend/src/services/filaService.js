@@ -1,7 +1,7 @@
 // Serviço de fila: concentra consultas e regras específicas das senhas em espera.
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
-import BaseService from "./BaseService.js";
+import BaseService from "./baseService.js";
 
 const senhaFilaSelect = {
   idSenha: true,

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { FiChevronDown, FiChevronUp, FiFileText } from "react-icons/fi";
+import Badge from "../../../../components/ui/Badge";
 import Button from "../../../../components/ui/Button";
 import { DOCUMENTOS_TRIAGEM } from "../../constants/triagem";
 
@@ -50,12 +51,9 @@ export const DocumentosPendentes = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <span
-            className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
-              totalSelecionados > 0
-                ? "bg-status-warning-bg text-status-warning border-status-warning/30"
-                : "bg-surface-muted text-text-secondary border-border"
-            }`}
+          <Badge
+            variant={totalSelecionados > 0 ? "warning" : "neutral"}
+            size="md"
           >
             {totalSelecionados === 0
               ? "Nenhum selecionado"
@@ -64,7 +62,7 @@ export const DocumentosPendentes = ({
                     ? "documento faltante"
                     : "documentos faltantes"
                 }`}
-          </span>
+          </Badge>
           <span className="text-text-secondary">
             {aberto ? (
               <FiChevronUp className="h-5 w-5" />
