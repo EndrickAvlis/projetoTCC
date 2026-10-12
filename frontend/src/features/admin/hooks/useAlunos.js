@@ -1,58 +1,60 @@
-import * as React from 'react';
-import { listarAlunosAdmin } from "../services/AlunosService";
+import * as React from "react";
+import { listarAlunosAdmin } from "../services/alunoService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useAlunos = ({
-    busca = "",
-    cursoId = "",
-    status = "ATIVO",
-    pagina = 1,
-    limite = 10,
+  busca = "",
+  cursoId = "",
+  cidade = "",
+  status = "ATIVO",
+  pagina = 1,
+  limite = 10,
 } = {}) => {
-    const buscaDebounced = useDebounce(busca, 300);
-    const [alunos, setAlunos] = React.useState([]);
-    const [total, setTotal] = React.useState(0);
-    const [totalAtivos, setTotalAtivos] = React.useState(0);
-    const [carregando, setCarregando] = React.useState(true);
-    const [erro, setErro] = React.useState(null);
+  const buscaDebounced = useDebounce(busca, 300);
+  const [alunos, setAlunos] = React.useState([]);
+  const [total, setTotal] = React.useState(0);
+  const [totalAtivos, setTotalAtivos] = React.useState(0);
+  const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
-    const carregarAlunos = React.useCallback(async () => {
-        setCarregando(true);
-        setErro(null);
+  const carregarAlunos = React.useCallback(async () => {
+    setCarregando(true);
+    setErro(null);
 
-        try {
-            const res = await listarAlunosAdmin({
-                busca: buscaDebounced,
-                cursoId,
-                status,
-                pagina,
-                limite,
-            });
+    try {
+      const res = await listarAlunosAdmin({
+        busca: buscaDebounced,
+        cursoId,
+        cidade,
+        status,
+        pagina,
+        limite,
+      });
 
-            setAlunos(res?.alunos ?? []);
-            setTotal(res?.total ?? 0);
-            if (typeof res?.totalAtivos === "number") {
-                setTotalAtivos(res.totalAtivos);
-            }
-        } catch (error) {
-            setAlunos([]);
-            setTotal(0);
-            setErro(error.message || "Erro ao carregar lista de alunos");
-        } finally {
-            setCarregando(false);
-        }
-    }, [buscaDebounced, cursoId, status, pagina, limite]);
+      setAlunos(res?.alunos ?? []);
+      setTotal(res?.total ?? 0);
+      if (typeof res?.totalAtivos === "number") {
+        setTotalAtivos(res.totalAtivos);
+      }
+    } catch (error) {
+      setAlunos([]);
+      setTotal(0);
+      setErro(error.message || "Erro ao carregar lista de alunos");
+    } finally {
+      setCarregando(false);
+    }
+  }, [buscaDebounced, cursoId, cidade, status, pagina, limite]);
 
-    React.useEffect(() => {
-        void Promise.resolve().then(carregarAlunos);
-    }, [carregarAlunos]);
+  React.useEffect(() => {
+    void Promise.resolve().then(carregarAlunos);
+  }, [carregarAlunos]);
 
-    return {
-        alunos,
-        total,
-        totalAtivos,
-        carregando,
-        erro,
-        recarregar: carregarAlunos,
-    };
+  return {
+    alunos,
+    total,
+    totalAtivos,
+    carregando,
+    erro,
+    recarregar: carregarAlunos,
+  };
 };

@@ -1,4 +1,4 @@
-import CursosService from "../services/CursoService.js";
+import CursosService from "../services/cursoService.js";
 
 const cursoService = new CursosService();
 

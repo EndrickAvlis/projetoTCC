@@ -2,11 +2,12 @@ import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
 import Alert from "../../../../../components/ui/Alert";
+import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import ArmarioModal from "./ArmarioModal";
 
 import { useArmario } from "../../../hooks/useArmario";
-import * as produtoService from "../../../services/ProdutosService";
+import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
 
 const SecaoArmarios = () => {
@@ -110,15 +111,13 @@ const SecaoArmarios = () => {
               </div>
             </div>
 
-            <span
-              className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium ${
-                estaDisponivel
-                  ? "bg-status-success-bg text-status-success"
-                  : "bg-disabled-bg text-text-secondary"
-              }`}
+            <Badge
+              variant={estaDisponivel ? "success" : "neutral"}
+              size="md"
+              className="w-fit"
             >
               {estaDisponivel ? "Disponível na APM" : "Indisponível na APM"}
-            </span>
+            </Badge>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">

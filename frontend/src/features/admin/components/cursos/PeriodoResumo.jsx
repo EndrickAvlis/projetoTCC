@@ -1,4 +1,5 @@
 import * as FiIcons from "react-icons/fi";
+import Badge from "../../../../components/ui/Badge";
 
 const nomesPeriodos = {
   manha: "Manhã",
@@ -20,15 +21,13 @@ const PeriodoResumo = ({ periodoCurso, onEditar }) => (
       {periodoCurso.vagasTotais} vagas
     </span>
 
-    <span
-      className={`w-fit whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${
-        periodoCurso.matriculaAtiva
-          ? "bg-status-success-bg text-status-success"
-          : "bg-disabled-bg text-text-secondary"
-      }`}
+    <Badge
+      variant={periodoCurso.matriculaAtiva ? "success" : "neutral"}
+      size="sm"
+      className="w-fit whitespace-nowrap text-[11px]"
     >
       Matrícula {periodoCurso.matriculaAtiva ? "aberta" : "fechada"}
-    </span>
+    </Badge>
 
     {onEditar && (
       <button

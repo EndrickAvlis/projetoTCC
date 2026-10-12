@@ -5,7 +5,6 @@ export const CABECALHOS_OBRIGATORIOS = [
   "CIDADE",
   "SEXO",
   "CLASSIFICACAO",
-  "COD_CURSO",
   "HABILITACAO",
   "PERIODO",
 ];
@@ -110,22 +109,17 @@ const normalizarTexto = (valor) => {
     .replace(/\s+/g, " ");
 };
 
-
-const normalizarCodigo = (valor) => {
-  return String(valor ?? "").trim().replace(/^'+/, "").trim();
-};
-
 const normalizarPeriodo = (valor) => {
   const normalizado = normalizarTexto(valor)
     .replaceAll("-", "")
     .replaceAll(" ", "");
 
   const periodos = {
-    MANHA: "MANHA",
-    TARDE: "TARDE",
-    NOITE: "NOITE",
-    INTEGRAL: "INTEGRAL",
-    ONLINE: "ONLINE",
+    MANHA: "manha",
+    TARDE: "tarde",
+    NOITE: "noite",
+    INTEGRAL: "integral",
+    ONLINE: "online",
   };
 
   return periodos[normalizado] ?? null;
@@ -151,20 +145,17 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
     const escolaridadeTxt = normalizarTexto(registro.ESCOLARIDADE);
     const cidadeAluno = registro.CIDADE.trim();
     const sexoAluno = normalizarTexto(registro.SEXO);
-    const codigoCursoCsv = normalizarCodigo(registro.COD_CURSO);
     const habilitacao = registro.HABILITACAO.trim();
     const periodo = normalizarPeriodo(registro.PERIODO);
     const classificacaoTxt = registro.CLASSIFICACAO.trim();
     const classificacao =
       classificacaoTxt === "" ? null : Number(classificacaoTxt);
 
-    // REGRA 1: Descartar TREINEIRO
     if (normalizarTexto(habilitacao) === "TREINEIRO") {
       treineiros += 1;
       return;
     }
 
-    // REGRA 2: Validar dados obrigatórios e tipos
     const escolaridadeValida =
       escolaridadeTxt === "SIM" ||
       escolaridadeTxt === "NAO" ||
@@ -177,7 +168,6 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
       nomeAluno &&
       cidadeAluno &&
       sexoAluno &&
-      codigoCursoCsv &&
       habilitacao &&
       periodo;
 
@@ -190,65 +180,48 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
       return;
     }
 
-    // REGRA 3: Manter APENAS os campos autorizados pela documentação (descarta CPF, RG, email, etc.)
+    const chaveCurso = normalizarNomeComparacao(habilitacao);
+
     candidatosValidos.push({
       nomeAluno,
       escolaridadePublica: escolaridadeTxt === "SIM",
       cidadeAluno,
       sexoAluno,
-      codigoCursoCsv,
+      chaveCurso,
       classificacao,
       periodo,
     });
 
-    // REGRA 4: Agrupar cursos encontrados no CSV
-    if (!mapaCursos.has(codigoCursoCsv)) {
-      mapaCursos.set(codigoCursoCsv, {
-        codigoCsv: codigoCursoCsv,
+    if (!mapaCursos.has(chaveCurso)) {
+      mapaCursos.set(chaveCurso, {
+        chave: chaveCurso,
         nomeCsv: habilitacao,
-        periodo,
+        periodos: new Set(),
         totalCandidatos: 0,
       });
     }
 
-    mapaCursos.get(codigoCursoCsv).totalCandidatos += 1;
+    const curso = mapaCursos.get(chaveCurso);
+    curso.totalCandidatos += 1;
+    if (periodo) {
+      curso.periodos.add(periodo);
+    }
   });
 
-  // Agrupamento dos cursos e sugestão de associação com os cursos do sistema
   const gruposCursos = Array.from(mapaCursos.values()).map((grupo) => {
-    // 1º Tenta reconhecer pelo codigoCsv já cadastrado no curso
-    const matchCodigo = cursosExistentes.find(
-      (c) => c.codigoCsv && normalizarCodigo(c.codigoCsv) === grupo.codigoCsv,
-    );
-
-    if (matchCodigo) {
-      return {
-        ...grupo,
-        idCurso: String(matchCodigo.id),
-        tipoAssociacao: "RECONHECIDO", // Já tem o mesmo código salvo
-      };
-    }
-
-    // 2º Tenta sugerir pelo nome do curso
     const matchNome = cursosExistentes.find(
       (c) =>
         normalizarNomeComparacao(c.nome) ===
         normalizarNomeComparacao(grupo.nomeCsv),
     );
 
-    if (matchNome) {
-      return {
-        ...grupo,
-        idCurso: String(matchNome.id),
-        tipoAssociacao: "SUGESTAO", // Sugerido pelo nome
-      };
-    }
-
-    // 3º Associação pendente (administrador deve escolher)
     return {
-      ...grupo,
-      idCurso: "",
-      tipoAssociacao: "PENDENTE",
+      chave: grupo.chave,
+      nomeCsv: grupo.nomeCsv,
+      periodos: Array.from(grupo.periodos),
+      totalCandidatos: grupo.totalCandidatos,
+      idCurso: matchNome ? String(matchNome.id) : "",
+      tipoAssociacao: matchNome ? "SUGESTAO" : "PENDENTE",
     };
   });
 

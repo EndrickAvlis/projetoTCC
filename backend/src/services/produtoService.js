@@ -1,5 +1,5 @@
 import prisma from "../config/prisma.js";
-import BaseService from "./BaseService.js";
+import BaseService from "./baseService.js";
 import AppError from "../errors/AppError.js";
 
 const produtoSelect = {
@@ -106,8 +106,7 @@ export default class ProdutoService extends BaseService {
   } = {}) {
     const buscaLimpa = busca.trim();
 
-    const statusItem =
-      arquivado === "true" ? "arquivado" : "ativo";
+    const statusItem = arquivado === "true" ? "arquivado" : "ativo";
 
     return super.listar(
       {
@@ -199,20 +198,13 @@ export default class ProdutoService extends BaseService {
       dadosAtualizacao.precoProduto = dados.preco;
     }
 
-    if (
-      produto.tipoProduto === "armario" &&
-      dados.quantidade !== undefined
-    ) {
+    if (produto.tipoProduto === "armario" && dados.quantidade !== undefined) {
       dadosAtualizacao.quantidadeProduto = dados.quantidade;
     }
 
-    return super.atualizar(
-      produtoId,
-      dadosAtualizacao,
-      {
-        select: produtoSelect,
-      },
-    );
+    return super.atualizar(produtoId, dadosAtualizacao, {
+      select: produtoSelect,
+    });
   }
 
   async alterarStatusProduto(produtoId, status) {
@@ -269,10 +261,7 @@ export default class ProdutoService extends BaseService {
 
       if (operacao === "diminuir") {
         if (quantidade > produto.quantidadeProduto) {
-          throw estoqueInsuficiente(
-            produto.quantidadeProduto,
-            quantidade,
-          );
+          throw estoqueInsuficiente(produto.quantidadeProduto, quantidade);
         }
 
         novaQuantidade -= quantidade;

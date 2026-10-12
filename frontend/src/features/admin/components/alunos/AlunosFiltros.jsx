@@ -15,16 +15,22 @@ const AlunosFiltros = ({
     onAlterarBusca,
     cursoId,
     onAlterarCurso,
+    cidade,
+    onAlterarCidade,
+    cidades = [],
     status,
     onAlterarStatus,
     cursos = [],
 }) => {
-    const opcoesCursos = React.useMemo(() => {
-        return cursos.map((curso) => ({
-            value: String(curso.id),
-            label: curso.nome,
-        }));
-    }, [cursos]);
+    const opcoesCursos = cursos.map((curso) => ({
+        value: String(curso.id),
+        label: curso.nome,
+    }));
+
+    const opcoesCidades = cidades.map((c) => ({
+        value: c,
+        label: c,
+    }));
 
     return (
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -43,6 +49,15 @@ const AlunosFiltros = ({
                         onChange={(e) => onAlterarCurso(e.target.value)}
                         placeholder="Todos os cursos"
                         options={opcoesCursos}
+                        size="md"
+                    />
+                </div>
+                <div className="w-full sm:w-56">
+                    <Select
+                        value={cidade}
+                        onChange={(e) => onAlterarCidade(e.target.value)}
+                        placeholder="Todas as cidades"
+                        options={opcoesCidades}
                         size="md"
                     />
                 </div>

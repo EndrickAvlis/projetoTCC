@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import * as FiIcons from "react-icons/fi";
 import Alert from "../../../../../components/ui/Alert";
+import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import Select from "../../../../../components/ui/Select";
 
@@ -16,60 +17,39 @@ const MapeamentoCursos = ({
   carregando = false,
   erro = null,
 }) => {
-  const opcoesCursos = React.useMemo(() => {
-    return cursosExistentes.map((curso) => ({
-      value: String(curso.id),
-      label: curso.codigoCsv
-        ? `${curso.nome} (Código: ${curso.codigoCsv})`
-        : curso.nome,
-    }));
-  }, [cursosExistentes]);
+  const opcoesCursos = cursosExistentes.map((curso) => ({
+    value: String(curso.id),
+    label: curso.nome,
+  }));
 
-  const pendentes = React.useMemo(() => {
-    return gruposCursos.filter((grupo) => !grupo.idCurso);
-  }, [gruposCursos]);
+  const totalPendentes = gruposCursos.filter((grupo) => !grupo.idCurso).length;
+  const temPendencias = totalPendentes > 0;
+  const totalCandidatos = gruposCursos.reduce(
+    (soma, grupo) => soma + (grupo.totalCandidatos || 0),
+    0,
+  );
 
-  const temPendencias = pendentes.length > 0;
-  const totalCandidatos = React.useMemo(() => {
-    return gruposCursos.reduce(
-      (soma, grupo) => soma + (grupo.totalCandidatos || 0),
-      0,
-    );
-  }, [gruposCursos]);
-
-  const obterBadgeAssociacao = (grupo) => {
+  const renderBadgeAssociacao = (grupo) => {
     if (!grupo.idCurso) {
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-status-warning-bg px-2.5 py-1 text-xs font-semibold text-status-warning border border-status-warning/30">
-          <FiIcons.FiAlertTriangle size={13} />
+        <Badge variant="warning" size="md" icon={<FiIcons.FiAlertTriangle size={13} />}>
           Pendente
-        </span>
-      );
-    }
-
-    if (grupo.tipoAssociacao === "RECONHECIDO") {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success-bg px-2.5 py-1 text-xs font-semibold text-status-success border border-status-success/30">
-          <FiIcons.FiCheckCircle size={13} />
-          Reconhecido
-        </span>
+        </Badge>
       );
     }
 
     if (grupo.tipoAssociacao === "SUGESTAO") {
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary border border-primary/20">
-          <FiIcons.FiHelpCircle size={13} />
+        <Badge variant="primary" size="md" icon={<FiIcons.FiHelpCircle size={13} />}>
           Sugestão por Nome
-        </span>
+        </Badge>
       );
     }
 
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-status-info-bg px-2.5 py-1 text-xs font-semibold text-status-info border border-status-info/30">
-        <FiIcons.FiCheck size={13} />
+      <Badge variant="success" size="md" icon={<FiIcons.FiCheck size={13} />}>
         Associado
-      </span>
+      </Badge>
     );
   };
 
@@ -95,8 +75,8 @@ const MapeamentoCursos = ({
         {temPendencias ? (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-status-warning">
             <FiIcons.FiAlertCircle size={15} />
-            {pendentes.length}{" "}
-            {pendentes.length === 1 ? "curso precisa" : "cursos precisam"} de
+            {totalPendentes}{" "}
+            {totalPendentes === 1 ? "curso precisa" : "cursos precisam"} de
             associação
           </span>
         ) : (
@@ -119,7 +99,7 @@ const MapeamentoCursos = ({
           const associado = Boolean(grupo.idCurso);
           return (
             <div
-              key={grupo.codigoCsv}
+              key={grupo.chave}
               className={`rounded-xl border p-4 transition-colors ${
                 !associado
                   ? "border-status-warning/60 bg-status-warning-bg/10"
@@ -128,23 +108,22 @@ const MapeamentoCursos = ({
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-surface-muted text-text-primary border border-border">
-                      Cód: {grupo.codigoCsv}
-                    </span>
-                    <h4 className="text-sm font-semibold text-text-primary">
-                      {grupo.nomeCsv}
-                    </h4>
-                  </div>
+                  <h4 className="text-sm font-semibold text-text-primary">
+                    {grupo.nomeCsv}
+                  </h4>
 
                   <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
-                    <span>
-                      Período no CSV:{" "}
-                      <strong className="text-text-primary">
-                        {grupo.periodo || "—"}
-                      </strong>
-                    </span>
-                    <span>•</span>
+                    {grupo.periodos?.length > 0 && (
+                      <>
+                        <span>
+                          Período{grupo.periodos.length > 1 ? "s" : ""}:{" "}
+                          <strong className="text-text-primary uppercase">
+                            {grupo.periodos.join(", ")}
+                          </strong>
+                        </span>
+                        <span>•</span>
+                      </>
+                    )}
                     <span>
                       Candidatos:{" "}
                       <strong className="text-text-primary">
@@ -154,7 +133,7 @@ const MapeamentoCursos = ({
                   </div>
                 </div>
 
-                <div className="self-start">{obterBadgeAssociacao(grupo)}</div>
+                <div className="self-start">{renderBadgeAssociacao(grupo)}</div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-border/60">
@@ -164,7 +143,7 @@ const MapeamentoCursos = ({
                   placeholder="Selecione um curso existente..."
                   value={grupo.idCurso || ""}
                   onChange={(e) =>
-                    onAtualizarAssociacao(grupo.codigoCsv, e.target.value)
+                    onAtualizarAssociacao(grupo.chave, e.target.value)
                   }
                   options={opcoesCursos}
                   size="sm"

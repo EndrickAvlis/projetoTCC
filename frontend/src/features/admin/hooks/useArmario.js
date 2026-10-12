@@ -1,5 +1,5 @@
 import * as React from "react";
-import { buscarArmario } from "../services/ProdutosService";
+import { buscarArmario } from "../services/produtoService";
 
 export const useArmario = () => {
   const [armario, setArmario] = React.useState(null);

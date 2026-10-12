@@ -2,12 +2,15 @@ import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
 import Alert from "../../../components/ui/Alert";
+import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
+import TableMenuActions from "../../../components/ui/TableMenuActions";
 
 import AlunosFiltros from "../components/alunos/AlunosFiltros";
 import ImportarAlunosModal from "../components/alunos/importacao/ImportarAlunosModal";
 
+import * as AlunosService from "../services/alunoService";
 import { useAlunos } from "../hooks/useAlunos";
 import { useCursos } from "../hooks/useCursos";
 
@@ -16,7 +19,10 @@ const AlunosPage = () => {
   const [cursoId, setCursoId] = React.useState("");
   const [status, setStatus] = React.useState("ATIVO");
   const [pagina, setPagina] = React.useState(1);
-  const [modalImportacaoAberto, setModalImportacaoAberto] = React.useState(false);
+  const [modalImportacaoAberto, setModalImportacaoAberto] =
+    React.useState(false);
+  const [cidade, setCidade] = React.useState("");
+  const [cidades, setCidades] = React.useState([]);
 
   const {
     alunos,
@@ -28,15 +34,33 @@ const AlunosPage = () => {
   } = useAlunos({
     busca,
     cursoId,
+    cidade,
     status,
     pagina,
-    limite: 10,
+    limite: 6,
   });
 
   const { cursos } = useCursos({ arquivado: false });
 
+  React.useEffect(() => {
+    const carregarCidades = async () => {
+      try {
+        const res = await AlunosService.listarCidadesAlunos();
+        setCidades(res?.cidades ?? []);
+      } catch {
+        setCidades([]);
+      }
+    };
+    carregarCidades();
+  }, []);
+
   const handleAlterarBusca = (novaBusca) => {
     setBusca(novaBusca);
+    setPagina(1);
+  };
+
+  const handleAlterarCidade = (novaCidade) => {
+    setCidade(novaCidade);
     setPagina(1);
   };
 
@@ -45,58 +69,41 @@ const AlunosPage = () => {
     setPagina(1);
   };
 
-  const handleAlterarStatus = (novoStatus) => {
+  const handleAlterarFiltroStatus = (novoStatus) => {
     setStatus(novoStatus);
     setPagina(1);
   };
 
+  const handleAtualizarStatusAluno = async (alunoId, novoStatus) => {
+    try {
+      await AlunosService.atualizarDadosAluno(alunoId, { status: novoStatus });
+      recarregarAlunos();
+    } catch (err) {
+      alert(err.message || "Erro ao alterar situação do aluno.");
+    }
+  };
+
   const renderBadgeStatusAluno = (statusAluno) => {
-    if (statusAluno === "ATIVO") {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success-bg px-2.5 py-0.5 text-xs font-semibold text-status-success border border-status-success/30">
-          <span className="h-1.5 w-1.5 rounded-full bg-status-success" />
-          Ativo
-        </span>
-      );
-    }
-
-    if (statusAluno === "CANDIDATO") {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/20">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          Candidato
-        </span>
-      );
-    }
-
-    if (statusAluno === "ARQUIVADO") {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-semibold text-text-secondary border border-border">
-          <span className="h-1.5 w-1.5 rounded-full bg-text-secondary" />
-          Arquivado
-        </span>
-      );
-    }
-
+    if (statusAluno === "ATIVO") return <Badge variant="success" dot>Ativo</Badge>;
+    if (statusAluno === "CANDIDATO") return <Badge variant="primary" dot>Candidato</Badge>;
+    if (statusAluno === "ARQUIVADO") return <Badge variant="neutral" dot>Arquivado</Badge>;
     return null;
   };
 
   const renderBadgeStatusMatricula = (statusMatricula) => {
     if (statusMatricula === "ATIVA") {
       return (
-        <span className="inline-flex items-center gap-1 rounded-md bg-status-success-bg px-2 py-0.5 text-xs font-medium text-status-success border border-status-success/30">
-          <FiIcons.FiCheck size={12} />
+        <Badge variant="success" icon={<FiIcons.FiCheck size={12} />}>
           Ativa
-        </span>
+        </Badge>
       );
     }
 
     if (statusMatricula === "PENDENTE") {
       return (
-        <span className="inline-flex items-center gap-1 rounded-md bg-status-warning-bg px-2 py-0.5 text-xs font-medium text-status-warning border border-status-warning/30">
-          <FiIcons.FiClock size={12} />
+        <Badge variant="warning" icon={<FiIcons.FiClock size={12} />}>
           Pendente
-        </span>
+        </Badge>
       );
     }
 
@@ -105,23 +112,31 @@ const AlunosPage = () => {
 
   const colunas = [
     {
-      key: "nomeAluno",
+      key: "nome",
       label: "Nome do Aluno",
       render: (aluno) => (
-        <p className="font-semibold text-text-primary">{aluno.nomeAluno}</p>
+        <p
+          className="max-w-50 truncate font-semibold text-text-primary"
+          title={aluno.nome}
+        >
+          {aluno.nome}
+        </p>
       ),
     },
     {
       key: "curso",
       label: "Curso",
       render: (aluno) => (
-        <div>
-          <p className="font-medium text-text-primary">
-            {aluno.cursoAluno?.curso?.nomeCurso}
+        <div className="max-w-55">
+          <p
+            className="truncate font-medium text-text-primary"
+            title={aluno.curso || ""}
+          >
+            {aluno.curso || "—"}
           </p>
-          {aluno.cursoAluno?.periodo && (
+          {aluno.periodo && (
             <p className="text-xs text-text-secondary capitalize">
-              Período: {aluno.cursoAluno.periodo.toLowerCase()}
+              Período: {aluno.periodo.toLowerCase()}
             </p>
           )}
         </div>
@@ -131,31 +146,60 @@ const AlunosPage = () => {
       key: "classificacao",
       label: "Classificação",
       render: (aluno) =>
-        aluno.cursoAluno?.classificacao ? (
-          <span className="font-semibold text-text-primary">
-            {aluno.cursoAluno.classificacao}º
+        aluno.classificacao ? (
+          <span className="font-semibold text-text-primary text-center">
+            {aluno.classificacao}º
           </span>
         ) : (
-          <span className="text-text-secondary">—</span>
+          <span className="text-text-secondary">X</span>
         ),
     },
     {
-      key: "cidadeAluno",
+      key: "cidade",
       label: "Cidade",
       render: (aluno) => (
-        <span className="text-text-primary">{aluno.cidadeAluno || "—"}</span>
+        <span
+          className="block max-w-37.5 truncate text-text-primary"
+          title={aluno.cidade || ""}
+        >
+          {aluno.cidade || "—"}
+        </span>
       ),
-    },
-    {
-      key: "statusAluno",
-      label: "Situação do Aluno",
-      render: (aluno) => renderBadgeStatusAluno(aluno.statusAluno),
     },
     {
       key: "statusMatricula",
       label: "Situação da Matrícula",
-      render: (aluno) =>
-        renderBadgeStatusMatricula(aluno.cursoAluno?.statusMatricula),
+      render: (aluno) => renderBadgeStatusMatricula(aluno.statusMatricula),
+    },
+    {
+      key: "acoes",
+      label: "Ações",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (aluno) => (
+        <TableMenuActions
+          labelAria={`Ações do aluno ${aluno.nome}`}
+          itens={[
+            aluno.status === "CANDIDATO" && {
+              label: "Ativar Aluno",
+              icone: FiIcons.FiCheckCircle,
+              onClick: () => handleAtualizarStatusAluno(aluno.id, "ATIVO"),
+            },
+            aluno.status === "ATIVO" && {
+              label: "Arquivar Aluno",
+              icone: FiIcons.FiArchive,
+              onClick: () => handleAtualizarStatusAluno(aluno.id, "ARQUIVADO"),
+              variante: "danger",
+            },
+            aluno.status === "ARQUIVADO" && {
+              label: "Reativar Aluno",
+              icone: FiIcons.FiRotateCcw,
+              onClick: () => handleAtualizarStatusAluno(aluno.id, "ATIVO"),
+              variante: "success",
+            },
+          ]}
+        />
+      ),
     },
   ];
 
@@ -194,10 +238,13 @@ const AlunosPage = () => {
       <AlunosFiltros
         busca={busca}
         onAlterarBusca={handleAlterarBusca}
+        cidade={cidade}
+        onAlterarCidade={handleAlterarCidade}
+        cidades={cidades}
         cursoId={cursoId}
         onAlterarCurso={handleAlterarCurso}
         status={status}
-        onAlterarStatus={handleAlterarStatus}
+        onAlterarStatus={handleAlterarFiltroStatus}
         cursos={cursos}
       />
 
@@ -214,10 +261,11 @@ const AlunosPage = () => {
         <DataTable
           columns={colunas}
           data={alunos}
-          getRowKey={(aluno) => aluno.idAluno}
+          getRowKey={(aluno) => aluno.id}
           emptyMessage="Nenhum aluno encontrado para os filtros selecionados."
+          alturaMinima="380px"
           pagina={pagina}
-          limite={10}
+          limite={6}
           total={total}
           onPaginaChange={setPagina}
         />

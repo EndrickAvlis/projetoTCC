@@ -26,9 +26,3 @@ export const atualizarUsuario = (usuarioid, dados) =>
     method: "PATCH",
     body: dados,
   });
-
-export const alterarStatusUsuario = (usuarioid, status) =>
-  requisitarApi(criarurlUsuario(usuarioid), {
-    method: "PATCH",
-    body: { status },
-  });

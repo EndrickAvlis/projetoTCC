@@ -119,7 +119,6 @@ model Contribuicao {
 model Curso {
   idCurso   Int     @id @default(autoincrement())
   nomeCurso String  @db.VarChar(100)
-  codigoCsv String? @unique @db.VarChar(50)
   arquivado Boolean @default(false)
 
   periodos    PeriodoCurso[]
