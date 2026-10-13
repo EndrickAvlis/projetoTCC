@@ -61,7 +61,6 @@ model CursoAluno {
 model Curso {
   idCurso   Int     @id @default(autoincrement())
   nomeCurso String  @db.VarChar(100)
-  codigoCsv String? @unique @db.VarChar(30)
   arquivado Boolean @default(false)
 
   periodos    PeriodoCurso[]
@@ -118,25 +117,22 @@ model Curso {
 
 * **Rota:** `POST /admin/alunos/importar`
 * **Autenticação:** Obrigatória (`admin`)
-* **Finalidade:** Atualizar o `codigoCsv` dos cursos associados, cadastrar candidatos com situação `CANDIDATO` e matrícula `PENDENTE` em transação atômica (`prisma.$transaction`).
+* **Finalidade:** Cadastrar candidatos com situação `CANDIDATO` e matrícula `PENDENTE` em transação atômica (`prisma.$transaction`), vinculando-os diretamente ao `cursoId` resolvido no frontend.
 
 ### Contrato de Entrada (Payload enviado pelo Frontend):
 ```json
 {
   "anoProcesso": 2026,
   "semestreProcesso": 2,
-  "mapeamentoCursos": [
-    { "codigoCsv": "4124", "idCurso": 1 }
-  ],
   "candidatos": [
     {
-      "nomeAluno": "Ana Beatriz Silva",
+      "nome": "Ana Beatriz Silva",
       "escolaridadePublica": true,
-      "cidadeAluno": "São José do Rio Preto",
-      "sexoAluno": "FEMININO",
-      "codigoCursoCsv": "4124",
+      "cidade": "São José do Rio Preto",
+      "sexo": "Feminino",
       "classificacao": 1,
-      "periodo": "NOITE"
+      "periodo": "noite",
+      "cursoId": 1
     }
   ]
 }
@@ -146,36 +142,30 @@ model Curso {
 
 ## 5. Passo a Passo da Transação no Back-end (`prisma.$transaction`)
 
-Ao receber `POST /admin/alunos/importar`, o `AlunoService` executa em transação única atômica:
+Ao receber `POST /admin/alunos/importar`, o `AlunoService` executa em transação atômica:
 
 ```text
 [ Recebe Payload ]
        │
        ▼
-1. Validações Prévias
-   ├── Validar anoProcesso (2000–2100) e semestreProcesso (1 ou 2)
-   ├── Validar se todos os idCurso em mapeamentoCursos existem
-   └── Validar se todo codigoCursoCsv dos candidatos está mapeado
+1. Validações Prévias (Zod)
+   ├── Validar anoProcesso (inteiro positivo) e semestreProcesso (1 ou 2)
+   ├── Validar array candidatos não vazio
+   └── Validar campos individuais (nome, período enum, cursoId positivo)
        │
        ▼
-2. Atualização dos Cursos (Model: Curso)
-   └── Para cada item em mapeamentoCursos:
-         └── Atualizar codigoCsv na tabela Curso
+2. Consulta e Filtro de Duplicidades (Model: Aluno)
+   ├── Buscar candidatos já existentes para o mesmo ano/semestre com nome correspondente
+   ├── Normalizar nomes via formatarNome() e Set em letras maiúsculas
+   └── Ignorar registros duplicados no arquivo ou já existentes no banco (incrementa duplicados)
        │
        ▼
-3. Consulta de Duplicidades no Banco (Model: Aluno)
-   └── Buscar candidatos já existentes para o mesmo processo seletivo:
-         WHERE anoProcesso = X AND semestreProcesso = Y AND nomeAluno IN (...)
+3. Inserção em Lote de Alunos (tx.aluno.createManyAndReturn)
+   └── Cadastra novos alunos com statusAluno = 'CANDIDATO' e retorna idAluno gerado
        │
        ▼
-4. Inserção de Alunos e Matrículas (Model: Aluno + CursoAluno)
-   └── Para cada candidato no lote:
-         ├── Se candidato já existe no banco ou se repete no arquivo:
-         │     └── Incrementar duplicados e ignorar
-         └── Se válida:
-               ├── Inserir Aluno (statusAluno = 'CANDIDATO')
-               ├── Inserir CursoAluno (statusMatricula = 'PENDENTE', periodo, classificacao)
-               └── Incrementar importados
+4. Inserção em Lote de Matrículas (tx.cursoAluno.createMany)
+   └── Cria os vínculos em CursoAluno com statusMatricula = 'PENDENTE', periodo e classificacao
 ```
 
 ---
@@ -185,9 +175,7 @@ Ao receber `POST /admin/alunos/importar`, o `AlunoService` executa em transaçã
 ```json
 {
   "importados": 45,
-  "treineiros": 0,
-  "duplicados": 2,
-  "invalidos": 0
+  "duplicados": 2
 }
 ```
 
@@ -195,20 +183,28 @@ Ao receber `POST /admin/alunos/importar`, o `AlunoService` executa em transaçã
 
 ## 7. Demais Endpoints de Alunos
 
-### 7.1. Consulta por ID (`GET /admin/alunos/:id`)
-* **Resposta (HTTP 200):** Retorna o objeto completo do aluno e seu `cursoAluno`.
+### 7.1. Listar Cidades Cadastradas (`GET /admin/alunos/cidades`)
+* **Resposta (HTTP 200):** Retorna lista distinta de cidades para popular filtros rápidos.
 
-### 7.2. Alteração de Situação (`PATCH /admin/alunos/:id/status`)
-* **Body:** `{ "statusAluno": "ATIVO", "statusMatricula": "ATIVA" }`
+### 7.2. Consulta por ID (`GET /admin/alunos/:id`)
+* **Resposta (HTTP 200):** Retorna o objeto completo do aluno e seus vínculos com cursos (`cursosAluno`).
+
+### 7.3. Edição de Aluno (`PATCH /admin/alunos/:id`)
+* **Body:** `{ "nome": "Novo Nome", "status": "ATIVO" }` (ao menos um dos campos).
 * **Resposta (HTTP 200):** Retorna o registro atualizado.
+
+### 7.4. Vínculo de Matrícula (`POST /admin/alunos/:id/matriculas`)
+* **Body:** `{ "cursoId": 2 }`
+* **Resposta (HTTP 201):** Retorna os dados da matrícula criada.
 
 ---
 
 ## 8. Matriz de Erros e Validações (`POST /admin/alunos/importar`)
 
-| Cenário | Status HTTP | Mensagem de Retorno |
+| Cenário | Status HTTP | Código / Mensagem |
 | :--- | :---: | :--- |
-| Curso mapeado não existe no banco | `400 Bad Request` | `Curso ID {x} informado no mapeamento não existe.` |
-| Código de curso do candidato sem mapeamento | `400 Bad Request` | `Código de curso {x} não possui mapeamento associado.` |
-| Ano ou semestre inválidos | `400 Bad Request` | `Ano ou semestre do processo seletivo inválidos.` |
-| Falha crítica de banco / transação | `500 Internal Server Error` | `Erro ao importar lista de classificação.` |
+| Lista de candidatos vazia | `400 Bad Request` | `A lista de candidatos não pode estar vazia.` |
+| Semestre fora de 1 ou 2 | `400 Bad Request` | `O semestre deve ser 1 ou 2.` |
+| Período inválido | `400 Bad Request` | `Informe um período válido.` |
+| ID de curso inválido | `400 Bad Request` | `O ID deve ser maior que zero.` |
+| Erro interno de transação | `500 Internal Server Error` | Erro centralizado tratado pelo middleware global. |
