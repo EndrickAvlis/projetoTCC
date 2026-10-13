@@ -2,6 +2,7 @@ import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
 import Alert from "../../../../../components/ui/Alert";
+import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import Modal from "../../../../../components/ui/Modal";
@@ -149,14 +150,13 @@ const MovimentarEstoqueModal = ({
                 <span className="font-semibold text-text-primary">
                   Tamanho {uniforme?.nome}
                 </span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${uniforme?.status === "arquivado"
-                      ? "bg-disabled-bg text-text-secondary"
-                      : "bg-status-success-bg text-status-success"
-                    }`}
+                <Badge
+                  variant={uniforme?.status === "arquivado" ? "neutral" : "success"}
+                  dot
+                  size="sm"
                 >
                   {uniforme?.status === "arquivado" ? "Arquivado" : "Ativo"}
-                </span>
+                </Badge>
               </div>
               <p className="mt-0.5 text-xs text-text-secondary">
                 Preço unitário: {formatarMoeda(Number(uniforme?.preco ?? 0))}

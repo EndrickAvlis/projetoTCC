@@ -1,6 +1,6 @@
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
-import BaseService from "./BaseService.js";
+import BaseService from "./baseService.js";
 
 const FUSO_HORARIO = "America/Sao_Paulo";
 

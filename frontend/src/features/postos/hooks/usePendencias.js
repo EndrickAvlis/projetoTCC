@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as TriagemService from "../services/TriagemService";
+import * as TriagemService from "../services/triagemService";
 import { useAtendimento } from "../context/atendimentoContext";
 
 export const usePendencias = () => {

@@ -11,9 +11,11 @@ const ResultadoImportacao = ({
   onReiniciar,
 }) => {
   const totalImportados = resultado?.importados ?? 0;
-  const totalTreineiros = resultado?.treineiros ?? 0;
+  const totalTreineiros =
+    resultado?.treineiros ?? dadosArquivo?.resultado?.metricas?.treineiros ?? 0;
   const totalDuplicados = resultado?.duplicados ?? 0;
-  const totalInvalidos = resultado?.invalidos ?? 0;
+  const totalInvalidos =
+    resultado?.invalidos ?? dadosArquivo?.resultado?.metricas?.invalidos ?? 0;
   const totalLinhas = dadosArquivo?.resultado?.totalLinhas ?? 0;
 
   return (

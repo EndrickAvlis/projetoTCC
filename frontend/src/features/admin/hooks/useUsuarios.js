@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarUsuarios } from "../services/UsuariosService";
+import { listarUsuarios } from "../services/usuarioService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useUsuarios = ({ busca = "", tipo = "", status = "" } = {}) => {

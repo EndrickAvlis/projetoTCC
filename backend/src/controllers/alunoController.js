@@ -1,9 +1,10 @@
-import AlunoService from "../services/AlunoService.js";
+import AlunoService from "../services/alunoService.js";
 
 const alunoService = new AlunoService();
 
 export const mapearAluno = (aluno) => {
   if (!aluno) return null;
+  const matricula = aluno.cursosAluno?.[0];
 
   return {
     id: aluno.idAluno,
@@ -12,17 +13,13 @@ export const mapearAluno = (aluno) => {
     cidade: aluno.cidadeAluno,
     sexo: aluno.sexoAluno,
     escolaridadePublica: aluno.escolaridadePublica,
-    matriculas:
-      aluno.cursosAluno?.map((item) => ({
-        cursoId: item.curso?.idCurso,
-        curso: item.curso?.nomeCurso,
-        periodo: item.periodo,
-        classificacao: item.classificacao,
-        statusMatricula: item.statusMatricula,
-      })) ?? [],
+    cursoId: matricula?.codCurso,
+    curso: matricula?.curso?.nomeCurso,
+    periodo: matricula?.periodo,
+    classificacao: matricula?.classificacao,
+    statusMatricula: matricula?.statusMatricula,
   };
 };
-
 
 export const criarAluno = async (req, res) => {
   const aluno = await alunoService.cadastrarAluno(req.validado.body);
@@ -33,20 +30,24 @@ export const criarAluno = async (req, res) => {
 };
 
 export const listarAlunos = async (req, res) => {
-  const alunos = await alunoService.buscarAlunos(
-    req.validado.query.nome,
-  );
+  const resultado = await alunoService.buscarAlunos(req.validado.query);
 
   return res.json({
-    alunos: alunos.map(mapearAluno),
-    total: alunos.length,
+    alunos: resultado.alunos.map(mapearAluno),
+    total: resultado.total,
+    totalAtivos: resultado.totalAtivos,
+    pagina: resultado.pagina,
+    limite: resultado.limite,
   });
 };
 
+export const listarCidades = async (req, res) => {
+  const cidades = await alunoService.listarCidades();
+  return res.json({ cidades });
+};
+
 export const consultarAluno = async (req, res) => {
-  const aluno = await alunoService.buscarAlunoPorId(
-    req.validado.params.id,
-  );
+  const aluno = await alunoService.buscarAlunoPorId(req.validado.params.id);
 
   return res.json({
     aluno: mapearAluno(aluno),
@@ -89,4 +90,10 @@ export const removerMatricula = async (req, res) => {
   await alunoService.desvincularAlunoCurso(cursoId, id);
 
   return res.status(204).send();
+};
+
+export const importarAlunos = async (req, res) => {
+  const resultado = await alunoService.importarAlunos(req.validado.body);
+
+  return res.status(201).json(resultado);
 };

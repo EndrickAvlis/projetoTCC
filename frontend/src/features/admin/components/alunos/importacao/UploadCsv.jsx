@@ -8,7 +8,7 @@ import {
   decodificarCsv,
   parsearCsv,
   analisarCsvAlunos,
-} from "../../../services/ImportAlunosService";
+} from "../../../services/importAlunoService";
 
 const OPCOES_SEMESTRE = [
   { value: "1", label: "1º Semestre" },

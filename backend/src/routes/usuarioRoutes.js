@@ -1,8 +1,8 @@
 // Rotas HTTP relacionadas aos voluntários.
 import { Router } from "express";
-import * as VoluntarioController from "../controllers/VoluntarioController.js";
+import * as VoluntarioController from "../controllers/usuarioController.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
-import * as ValidatorVoluntario from "../schemas/SchemaVoluntario.js";
+import * as ValidatorVoluntario from "../schemas/SchemaUsuario.js";
 import * as auth from "../middlewares/authMiddleware.js";
 
 const voluntarioRoutes = Router();

@@ -1,4 +1,4 @@
-import VoluntarioService from "../services/VoluntarioService.js";
+import VoluntarioService from "../services/usuarioService.js";
 
 const voluntarioService = new VoluntarioService();
 

@@ -4,7 +4,7 @@ import "dotenv/config";
 import filaRoutes from "./routes/filaRoutes.js";
 import senhaRouter from "./routes/senhaRoutes.js";
 import cursoRoutes from "./routes/cursoRoutes.js";
-import voluntarioRoutes from "./routes/voluntarioRoutes.js";
+import voluntarioRoutes from "./routes/usuarioRoutes.js";
 import produtosRoutes from "./routes/produtosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import alunoRoutes from "./routes/alunoRoutes.js";
@@ -20,7 +20,7 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 
