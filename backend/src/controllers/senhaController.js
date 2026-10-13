@@ -31,3 +31,17 @@ export const alterarPrioridadeSenha = async (req, res) => {
     senha: senhaResposta(senha),
   });
 };
+
+export const reiniciarSequencia = async (_req, res) => {
+  const resultado = await senhaService.reiniciarSequencia();
+
+  return res.json({
+    message: "Sequência diária de senhas reiniciada com sucesso.",
+    ...resultado,
+  });
+};
+
+export const buscarUltimaSenha = async (_req, res) => {
+  const resultado = await senhaService.obterUltimaSenhaDoDia();
+  return res.json(resultado);
+};

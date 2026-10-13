@@ -63,7 +63,7 @@ export default class ProdutoService extends BaseService {
   }
 
   async criarProduto({ nome, preco, quantidade, tipo }) {
-    const nomeLimpo = nome.trim();
+    const nomeLimpo = nome.trim().toUpperCase();
 
     if (tipo === "uniforme") {
       const produtoExistente = await this.obterPorNome(nomeLimpo);
@@ -159,7 +159,7 @@ export default class ProdutoService extends BaseService {
       }
 
       if (dados.nome !== undefined) {
-        const nomeLimpo = dados.nome.trim();
+        const nomeLimpo = dados.nome.trim().toUpperCase();
 
         const produtoExistente = await prisma.produto.findFirst({
           where: {

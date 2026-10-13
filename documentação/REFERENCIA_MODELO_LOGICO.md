@@ -40,7 +40,6 @@ erDiagram
     CURSO {
         int idCurso PK
         string nomeCurso
-        string codigoCsv UK
         boolean arquivado
     }
 
@@ -159,7 +158,6 @@ Catálogo de cursos técnicos e integrados oferecidos pela unidade.
 | :--- | :--- | :--- | :--- |
 | `idCurso` | `Int` | PK, Auto-increment | Identificador único do curso. |
 | `nomeCurso` | `VarChar(100)` | Not Null | Nome oficial do curso. |
-| `codigoCsv` | `VarChar(50)` | Unique, Nullable | Código correspondente utilizado na importação do Vestibulinho. |
 | `arquivado` | `Boolean` | Not Null, Default: `false` | Indica se o curso está inativo para novas ofertas. |
 
 ---

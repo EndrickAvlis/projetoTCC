@@ -78,8 +78,8 @@ const AlunosPage = () => {
     try {
       await AlunosService.atualizarDadosAluno(alunoId, { status: novoStatus });
       recarregarAlunos();
-    } catch (err) {
-      alert(err.message || "Erro ao alterar situação do aluno.");
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     }
   };
 
@@ -247,8 +247,6 @@ const AlunosPage = () => {
         onAlterarStatus={handleAlterarFiltroStatus}
         cursos={cursos}
       />
-
-      {erro && <Alert type="error" message={erro} />}
 
       {carregando && alunos.length === 0 ? (
         <div className="flex items-center justify-center rounded-xl border border-border bg-surface py-16 text-sm text-text-secondary">

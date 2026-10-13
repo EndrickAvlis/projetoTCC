@@ -1,5 +1,4 @@
 import * as React from "react";
-import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
@@ -18,7 +17,6 @@ const PeriodoModal = ({
   onFechar,
   onSalvar,
   salvando = false,
-  erro = null,
 }) => {
   const emEdicao = Boolean(periodo);
 
@@ -86,8 +84,6 @@ const PeriodoModal = ({
       // conteudoRolavel={false}
     >
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {erro && <Alert type="error" message={erro} />}
-
         <Select
           label="Período"
           placeholder="Selecione o período"
@@ -103,6 +99,11 @@ const PeriodoModal = ({
           type="number"
           min="1"
           step="1"
+          onKeyDown={(e) => {
+            if (e.key === "-") {
+              e.preventDefault();
+            }
+          }}
           value={dados.vagasTotais}
           onChange={(e) => atualizarCampo("vagasTotais", e.target.value)}
           error={erros.vagasTotais}

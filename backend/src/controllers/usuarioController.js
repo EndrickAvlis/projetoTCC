@@ -1,9 +1,9 @@
-import VoluntarioService from "../services/usuarioService.js";
+import UsuarioService from "../services/usuarioService.js";
 
-const voluntarioService = new VoluntarioService();
+const usuarioService = new UsuarioService();
 
 export const listarVoluntarios = async (req, res) => {
-  const voluntarios = await voluntarioService.listar(req.validado.query);
+  const voluntarios = await usuarioService.listar(req.validado.query);
 
   return res.status(200).json({
     usuarios: voluntarios,
@@ -13,7 +13,7 @@ export const listarVoluntarios = async (req, res) => {
 
 
 export const criarVoluntario = async (req, res) => {
-  const voluntario = await voluntarioService.criar(req.validado.body);
+  const voluntario = await usuarioService.criar(req.validado.body);
 
   return res.status(201).json({
     mensagem: voluntario,
@@ -22,7 +22,7 @@ export const criarVoluntario = async (req, res) => {
 
 export const atualizarVoluntario = async (req, res) => {
   const { id } = req.validado.params;
-  const voluntario = await voluntarioService.atualizar(
+  const voluntario = await usuarioService.atualizar(
     id,
     req.validado.body,
   );

@@ -18,6 +18,7 @@ import RelatoriosPage from "./features/admin/pages/RelatoriosPage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
 import ConfiguracoesPage from "./features/admin/pages/ConfiguracoesPage";
 import Testes from "./testes";
+import Toast from "./components/ui/Toast";
 
 function App() {
   return (
@@ -81,6 +82,7 @@ function App() {
             }
           />
         </ReactRouter.Routes>
+        <Toast />
       </AuthProvider>
     </ReactRouter.BrowserRouter>
   );
