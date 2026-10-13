@@ -9,7 +9,7 @@ import Modal from "../../../../../components/ui/Modal";
 const dadosIniciais = {
   nome: "",
   preco: 0,
-  quantidade: "",
+  quantidade: 0,
 };
 
 const UniformeModal = ({
@@ -29,9 +29,9 @@ const UniformeModal = ({
     if (aberto) {
       if (uniforme) {
         setDados({
-          nome: dados.nome,
-          preco: dados.preco,
-          quantidade: dados.quantidade,
+          nome: uniforme.nome,
+          preco: uniforme.preco,
+          quantidade: uniforme.quantidade,
         });
       } else {
         setDados(dadosIniciais);
@@ -57,25 +57,26 @@ const UniformeModal = ({
     const nome = dados.nome.trim();
     const preco = Number(dados.preco);
     const quantidade = Number(dados.quantidade);
+
     if (!nome) {
-      newErrors.nome = "Informe o tamanho do uniforme.";
+      newErrors.nome = "Insira um tamanho.";
     } else if (nome.length > 50) {
       newErrors.nome = "O tamanho deve ter no máximo 50 caracteres.";
     }
+
     if (!Number.isFinite(preco) || preco <= 0) {
-      newErrors.preco = "Informe um preço maior que zero.";
+      newErrors.preco = "Insira o preço.";
     }
-    // Quantidade inicial é obrigatória apenas ao criar
     if (!emEdicao) {
-      if (
-        dados.quantidade === "" ||
-        !Number.isInteger(quantidade) ||
-        quantidade < 0
-      ) {
-        newErrors.quantidade =
-          "Informe uma quantidade inteira maior ou igual a zero.";
+      if (dados.quantidade === "") {
+        newErrors.quantidade = "Insira a quantidade inicial.";
+      } else if (!Number.isInteger(quantidade)) {
+        newErrors.quantidade = "Informe uma quantidade inteira.";
+      } else if (quantidade < 0) {
+        newErrors.quantidade = "A quantidade inicial deve ser maior ou igual a 0.";
       }
     }
+
     setErros(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -83,7 +84,7 @@ const UniformeModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!validarUniformeForm) return;
+    if (!validarUniformeForm()) return;
     if (emEdicao) {
       onSalvar({
         nome: dados.nome,
@@ -96,11 +97,6 @@ const UniformeModal = ({
         quantidade: dados.quantidade,
       });
     }
-    // onSalvar({
-    //   nome: dados.nome,
-    //   preco: dados.preco,
-    //   ...(!emEdicao && { quantidade: dados.quantidade }),
-    // });
   };
 
   return (
@@ -111,7 +107,6 @@ const UniformeModal = ({
       largura="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {erro && <Alert type="error" message={erro} />}
         <Input
           label="Tamanho"
           value={dados.nome}
@@ -125,6 +120,7 @@ const UniformeModal = ({
         <InputMoeda
           label="Preço"
           valor={dados.preco}
+          placeholder="00,00"
           onChange={(valor) => atualizarCampo("preco", valor)}
           error={erros.preco}
           disabled={salvando}
@@ -137,6 +133,11 @@ const UniformeModal = ({
             type="number"
             min="0"
             step="1"
+            onKeyDown={(e) => {
+              if (e.key === "-") {
+                e.preventDefault();
+              }
+            }}
             value={dados.quantidade}
             onChange={(evento) =>
               atualizarCampo("quantidade", evento.target.value)

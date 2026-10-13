@@ -103,6 +103,11 @@ const PeriodoModal = ({
           type="number"
           min="1"
           step="1"
+          onKeyDown={(e) => {
+            if (e.key === "-") {
+              e.preventDefault();
+            }
+          }}
           value={dados.vagasTotais}
           onChange={(e) => atualizarCampo("vagasTotais", e.target.value)}
           error={erros.vagasTotais}

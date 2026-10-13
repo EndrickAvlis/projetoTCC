@@ -1,7 +1,5 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
-
-import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
@@ -126,7 +124,6 @@ const CursoModal = ({
       conteudoRolavel={false}
     >
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        {erro && <Alert type="error" message={erro} />}
         <Input
           label="Nome do curso"
           maxLength="100"

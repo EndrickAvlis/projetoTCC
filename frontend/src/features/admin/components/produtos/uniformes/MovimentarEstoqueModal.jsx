@@ -44,21 +44,17 @@ const MovimentarEstoqueModal = ({
   const [erros, setErros] = React.useState({});
 
   const estoqueAtual = Number(uniforme?.quantidade ?? 0);
-
-  // Sincroniza o formulário ao abrir para um uniforme
   React.useEffect(() => {
     if (uniforme) {
       setOperacao("corrigir");
-      setQuantidade("");
+      setQuantidade(String(estoqueAtual));
       setErros({});
     }
-  }, [uniforme]);
+  }, [uniforme, estoqueAtual]);
 
   const alternarOperacao = (novaOperacao) => {
     setOperacao(novaOperacao);
     setErros({});
-
-    // Se for corrigir, pré-preenche com o estoque atual para agilizar ajuste fino
     if (novaOperacao === "corrigir") {
       setQuantidade(String(estoqueAtual));
     } else {
@@ -70,12 +66,14 @@ const MovimentarEstoqueModal = ({
     const novosErros = {};
     const qtdNum = Number(quantidade);
 
-    if (quantidade === "" || !Number.isInteger(qtdNum)) {
+    if (quantidade === "") {
+      novosErros.quantidade = "Informe a quantidade.";
+    } else if (!Number.isInteger(qtdNum)) {
       novosErros.quantidade = "Informe uma quantidade inteira.";
     } else if (operacao === "corrigir" && qtdNum < 0) {
-      novosErros.quantidade = "O novo estoque deve ser maior ou igual a zero.";
+      novosErros.quantidade = "O novo estoque deve ser maior ou igual a 0.";
     } else if (operacao !== "corrigir" && qtdNum <= 0) {
-      novosErros.quantidade = "Informe uma quantidade maior que zero.";
+      novosErros.quantidade = "Informe uma quantidade maior que 0.";
     } else if (operacao === "diminuir") {
       if (estoqueAtual === 0) {
         novosErros.quantidade = "Não há estoque disponível para retirada.";
@@ -106,19 +104,41 @@ const MovimentarEstoqueModal = ({
   const qtdValida =
     qtdNumero !== null && Number.isInteger(qtdNumero) && qtdNumero >= 0;
 
-  let novoEstoque = null;
-  let diferenca = null;
+  let novoEstoque = estoqueAtual;
+  let diferenca = 0;
 
-  if (qtdValida) {
-    if (operacao === "adicionar") {
-      novoEstoque = estoqueAtual + qtdNumero;
-      diferenca = qtdNumero;
-    } else if (operacao === "diminuir") {
-      novoEstoque = estoqueAtual - qtdNumero;
-      diferenca = -qtdNumero;
-    } else if (operacao === "corrigir") {
+  if (operacao === "corrigir") {
+    if (qtdValida) {
       novoEstoque = qtdNumero;
       diferenca = qtdNumero - estoqueAtual;
+    } else if (quantidade === "") {
+      novoEstoque = estoqueAtual;
+      diferenca = 0;
+    } else {
+      novoEstoque = null;
+      diferenca = null;
+    }
+  } else if (operacao === "adicionar") {
+    if (qtdValida) {
+      novoEstoque = estoqueAtual + qtdNumero;
+      diferenca = qtdNumero;
+    } else if (quantidade === "") {
+      novoEstoque = estoqueAtual;
+      diferenca = 0;
+    } else {
+      novoEstoque = null;
+      diferenca = null;
+    }
+  } else if (operacao === "diminuir") {
+    if (qtdValida) {
+      novoEstoque = estoqueAtual - qtdNumero;
+      diferenca = -qtdNumero;
+    } else if (quantidade === "") {
+      novoEstoque = estoqueAtual;
+      diferenca = 0;
+    } else {
+      novoEstoque = null;
+      diferenca = null;
     }
   }
 
@@ -136,7 +156,9 @@ const MovimentarEstoqueModal = ({
       largura="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {erro && <Alert type="error" message={erro} />}
+        {erro && erro !== "Dados da requisição inválidos." && (
+          <Alert type="error" message={erro} />
+        )}
 
         {/* Card informativo do Uniforme */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-surface-muted p-4">
@@ -255,70 +277,77 @@ const MovimentarEstoqueModal = ({
         />
 
         {/* Simulação / Preview do Estoque Resultante */}
-        {qtdValida && (
-          <div className="space-y-2.5 rounded-xl border border-border bg-surface-muted p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-              Simulação do estoque
-            </p>
+        <div className="space-y-2.5 rounded-xl border border-border bg-surface-muted p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+            Simulação do estoque
+          </p>
 
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex flex-col">
-                <span className="text-xs text-text-secondary">Saldo atual</span>
-                <span className="text-base font-semibold text-text-primary">
-                  {estoqueAtual} unid.
-                </span>
-              </div>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col">
+              <span className="text-xs text-text-secondary">Saldo atual</span>
+              <span className="text-base font-semibold text-text-primary">
+                {estoqueAtual} unid.
+              </span>
+            </div>
 
-              <FiIcons.FiArrowRight className="text-text-secondary" />
+            <FiIcons.FiArrowRight className="text-text-secondary" />
 
-              <div className="flex flex-col items-center">
-                <span className="text-xs text-text-secondary">Ajuste</span>
-                <span
-                  className={`text-base font-bold ${diferenca > 0
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-text-secondary">Ajuste</span>
+              <span
+                className={`text-base font-bold ${
+                  diferenca === null
+                    ? "text-status-danger"
+                    : diferenca > 0
                       ? "text-status-success"
                       : diferenca < 0
                         ? "text-status-danger"
                         : "text-text-secondary"
-                    }`}
-                >
-                  {diferenca > 0
+                }`}
+              >
+                {diferenca === null
+                  ? "-"
+                  : diferenca > 0
                     ? `+${diferenca}`
                     : diferenca === 0
                       ? "0"
                       : `${diferenca}`}
-                </span>
-              </div>
-
-              <FiIcons.FiArrowRight className="text-text-secondary" />
-
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-text-secondary">Novo saldo</span>
-                <span
-                  className={`text-base font-bold ${novoEstoque < 0
-                      ? "text-status-danger"
-                      : novoEstoque === 0
-                        ? "text-status-warning"
-                        : "text-status-success"
-                    }`}
-                >
-                  {novoEstoque < 0
-                    ? "Inválido"
-                    : `${novoEstoque} ${novoEstoque === 1 ? "unidade" : "unidades"
-                    }`}
-                </span>
-              </div>
+              </span>
             </div>
 
-            {estoqueZeradoAoDiminuir && (
-              <div className="flex items-center gap-1.5 border-t border-border/60 pt-2 text-xs text-status-warning">
-                <FiIcons.FiAlertCircle size={14} className="shrink-0" />
-                <span>
-                  Atenção: esta baixa deixará o estoque deste uniforme totalmente zerado.
-                </span>
-              </div>
-            )}
+            <FiIcons.FiArrowRight className="text-text-secondary" />
+
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-text-secondary">Novo saldo</span>
+              <span
+                className={`text-base font-bold ${
+                  novoEstoque === null || novoEstoque < 0
+                    ? "text-status-danger"
+                    : novoEstoque === 0
+                      ? "text-status-warning"
+                      : "text-status-success"
+                }`}
+              >
+                {novoEstoque === null
+                  ? "Inválido"
+                  : novoEstoque < 0
+                    ? "Inválido"
+                    : `${novoEstoque} ${
+                        novoEstoque === 1 ? "unidade" : "unidades"
+                      }`}
+              </span>
+            </div>
           </div>
-        )}
+
+          {estoqueZeradoAoDiminuir && (
+            <div className="flex items-center gap-1.5 border-t border-border/60 pt-2 text-xs text-status-warning">
+              <FiIcons.FiAlertCircle size={14} className="shrink-0" />
+              <span>
+                Atenção: esta baixa deixará o estoque deste uniforme totalmente zerado.
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Rodapé com botões de ação */}
         <footer className="flex justify-end gap-3 border-t border-border pt-5">

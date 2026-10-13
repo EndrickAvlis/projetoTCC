@@ -82,7 +82,9 @@ const SecaoArmarios = () => {
       aria-labelledby="tab-armarios"
       className="space-y-4"
     >
-      {erroOperacao && <Alert type="error" message={erroOperacao} />}
+      {erroOperacao && erroOperacao !== "Dados da requisição inválidos." && (
+        <Alert type="error" message={erroOperacao} />
+      )}
 
       {carregandoArmario ? (
         <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center text-text-secondary">

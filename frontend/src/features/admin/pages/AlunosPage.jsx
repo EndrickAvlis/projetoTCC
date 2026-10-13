@@ -248,8 +248,6 @@ const AlunosPage = () => {
         cursos={cursos}
       />
 
-      {erro && <Alert type="error" message={erro} />}
-
       {carregando && alunos.length === 0 ? (
         <div className="flex items-center justify-center rounded-xl border border-border bg-surface py-16 text-sm text-text-secondary">
           <div className="flex flex-col items-center gap-2">

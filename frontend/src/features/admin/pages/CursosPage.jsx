@@ -22,18 +22,14 @@ const CursosPage = () => {
   const [salvando, setSalvando] = React.useState(false);
   const [erroOperacao, setErroOperacao] = React.useState(null);
 
-  // Modal de Curso
   const [modalCursoAberto, setModalCursoAberto] = React.useState(false);
   const [cursoEmEdicao, setCursoEmEdicao] = React.useState(null);
 
-  // Modal de Período
   const [modalPeriodo, setModalPeriodo] = React.useState(null);
 
-  // Modal de Arquivamento
   const [cursoParaArquivamento, setCursoParaArquivamento] =
     React.useState(null);
 
-  // UI da Tabela
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
 
   const { cursos, total, carregando, erro, recarregar } = useCursos({
@@ -41,7 +37,6 @@ const CursosPage = () => {
     arquivado,
   });
 
-  //Adição e edição de cursos
   const fecharModalCurso = () => {
     setModalCursoAberto(false);
     setCursoEmEdicao(null);
@@ -72,7 +67,6 @@ const CursosPage = () => {
     }
   };
 
-  //Adição e edição de periodos
   const fecharModalPeriodo = () => {
     setModalPeriodo(null);
     setErroOperacao(null);
@@ -213,7 +207,6 @@ const CursosPage = () => {
       cellClassName: "text-right",
       render: (curso) => (
         <TableMenuActions
-          labelAria={`Ações do curso ${curso.nome}`}
           itens={[
             !curso.arquivado && {
               label: "Adicionar período",
@@ -298,8 +291,11 @@ const CursosPage = () => {
       {erro && <Alert type="error" message={erro} />}
 
       {carregando ? (
-        <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center text-text-secondary">
-          Carregando cursos...
+        <div className="flex items-center justify-center rounded-xl border border-border bg-surface py-16 text-sm text-text-secondary">
+          <div className="flex flex-col items-center gap-2">
+            <FiIcons.FiLoader className="h-6 w-6 animate-spin text-primary" />
+            <span>Carregando cursos...</span>
+          </div>
         </div>
       ) : (
         <DataTable
