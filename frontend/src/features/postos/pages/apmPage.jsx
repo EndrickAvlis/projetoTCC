@@ -1,16 +1,12 @@
-// TODO: Esta tela será reformulada na branch feature/apm
-/*
 import PostoLayout from "../layout/PostoLayout";
-import ApmVendas from "../components/apm/ApmVendas";
+import ApmMain from "../components/apm/ApmMain";
 
 const ApmPage = () => (
   <PostoLayout etapa="apm">
-    <ApmVendas />
+    <ApmMain />
   </PostoLayout>
 );
 
 export default ApmPage;
-*/
-const ApmPage = () => null;
-export default ApmPage;
+
 

@@ -3,7 +3,7 @@ import { listarCursosAdmin } from "../services/cursosService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useCursos = ({ busca = "", arquivado = false } = {}) => {
-  const buscaDebounced = useDebounce(busca, 300);
+  const buscaDebounced = useDebounce(busca);
   const [cursos, setCursos] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
@@ -14,12 +14,13 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
     setErro(null);
 
     try {
-      const resposta = await listarCursosAdmin({
+      const res = await listarCursosAdmin({
         busca: buscaDebounced,
         arquivado,
       });
-      setCursos(resposta.cursos ?? []);
-      setTotal(resposta.total ?? 0);
+      
+      setCursos(res.cursos ?? []);
+      setTotal(res.total ?? 0);
     } catch (error) {
       setCursos([]);
       setTotal(0);

@@ -1,6 +1,5 @@
 // Colunas obrigatórias exigidas pela documentação TELA_ALUNOS.md
 export const CABECALHOS_OBRIGATORIOS = [
-  "NR_INSCRICAO",
   "NOME",
   "ESCOLARIDADE",
   "CIDADE",
@@ -111,10 +110,6 @@ const normalizarTexto = (valor) => {
     .replace(/\s+/g, " ");
 };
 
-const normalizarInscricao = (valor) => {
-  // Remove espaços e apóstrofos sem eliminar zeros à esquerda
-  return String(valor ?? "").trim().replace(/^'+/, "").trim();
-};
 
 const normalizarCodigo = (valor) => {
   return String(valor ?? "").trim().replace(/^'+/, "").trim();
@@ -152,7 +147,6 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
   const mapaCursos = new Map();
 
   registros.forEach((registro) => {
-    const numeroInscricao = normalizarInscricao(registro.NR_INSCRICAO);
     const nomeAluno = registro.NOME.trim();
     const escolaridadeTxt = normalizarTexto(registro.ESCOLARIDADE);
     const cidadeAluno = registro.CIDADE.trim();
@@ -180,7 +174,6 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
       classificacao === null || Number.isInteger(classificacao);
 
     const camposObrigatoriosPreenchidos =
-      numeroInscricao &&
       nomeAluno &&
       cidadeAluno &&
       sexoAluno &&
@@ -199,7 +192,6 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
 
     // REGRA 3: Manter APENAS os campos autorizados pela documentação (descarta CPF, RG, email, etc.)
     candidatosValidos.push({
-      numeroInscricao,
       nomeAluno,
       escolaridadePublica: escolaridadeTxt === "SIM",
       cidadeAluno,

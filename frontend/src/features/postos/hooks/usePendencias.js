@@ -1,9 +1,9 @@
 import * as React from "react";
 import * as TriagemService from "../services/TriagemService";
-import { useAtendimento } from "../../../context/atendimentoContext";
+import { useAtendimento } from "../context/atendimentoContext";
 
 export const usePendencias = () => {
-  const { setSenhaAtual, setAtendimentoAtual } = useAtendimento();
+  const { definirAtendimento } = useAtendimento();
   const [pendencias, setPendencias] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [pendenciaSelecionada, setPendenciaSelecionada] = React.useState(null);
@@ -31,7 +31,7 @@ export const usePendencias = () => {
   );
 
   React.useEffect(() => {
-    void Promise.resolve().then(carregarPendencias);
+    carregarPendencias();
     const intervalo = window.setInterval(
       () => void carregarPendencias({ silencioso: true }),
       5000,
@@ -58,8 +58,7 @@ export const usePendencias = () => {
       try {
         const res = await TriagemService.retomarPendencia(senhaId);
         if (res.senha) {
-          setSenhaAtual(res.senha);
-          setAtendimentoAtual(res.historico);
+          definirAtendimento(res.senha, res.atendimento);
         }
         setPendenciaSelecionada(null);
         await carregarPendencias({ silencioso: true });
@@ -71,7 +70,7 @@ export const usePendencias = () => {
         setCarregando(false);
       }
     },
-    [carregarPendencias, setSenhaAtual, setAtendimentoAtual],
+    [carregarPendencias, definirAtendimento],
   );
 
   return {

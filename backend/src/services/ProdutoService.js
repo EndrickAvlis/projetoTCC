@@ -99,7 +99,7 @@ export default class ProdutoService extends BaseService {
     );
   }
 
-  async listarProdutos({
+  async listarUniformes({
     busca = "",
     arquivado = "false",
     tipo = "uniforme",

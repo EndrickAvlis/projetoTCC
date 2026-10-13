@@ -1,8 +1,8 @@
 import * as React from "react";
 import { FiClock, FiAlertCircle } from "react-icons/fi";
-import { useTriagem } from "../../hooks/useTriagem";
+import { useAtendimento } from "../../context/atendimentoContext";
 import { usePendencias } from "../../hooks/usePendencias";
-import { listarCursos } from "../../services/TriagemService";
+import * as TriagemService from "../../services/TriagemService";
 import AtendimentoActions from "../../layout/AtendimentoActions";
 import BuscarAlunos from "./BuscarAlunos";
 import DadosAlunoForm from "./DadosAlunoForm";
@@ -61,15 +61,14 @@ export const TriagemMain = () => {
   const {
     fase,
     senhaAtual,
-    iniciar,
-    salvarDados,
+    atendimentoAtual,
+    carregando,
+    erro,
     finalizar,
-    salvarPendencia,
-    rechamar,
-    definirSenhaChamada,
-    carregando: carregandoTriagem,
-    erro: erroTriagem,
-  } = useTriagem();
+    limparAtendimento,
+    setCarregando,
+    setErro,
+  } = useAtendimento();
 
   const {
     pendencias,
@@ -77,6 +76,7 @@ export const TriagemMain = () => {
     pendenciaSelecionada,
     selecionarPendencia,
     retomar,
+    //isso deve realmente ser assim?
     carregando: carregandoPendencias,
     erro: erroPendencias,
   } = usePendencias();
@@ -85,14 +85,25 @@ export const TriagemMain = () => {
   const [cursos, setCursos] = React.useState([]);
   const [alunoId, setAlunoId] = React.useState(null);
   const [dadosAluno, setDadosAluno] = React.useState(DADOS_INICIAIS);
-  const [documentosSelecionados, setDocumentosSelecionados] = React.useState([]);
+  const [documentosSelecionados, setDocumentosSelecionados] = React.useState(
+    [],
+  );
 
   React.useEffect(() => {
-    listarCursos().then(setCursos).catch(() => setCursos([]));
+    const carregarCursos = async () => {
+      try {
+        const res = await TriagemService.listarCursos();
+        setCursos(res.cursos);
+      } catch {
+        setCursos([]);
+      }
+    };
+
+    carregarCursos();
   }, []);
 
   const handleSelecionarAluno = (aluno) => {
-    setAlunoId(aluno?.id ?? null);
+    setAlunoId(aluno.id);
     setDadosAluno(alunoParaForm(aluno));
   };
 
@@ -107,26 +118,55 @@ export const TriagemMain = () => {
   };
 
   const handleSalvarPendencia = async () => {
-    if (documentosSelecionados.length === 0) return;
-    if (dadosAluno.nome.trim() && dadosAluno.curso) {
-      await salvarDados(formParaPayload(dadosAluno, alunoId));
+    if (documentosSelecionados.length === 0 || !atendimentoAtual) return;
+
+    try {
+      setCarregando(true);
+      setErro(null);
+
+      if (dadosAluno.nome.trim() && dadosAluno.curso) {
+        await TriagemService.salvarAluno(
+          senhaAtual.id,
+          formParaPayload(dadosAluno, alunoId),
+        );
+      }
+
+      await TriagemService.registrarPendencia(
+        atendimentoAtual.id,
+        documentosSelecionados,
+      );
+
+      limparAtendimento();
+      handleLimparFormulario();
+    } catch (error) {
+      setErro(error.message);
+    } finally {
+      setCarregando(false);
     }
-    await salvarPendencia(documentosSelecionados);
-    handleLimparFormulario();
   };
 
   const handleFinalizar = async () => {
-    await salvarDados(formParaPayload(dadosAluno, alunoId));
-    await finalizar();
-    handleLimparFormulario();
+    try {
+      setCarregando(true);
+      setErro(null);
+
+      await TriagemService.salvarAluno(
+        senhaAtual.id,
+        formParaPayload(dadosAluno, alunoId),
+      );
+
+      await finalizar();
+      handleLimparFormulario();
+    } catch (error) {
+      setErro(error.message);
+    } finally {
+      setCarregando(false);
+    }
   };
 
   const handleRetomar = async (senhaId) => {
     const res = await retomar(senhaId);
-    if (res?.senha) {
-      definirSenhaChamada(res.senha);
-    }
-    if (res?.documentos) {
+    if (res.documentos) {
       setDocumentosSelecionados(res.documentos);
     }
     setAbaAtiva("atendimento");
@@ -138,7 +178,7 @@ export const TriagemMain = () => {
     dadosAluno.curso &&
     dadosAluno.periodo &&
     dadosAluno.ano &&
-    documentosSelecionados.length === 0
+    documentosSelecionados.length === 0,
   );
 
   const abasTriagem = [
@@ -160,19 +200,14 @@ export const TriagemMain = () => {
         ariaLabel="Abas da triagem"
       />
 
-      {(erroTriagem || erroPendencias) && (
-        <Alert type="error" message={erroTriagem || erroPendencias} />
+      {(erro || erroPendencias) && (
+        <Alert type="error" message={erro || erroPendencias} />
       )}
 
       {abaAtiva === "atendimento" && (
         <div className="flex flex-col gap-6">
           <AtendimentoActions
-            senhaAtual={senhaAtual}
-            fase={fase}
-            carregando={carregandoTriagem}
             podeFinalizar={podeFinalizar}
-            onIniciar={iniciar}
-            onRechamar={rechamar}
             onFinalizar={handleFinalizar}
           />
 
@@ -197,7 +232,7 @@ export const TriagemMain = () => {
                 documentosSelecionados={documentosSelecionados}
                 onChange={setDocumentosSelecionados}
                 onSalvarPendencia={handleSalvarPendencia}
-                salvando={carregandoTriagem}
+                salvando={carregando}
                 disabled={fase !== "iniciada"}
               />
             </div>

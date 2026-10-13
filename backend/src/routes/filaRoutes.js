@@ -13,4 +13,6 @@ filaRoutes.get("/", validarRequisicao(ValidatorFila.listarFilaSchema), FilaContr
 
 filaRoutes.post("/chamadas", validarRequisicao(ValidatorFila.chamarSenhaSchema), FilaController.chamarSenha);
 
+// GET /historico
+
 export default filaRoutes;

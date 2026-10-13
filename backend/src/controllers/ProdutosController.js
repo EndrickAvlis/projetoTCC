@@ -19,12 +19,12 @@ export const criarProdutoAdmin = async (req, res) => {
   });
 };
 
-export const listarProdutosAdmin = async (req, res) => {
-  const produtos = await produtoService.listarProdutos(req.validado.query);
+export const listarUniformes = async (req, res) => {
+  const uniformes = await produtoService.listarUniformes(req.validado.query);
 
   return res.json({
-    produtos: produtos.map(mapearProdutosResposta),
-    total: produtos.length,
+    uniformes: uniformes.map(mapearProdutosResposta),
+    total: uniformes.length,
   });
 };
 
@@ -73,6 +73,6 @@ export const buscarConfiguracaoArmario = async (req, res) => {
   const produto = await produtoService.buscarConfiguracaoArmario();
 
   return res.json({
-    produto: mapearProdutosResposta(produto),
+    armario: mapearProdutosResposta(produto),
   });
 };

@@ -108,13 +108,7 @@ const AlunosPage = () => {
       key: "nomeAluno",
       label: "Nome do Aluno",
       render: (aluno) => (
-        <div className="space-y-0.5">
-          <p className="font-semibold text-text-primary">{aluno.nomeAluno}</p>
-          <p className="font-mono text-xs text-text-secondary">
-            Inscrição:{" "}
-            <span className="text-text-primary">{aluno.numeroInscricao}</span>
-          </p>
-        </div>
+        <p className="font-semibold text-text-primary">{aluno.nomeAluno}</p>
       ),
     },
     {

@@ -1,14 +1,4 @@
-// Funções reutilizáveis para exibir CPF e valores monetários no padrão brasileiro.
-const FormaterCpf = (value) => {
-  if (!value) return "";
-  const cpf = value.replace(/\D/g, "");
 
-  return cpf
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})$/, "$1.$2.$3-$4")
-    .substring(0, 14); // Garante o limite máximo de caracteres com pontos/hífen
-};
 
 export const formatarMoeda = (valor = 0) =>
   new Intl.NumberFormat("pt-BR", {
@@ -58,5 +48,3 @@ export const formatarHora = (dataIso) => {
     return dataIso;
   }
 };
-
-export default FormaterCpf;

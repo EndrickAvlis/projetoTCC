@@ -1,4 +1,3 @@
-// Ponto de entrada que monta a aplicação React no navegador.
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './globals.css'
