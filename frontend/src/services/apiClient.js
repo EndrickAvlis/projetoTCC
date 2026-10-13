@@ -33,6 +33,12 @@ apiClient.interceptors.response.use(
     ) {
       dadosReq._retry = true;
 
+      if (erro.response?.data?.code === "USUARIO_DESATIVADO") {
+        sessionStorage.setItem("alerta_sessao", erro.response.data.message);
+        window.dispatchEvent(new Event("auth:unauthorized"));
+        return Promise.reject(erro);
+      }
+
       if (!promisseRefresh) {
         promisseRefresh = apiClient
           .post("/auth/refresh")

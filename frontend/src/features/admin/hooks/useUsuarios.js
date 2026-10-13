@@ -3,7 +3,7 @@ import { listarUsuarios } from "../services/usuarioService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useUsuarios = ({ busca = "", tipo = "", status = "" } = {}) => {
-  const buscaDebounced = useDebounce(busca);
+  const buscaDebounced = useDebounce(busca, 300);
   const [usuarios, setUsuarios] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
@@ -25,7 +25,7 @@ export const useUsuarios = ({ busca = "", tipo = "", status = "" } = {}) => {
     } catch (error) {
       setUsuarios([]);
       setTotal(0);
-      setErro(error.message);
+      setErro(error.message || "Erro ao carregar usuários.");
     } finally {
       setCarregando(false);
     }

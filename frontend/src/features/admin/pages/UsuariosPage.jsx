@@ -1,5 +1,304 @@
+import * as React from "react";
+import * as FiIcons from "react-icons/fi";
+
+import Badge from "../../../components/ui/Badge";
+import Button from "../../../components/ui/Button";
+import DataTable from "../../../components/ui/DataTable";
+import Input from "../../../components/ui/Input";
+import Select from "../../../components/ui/Select";
+import TableMenuActions from "../../../components/ui/TableMenuActions";
+import ConfirmarModal from "../../../components/ui/ConfirmarModal";
+
+import UsuariosModal from "../components/usuarios/UsuariosModal";
+import { useUsuarios } from "../hooks/useUsuarios";
+import * as usuarioService from "../services/usuarioService";
+import { useAuth } from "../../../context/authContext";
+
+const OPCOES_FILTRO_TIPO = [
+  { value: "", label: "Todos os perfis" },
+  { value: "admin", label: "Administradores" },
+  { value: "supervisor", label: "Supervisores" },
+  { value: "atendente", label: "Atendentes" },
+];
+
 const UsuariosPage = () => {
-  return <h1>Usuários</h1>;
+  const { usuario: usuarioLogado } = useAuth();
+  const ehSupervisor = usuarioLogado?.tipo === "supervisor";
+  const ehAdmin = usuarioLogado?.tipo === "admin";
+
+  const [busca, setBusca] = React.useState("");
+  const [tipoFiltro, setTipoFiltro] = React.useState("");
+  const [statusAtivo, setStatusAtivo] = React.useState(true);
+
+  const [salvando, setSalvando] = React.useState(false);
+  const [erroOperacao, setErroOperacao] = React.useState(null);
+
+  const [modalUsuarioAberto, setModalUsuarioAberto] = React.useState(false);
+  const [usuarioEmEdicao, setUsuarioEmEdicao] = React.useState(null);
+  const [usuarioParaAlterarStatus, setUsuarioParaAlterarStatus] =
+    React.useState(null);
+
+  const { usuarios, carregando, erro, recarregar } = useUsuarios({
+    busca,
+    tipo: ehSupervisor ? "" : tipoFiltro,
+    status: statusAtivo,
+  });
+
+  const abrirModalUsuario = (usuario = null) => {
+    setErroOperacao(null);
+    setUsuarioEmEdicao(usuario);
+    setModalUsuarioAberto(true);
+  };
+
+  const fecharModalUsuario = () => {
+    setModalUsuarioAberto(false);
+    setUsuarioEmEdicao(null);
+    setErroOperacao(null);
+  };
+
+  const handleSalvarUsuario = async (dados, id = usuarioEmEdicao?.id) => {
+    setSalvando(true);
+    setErroOperacao(null);
+
+    try {
+      if (id) {
+        await usuarioService.atualizarUsuario(id, dados);
+      } else {
+        await usuarioService.criarUsuario(dados);
+      }
+
+      fecharModalUsuario();
+      setUsuarioParaAlterarStatus(null);
+      await recarregar();
+    } catch (error) {
+      setErroOperacao(error.message || "Erro ao salvar usuário.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const listaFiltrada = ehSupervisor
+    ? usuarios.filter(
+        (u) => u.tipo === "atendente" || u.id === usuarioLogado?.id,
+      )
+    : usuarios;
+
+  const usuariosOrdenados = usuarioLogado
+    ? [...listaFiltrada].sort((a, b) => {
+        if (a.id === usuarioLogado.id) return -1;
+        if (b.id === usuarioLogado.id) return 1;
+        return 0;
+      })
+    : listaFiltrada;
+
+  const renderBadgeTipo = (tipo) => {
+    switch (tipo) {
+      case "admin":
+        return <Badge variant="primary">Administrador</Badge>;
+      case "supervisor":
+        return <Badge variant="warning">Supervisor</Badge>;
+      case "atendente":
+        return <Badge variant="neutral">Atendente</Badge>;
+      default:
+        return <Badge variant="neutral">{tipo}</Badge>;
+    }
+  };
+
+  const columnsUsuario = [
+    {
+      key: "nome",
+      label: "Usuário",
+      render: (u) => {
+        const ehProprioUsuario = u.id === usuarioLogado?.id;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-text-primary">{u.nome}</span>
+            {ehProprioUsuario && (
+              <Badge variant="primary" size="sm">
+                Você
+              </Badge>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "tipo",
+      label: "Função / Cargo",
+      render: (u) => renderBadgeTipo(u.tipo),
+    },
+    {
+      key: "status",
+      label: "Situação",
+      render: (u) =>
+        u.status ? (
+          <Badge variant="success" dot>
+            Ativo
+          </Badge>
+        ) : (
+          <Badge variant="danger" dot>
+            Inativo
+          </Badge>
+        ),
+    },
+    {
+      key: "acoes",
+      label: "Ações",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (u) => {
+        const ehProprioUsuario = u.id === usuarioLogado?.id;
+        const podeEditar =
+          ehAdmin || ehProprioUsuario || u.tipo === "atendente";
+        const podeInativar =
+          !ehProprioUsuario && (ehAdmin || u.tipo === "atendente");
+
+        return (
+          <TableMenuActions
+            labelAria={`Ações do usuário ${u.nome}`}
+            itens={[
+              podeEditar && {
+                label: "Editar",
+                icone: FiIcons.FiEdit2,
+                onClick: () => abrirModalUsuario(u),
+              },
+              podeInativar && {
+                label: u.status ? "Inativar" : "Ativar",
+                icone: u.status ? FiIcons.FiUserX : FiIcons.FiUserCheck,
+                onClick: () => setUsuarioParaAlterarStatus(u),
+                variante: u.status ? "danger" : "success",
+              },
+            ]}
+          />
+        );
+      },
+    },
+  ];
+
+  return (
+    <section className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <p className="mt-1 text-text-secondary">
+            {usuariosOrdenados.length} usuário
+            {usuariosOrdenados.length === 1 ? "" : "s"}{" "}
+            {statusAtivo ? "ativo" : "inativo"}
+            {usuariosOrdenados.length === 1 ? "" : "s"} encontrado
+            {usuariosOrdenados.length === 1 ? "" : "s"}.
+          </p>
+        </div>
+
+        <Button
+          leftIcon={<FiIcons.FiUserPlus />}
+          className="w-full sm:w-auto"
+          onClick={() => abrirModalUsuario()}
+        >
+          Adicionar usuário
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+          <Input
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Pesquisar por nome de usuário..."
+            icon={<FiIcons.FiSearch />}
+            size="md"
+            className="w-full sm:max-w-md"
+          />
+
+          {!ehSupervisor && (
+            <div className="w-full sm:w-56">
+              <Select
+                value={tipoFiltro}
+                onChange={(event) => setTipoFiltro(event.target.value)}
+                options={OPCOES_FILTRO_TIPO}
+                placeholder=""
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="flex rounded-btn border border-border p-1">
+          <button
+            type="button"
+            onClick={() => setStatusAtivo(true)}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
+              statusAtivo
+                ? "bg-primary text-text-inverse"
+                : "text-text-secondary hover:bg-surface-muted"
+            }`}
+          >
+            Ativos
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusAtivo(false)}
+            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
+              !statusAtivo
+                ? "bg-primary text-text-inverse"
+                : "text-text-secondary hover:bg-surface-muted"
+            }`}
+          >
+            Inativos
+          </button>
+        </div>
+      </div>
+      <DataTable
+        columns={columnsUsuario}
+        data={carregando ? [] : usuariosOrdenados}
+        getRowKey={(u) => u.id}
+        emptyMessage={
+          erro
+            ? erro
+            : carregando
+              ? "Carregando usuários..."
+              : statusAtivo
+                ? "Nenhum usuário ativo encontrado."
+                : "Nenhum usuário inativo encontrado."
+        }
+      />
+
+      <UsuariosModal
+        aberto={modalUsuarioAberto}
+        usuario={usuarioEmEdicao}
+        usuarioLogado={usuarioLogado}
+        onFechar={fecharModalUsuario}
+        onSalvar={handleSalvarUsuario}
+        salvando={salvando}
+        erro={erroOperacao}
+      />
+
+      <ConfirmarModal
+        aberto={Boolean(usuarioParaAlterarStatus)}
+        onFechar={() => setUsuarioParaAlterarStatus(null)}
+        onConfirmar={() =>
+          handleSalvarUsuario(
+            { status: !usuarioParaAlterarStatus.status },
+            usuarioParaAlterarStatus.id,
+          )
+        }
+        titulo={
+          usuarioParaAlterarStatus?.status
+            ? "Inativar usuário"
+            : "Ativar usuário"
+        }
+        mensagem={
+          usuarioParaAlterarStatus?.status
+            ? `Deseja realmente inativar o acesso de ${usuarioParaAlterarStatus?.nome}? O usuário não conseguirá mais entrar no sistema.`
+            : `Deseja reativar o acesso de ${usuarioParaAlterarStatus?.nome}?`
+        }
+        textoConfirmar={
+          usuarioParaAlterarStatus?.status ? "Inativar" : "Ativar"
+        }
+        variante={usuarioParaAlterarStatus?.status ? "danger" : "success"}
+        salvando={salvando}
+        erro={erroOperacao}
+      />
+    </section>
+  );
 };
 
 export default UsuariosPage;

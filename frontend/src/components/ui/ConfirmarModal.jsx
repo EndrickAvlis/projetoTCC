@@ -1,4 +1,3 @@
-import Alert from "./Alert";
 import Button from "./Button";
 import Modal from "./Modal";
 
@@ -24,7 +23,7 @@ const ConfirmarModal = ({
       largura={largura}
     >
       <div className="space-y-5">
-        {erro && <Alert type="error" message={erro} />}
+        {erro && <p className="text-sm text-status-danger">{erro}</p>}
 
         {children ? (
           children
