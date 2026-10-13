@@ -66,17 +66,17 @@ erDiagram
         int senhaCodigo
         datetime dataHoraInicioSenha
         datetime dataHoraFimSenha
-        string etapaSenha
+        EtapaSenha etapaSenha
         boolean tipoSenha
-        string statusSenha
-        json pendenciaTriagem "nullable"
+        StatusSenha statusSenha
+        json documentosPendentes "nullable"
     }
 
     HISTORICO_SENHA {
         int idHistorico PK
         int codSenha FK
         int codVoluntario FK
-        string etapaHistorico
+        EtapaSenha etapaHistorico "nullable"
         datetime dataHoraInicioHistorico
         datetime dataHoraFimHistorico
     }
@@ -86,7 +86,7 @@ erDiagram
         string nomeVoluntario
         string senhaVoluntario
         TipoVoluntario tipoVoluntario
-        string statusVoluntario
+        boolean statusVoluntario
     }
 
     PRODUTO {
@@ -113,14 +113,14 @@ erDiagram
         decimal precoUnitario
         int quantidadeItem
         int quantidadeRetiradaItem
-        string statusItem
+        StatusItem statusItem
     }
 
     PAGAMENTO {
         int idPagamento PK
         int codCompra FK
         decimal valorPagamento
-        string tipoPagamento
+        TipoPagamento tipoPagamento
     }
 
     CONTRIBUICAO {
@@ -202,10 +202,10 @@ Controle das senhas emitidas para o fluxo presencial do dia.
 | `senhaCodigo` | `Int` | Not Null | Número da senha exibido no ticket e painel (reiniciado diariamente). |
 | `dataHoraInicioSenha` | `DateTime` | Not Null | Momento exato em que a senha foi emitida no Totem. |
 | `dataHoraFimSenha` | `DateTime` | Nullable | Momento em que a senha concluiu o último posto ou foi cancelada. |
-| `etapaSenha` | `VarChar(15)` | Not Null | Posto atual da senha: `'triagem'`, `'apm'`, `'docs'`. |
+| `etapaSenha` | `Enum EtapaSenha` | Not Null | Posto atual da senha: `triagem`, `apm`, `docs`. |
 | `tipoSenha` | `Boolean` | Not Null, Default: `false` | Indicador de prioridade (`false` = normal, `true` = prioritária). |
-| `statusSenha` | `VarChar(20)` | Not Null | Estado da senha: `'aguardando'`, `'em_atendimento'`, `'pendente'`, `'finalizada'`, `'cancelada'`. |
-| `pendenciaTriagem` | `Json` | Nullable | Registro de pendências documentais da Triagem (lista de documentos e data). |
+| `statusSenha` | `Enum StatusSenha` | Not Null | Estado da senha: `aguardando`, `em_atendimento`, `pendente`, `finalizada`, `cancelada`. |
+| `documentosPendentes` | `Json` | Nullable | Registro de pendências documentais da Triagem (lista de documentos e data). |
 
 ---
 
@@ -217,7 +217,7 @@ Rastreamento de cada passagem da senha por um guichê e atendente para cálculo 
 | `idHistorico` | `Int` | PK, Auto-increment | Identificador único do atendimento específico. |
 | `codSenha` | `Int` | FK -> `Senha(idSenha)` | Senha que está sendo atendida. |
 | `codVoluntario` | `Int` | FK -> `Voluntario(idVoluntario)` | Usuário atendente responsável pelo guichê. |
-| `etapaHistorico` | `VarChar(15)` | Nullable | Etapa em que o atendimento ocorreu (`'triagem'`, `'apm'`, `'docs'`). |
+| `etapaHistorico` | `Enum EtapaSenha` | Nullable | Etapa em que o atendimento ocorreu (`triagem`, `apm`, `docs`). |
 | `dataHoraInicioHistorico` | `DateTime` | Not Null | Horário exato de início do atendimento no guichê. |
 | `dataHoraFimHistorico` | `DateTime` | Nullable | Horário de conclusão ou liberação do guichê. |
 
@@ -232,7 +232,7 @@ Usuários credenciados para operar o sistema nos postos ou na gestão.
 | `nomeVoluntario` | `VarChar(100)` | Not Null | Nome de exibição e identificador de login. |
 | `senhaVoluntario` | `VarChar(255)` | Not Null | Hash criptográfico seguro da senha (bcrypt/argon2). |
 | `tipoVoluntario` | `Enum TipoVoluntario` | Not Null, Default: `admin` | Perfil de permissão: `admin`, `supervisor`, `atendente`. |
-| `statusVoluntario` | `VarChar(20)` | Not Null, Default: `'ativo'` | Situação da conta: `'ativo'`, `'inativo'`. |
+| `statusVoluntario` | `Boolean` | Not Null, Default: `true` | Situação da conta: `true` (ativo), `false` (inativo). |
 
 ---
 
@@ -274,7 +274,7 @@ Discriminação dos produtos adquiridos em cada compra.
 | `precoUnitario` | `Decimal(5, 2)` | Not Null | Preço cobrado por unidade no momento da venda. |
 | `quantidadeItem` | `Int` | Not Null | Quantidade comprada do item. |
 | `quantidadeRetiradaItem` | `Int` | Not Null | Quantidade física entregue no momento da compra. |
-| `statusItem` | `VarChar(20)` | Not Null | Situação da entrega: `'retirado'`, `'pendente'`, `'parcial'`. |
+| `statusItem` | `Enum StatusItem` | Not Null | Situação da entrega: `retirado`, `pendente`, `parcial`. |
 
 ---
 
@@ -286,7 +286,7 @@ Detalhamento das formas de pagamento empregadas para quitar a compra.
 | `idPagamento` | `Int` | PK, Auto-increment | Identificador único da parcela de pagamento. |
 | `codCompra` | `Int` | FK -> `Compra(idCompra)` | Compra quitada. |
 | `valorPagamento` | `Decimal(6, 2)` | Not Null | Valor pago nesta forma. |
-| `tipoPagamento` | `VarChar(30)` | Not Null | Método: `'pix'`, `'dinheiro'`, `'debito'`, `'credito'`. |
+| `tipoPagamento` | `Enum TipoPagamento` | Not Null | Método: `pix`, `dinheiro`, `debito`, `credito`. |
 
 ---
 
@@ -329,14 +329,38 @@ enum StatusMatricula {
   PENDENTE
   ATIVA
 }
+
+enum EtapaSenha {
+  triagem
+  apm
+  docs
+}
+
+enum StatusSenha {
+  aguardando
+  em_atendimento
+  pendente
+  finalizada
+  cancelada
+}
+
+enum StatusItem {
+  retirado
+  pendente
+  parcial
+}
+
+enum TipoPagamento {
+  pix
+  dinheiro
+  debito
+  credito
+}
 ```
 
 ### Domínios em VarChar Padronizados:
-- **`Senha.etapaSenha`:** `'triagem'`, `'apm'`, `'docs'`
-- **`Senha.statusSenha`:** `'aguardando'`, `'em_atendimento'`, `'pendente'`, `'finalizada'`, `'cancelada'`
 - **`Produto.tipoProduto`:** `'uniforme'`, `'armario'`
-- **`ItemCompra.statusItem`:** `'retirado'`, `'pendente'`, `'parcial'`
-- **`Pagamento.tipoPagamento`:** `'pix'`, `'dinheiro'`, `'debito'`, `'credito'`
+- **`Produto.statusItem`:** Uniformes: `'ativo'`, `'arquivado'`. Armários: `'disponivel'`, `'indisponivel'`.
 
 ---
 

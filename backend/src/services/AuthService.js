@@ -29,11 +29,11 @@ export default class AuthClass extends BaseService {
             });
         }
 
-        if(usuario.statusVoluntario !== "ativo"){
+        if (!usuario.statusVoluntario) {
             throw new AppError("Usuario desativado.", {
-                        status: 401,
-                        code: "USUARIO_DESATIVADO",
-                    });
+                status: 401,
+                code: "USUARIO_DESATIVADO",
+            });
         }
         
         const senhaValida = await bcrypt.compare(
@@ -98,11 +98,11 @@ export default class AuthClass extends BaseService {
             });
         }
 
-        if (usuario.statusVoluntario !== "ativo"){
+        if (!usuario.statusVoluntario) {
             throw new AppError("Usuario desativado.", {
-                        status: 401,
-                        code: "USUARIO_DESATIVADO",
-                    });
+                status: 401,
+                code: "USUARIO_DESATIVADO",
+            });
         }
 
         const accessPayload = {
