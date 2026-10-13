@@ -114,7 +114,7 @@ export default class AuthClass extends BaseService {
         }
 
         const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
-        return { accessToken };
+        return accessToken;
         } catch (error) {
 
         }
