@@ -114,4 +114,40 @@ export default class SenhaService extends BaseService {
 
     return senhaAtualizada;
   }
+
+  async avancarEtapa(id, etapaAtual) {
+    const senha = await super.buscarPorId(id, {
+      select: {
+        statusSenha: true,
+      },
+    });
+
+    if (!senha) {
+      throw senhaNaoEncontrada();
+    }
+
+    let proximaEtapa = "finalizada";
+
+    switch(etapaAtual){
+      case "triagem":
+        proximaEtapa = "apm"
+      break;
+      case "apm":
+        proximaEtapa = "docs"
+      break;
+      case "docs":
+        proximaEtapa = "finalizada"
+      break;
+      default:
+        proximaEtapa = "finalizada"
+      break;
+    }
+
+    super.atualizar(id,
+      {
+        etapaSenha: proximaEtapa,
+        statusSenha: "aguardando"
+      }
+    )
+  }
 }
