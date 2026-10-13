@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import Alert from "../../../../../components/ui/Alert";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import InputMoeda from "../../../../../components/ui/InputMoeda";
@@ -18,7 +17,6 @@ const UniformeModal = ({
   onFechar,
   onSalvar,
   salvando = false,
-  erro = null,
 }) => {
   const emEdicao = Boolean(uniforme);
 

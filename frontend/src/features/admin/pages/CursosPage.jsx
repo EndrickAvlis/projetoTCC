@@ -20,7 +20,6 @@ const CursosPage = () => {
   const [arquivado, setArquivado] = React.useState(false);
 
   const [salvando, setSalvando] = React.useState(false);
-  const [erroOperacao, setErroOperacao] = React.useState(null);
 
   const [modalCursoAberto, setModalCursoAberto] = React.useState(false);
   const [cursoEmEdicao, setCursoEmEdicao] = React.useState(null);
@@ -40,16 +39,13 @@ const CursosPage = () => {
   const fecharModalCurso = () => {
     setModalCursoAberto(false);
     setCursoEmEdicao(null);
-    setErroOperacao(null);
   };
   const abrirModalCurso = (curso = null) => {
-    setErroOperacao(null);
     setCursoEmEdicao(curso);
     setModalCursoAberto(true);
   };
   const handleSalvarCurso = async (dados) => {
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       if (cursoEmEdicao) {
@@ -60,28 +56,22 @@ const CursosPage = () => {
 
       fecharModalCurso();
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
   };
 
-  const fecharModalPeriodo = () => {
-    setModalPeriodo(null);
-    setErroOperacao(null);
-  };
-  const abrirModalPeriodo = (curso, periodo = null) => {
-    setErroOperacao(null);
+  const fecharModalPeriodo = () => setModalPeriodo(null);
+  const abrirModalPeriodo = (curso, periodo = null) =>
     setModalPeriodo({ curso, periodo });
-  };
   const handleSalvarPeriodo = async (dados) => {
     if (!modalPeriodo) return;
 
     const { curso, periodo } = modalPeriodo;
 
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       if (periodo) {
@@ -92,8 +82,8 @@ const CursosPage = () => {
 
       fecharModalPeriodo();
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
@@ -105,7 +95,6 @@ const CursosPage = () => {
     }
 
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       await cursoService.alterarArquivamentoCurso(
@@ -116,8 +105,8 @@ const CursosPage = () => {
       setCursoParaArquivamento(null);
 
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
@@ -316,7 +305,6 @@ const CursosPage = () => {
         onFechar={fecharModalCurso}
         onSalvar={handleSalvarCurso}
         salvando={salvando}
-        erro={erroOperacao}
       />
       <PeriodoModal
         aberto={Boolean(modalPeriodo)}
@@ -324,7 +312,6 @@ const CursosPage = () => {
         onFechar={fecharModalPeriodo}
         onSalvar={handleSalvarPeriodo}
         salvando={salvando}
-        erro={erroOperacao}
       />
       <ConfirmarModal
         aberto={Boolean(cursoParaArquivamento)}
@@ -345,7 +332,6 @@ const CursosPage = () => {
         }
         variante={cursoParaArquivamento?.arquivado ? "success" : "danger"}
         salvando={salvando}
-        erro={erroOperacao}
       />
     </section>
   );

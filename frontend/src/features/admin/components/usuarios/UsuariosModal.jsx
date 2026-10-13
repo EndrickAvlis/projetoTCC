@@ -23,7 +23,6 @@ const UsuariosModal = ({
   onFechar,
   onSalvar,
   salvando = false,
-  erro = null,
 }) => {
   const emEdicao = Boolean(usuario);
   const ehSupervisor = usuarioLogado?.tipo === "supervisor";
@@ -99,8 +98,6 @@ const UsuariosModal = ({
       largura="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {erro && <p className="text-sm text-status-danger">{erro}</p>}
-
         <Input
           label="Nome completo"
           maxLength={100}

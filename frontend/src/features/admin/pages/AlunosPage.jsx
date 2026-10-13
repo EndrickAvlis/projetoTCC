@@ -78,8 +78,8 @@ const AlunosPage = () => {
     try {
       await AlunosService.atualizarDadosAluno(alunoId, { status: novoStatus });
       recarregarAlunos();
-    } catch (err) {
-      alert(err.message || "Erro ao alterar situação do aluno.");
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     }
   };
 

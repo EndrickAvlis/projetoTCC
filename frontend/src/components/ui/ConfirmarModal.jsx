@@ -11,7 +11,6 @@ const ConfirmarModal = ({
   textoCancelar = "Cancelar",
   variante = "danger", // "danger" | "success" | "primary"
   salvando = false,
-  erro = null,
   largura = "max-w-lg",
   children,
 }) => {
@@ -23,8 +22,6 @@ const ConfirmarModal = ({
       largura={largura}
     >
       <div className="space-y-5">
-        {erro && <p className="text-sm text-status-danger">{erro}</p>}
-
         {children ? (
           children
         ) : (

@@ -14,7 +14,6 @@ const SecaoArmarios = () => {
   const [modalArmarioAberto, setModalArmarioAberto] = React.useState(false);
   const [armarioEmEdicao, setArmarioEmEdicao] = React.useState(null);
   const [salvando, setSalvando] = React.useState(false);
-  const [erroOperacao, setErroOperacao] = React.useState(null);
 
   const {
     armario,
@@ -26,18 +25,15 @@ const SecaoArmarios = () => {
   const fecharModalArmario = () => {
     setModalArmarioAberto(false);
     setArmarioEmEdicao(null);
-    setErroOperacao(null);
   };
 
   const abrirModalArmario = (armarioParaEdicao = null) => {
-    setErroOperacao(null);
     setArmarioEmEdicao(armarioParaEdicao);
     setModalArmarioAberto(true);
   };
 
   const handleSalvarArmario = async (dados) => {
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       if (armarioEmEdicao) {
@@ -47,8 +43,8 @@ const SecaoArmarios = () => {
       }
       fecharModalArmario();
       await recarregarArmario();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
@@ -58,7 +54,6 @@ const SecaoArmarios = () => {
     if (!armario) return;
 
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       await produtoService.alterarDisponibilidadeArmario(
@@ -66,8 +61,8 @@ const SecaoArmarios = () => {
         armario.status !== "disponivel"
       );
       await recarregarArmario();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
@@ -82,10 +77,6 @@ const SecaoArmarios = () => {
       aria-labelledby="tab-armarios"
       className="space-y-4"
     >
-      {erroOperacao && erroOperacao !== "Dados da requisição inválidos." && (
-        <Alert type="error" message={erroOperacao} />
-      )}
-
       {carregandoArmario ? (
         <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center text-text-secondary">
           Carregando configuração do armário...
@@ -182,7 +173,6 @@ const SecaoArmarios = () => {
         onFechar={fecharModalArmario}
         onSalvar={handleSalvarArmario}
         salvando={salvando}
-        erro={erroOperacao}
       />
     </section>
   );

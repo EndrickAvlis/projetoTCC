@@ -31,7 +31,6 @@ const UsuariosPage = () => {
   const [statusAtivo, setStatusAtivo] = React.useState(true);
 
   const [salvando, setSalvando] = React.useState(false);
-  const [erroOperacao, setErroOperacao] = React.useState(null);
 
   const [modalUsuarioAberto, setModalUsuarioAberto] = React.useState(false);
   const [usuarioEmEdicao, setUsuarioEmEdicao] = React.useState(null);
@@ -45,7 +44,6 @@ const UsuariosPage = () => {
   });
 
   const abrirModalUsuario = (usuario = null) => {
-    setErroOperacao(null);
     setUsuarioEmEdicao(usuario);
     setModalUsuarioAberto(true);
   };
@@ -53,12 +51,10 @@ const UsuariosPage = () => {
   const fecharModalUsuario = () => {
     setModalUsuarioAberto(false);
     setUsuarioEmEdicao(null);
-    setErroOperacao(null);
   };
 
   const handleSalvarUsuario = async (dados, id = usuarioEmEdicao?.id) => {
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       if (id) {
@@ -70,8 +66,8 @@ const UsuariosPage = () => {
       fecharModalUsuario();
       setUsuarioParaAlterarStatus(null);
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message || "Erro ao salvar usuário.");
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
@@ -268,7 +264,6 @@ const UsuariosPage = () => {
         onFechar={fecharModalUsuario}
         onSalvar={handleSalvarUsuario}
         salvando={salvando}
-        erro={erroOperacao}
       />
 
       <ConfirmarModal
@@ -295,7 +290,6 @@ const UsuariosPage = () => {
         }
         variante={usuarioParaAlterarStatus?.status ? "danger" : "success"}
         salvando={salvando}
-        erro={erroOperacao}
       />
     </section>
   );

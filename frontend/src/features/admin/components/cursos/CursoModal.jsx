@@ -18,7 +18,6 @@ const CursoModal = ({
   onFechar,
   onSalvar,
   salvando = false,
-  erro = null,
 }) => {
   const emEdicao = Boolean(curso);
 

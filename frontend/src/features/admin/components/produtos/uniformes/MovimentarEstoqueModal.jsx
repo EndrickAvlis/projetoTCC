@@ -37,7 +37,6 @@ const MovimentarEstoqueModal = ({
   onFechar,
   onSalvar,
   salvando = false,
-  erro = null,
 }) => {
   const [operacao, setOperacao] = React.useState("adicionar");
   const [quantidade, setQuantidade] = React.useState("");
@@ -156,10 +155,6 @@ const MovimentarEstoqueModal = ({
       largura="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {erro && erro !== "Dados da requisição inválidos." && (
-          <Alert type="error" message={erro} />
-        )}
-
         {/* Card informativo do Uniforme */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-surface-muted p-4">
           <div className="flex items-center gap-3.5">

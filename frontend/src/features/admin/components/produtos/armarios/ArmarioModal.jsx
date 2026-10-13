@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import Alert from "../../../../../components/ui/Alert";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import InputMoeda from "../../../../../components/ui/InputMoeda";
@@ -17,7 +16,6 @@ const ArmarioModal = ({
   onFechar,
   onSalvar,
   salvando = false,
-  erro = null,
 }) => {
   const emEdicao = Boolean(armario);
 
@@ -91,9 +89,6 @@ const ArmarioModal = ({
       largura="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {erro && erro !== "Dados da requisição inválidos." && (
-          <Alert type="error" message={erro} />
-        )}
         {!emEdicao && (
           <p className="text-sm text-text-secondary">
             Informe o preço e a quantidade inicial para os armários.
