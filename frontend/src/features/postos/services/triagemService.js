@@ -5,12 +5,6 @@ export const listarAlunos = (nome, limite = 10) => {
   return requisitarApi(`/alunos?${query.toString()}`);
 };
 
-export const criarAluno = (dados) =>
-  requisitarApi("/alunos", {
-    method: "POST",
-    body: dados,
-  });
-
 export const salvarAluno = (senhaId, payload) =>
   requisitarApi(`/senhas/${encodeURIComponent(senhaId)}/aluno`, {
     method: "PUT",
@@ -20,19 +14,16 @@ export const salvarAluno = (senhaId, payload) =>
 export const listarCursos = () => requisitarApi("/cursos");
 
 export const listarPendencias = () =>
-  requisitarApi("/filas/pendencias?etapa=triagem");
+  requisitarApi("/pendencias?etapa=triagem");
 
 export const registrarPendencia = (atendimentoId, documentos) =>
-  requisitarApi(
-    `/atendimentos/${encodeURIComponent(atendimentoId)}/pendencias`,
-    {
-      method: "POST",
-      body: { documentos },
-    },
-  );
+  requisitarApi("/pendencias", {
+    method: "POST",
+    body: { atendimentoId, documentos },
+  });
 
 export const retomarPendencia = (senhaId, etapa = "triagem") =>
-  requisitarApi("/atendimento/retomar", {
+  requisitarApi("/pendencias/retomar", {
     method: "POST",
     body: { senhaId, etapa },
   });
