@@ -1,11 +1,9 @@
-import SenhaService from "../services/SenhaService.js";
-import VoluntarioService from "../services/VoluntarioService.js";
-import HistoricoSenhaService from "../services/HistoricoSenhaService.js";
+import SenhaService from "../services/senhaService.js";
+import HistoricoSenhaService from "../services/historicoSenhaService.js";
 import AppError from "../errors/AppError.js";
 import { exactOptional } from "zod";
 
 const senhaService = new SenhaService();
-const voluntarioService = new VoluntarioService();
 const historicoSenhaService = new HistoricoSenhaService();
 
 const senhaNaoEncontrada = () =>
