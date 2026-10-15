@@ -33,6 +33,12 @@ apiClient.interceptors.response.use(
     ) {
       dadosReq._retry = true;
 
+      if (erro.response?.data?.code === "USUARIO_DESATIVADO") {
+        sessionStorage.setItem("alerta_sessao", erro.response.data.message);
+        window.dispatchEvent(new Event("auth:unauthorized"));
+        return Promise.reject(erro);
+      }
+
       if (!promisseRefresh) {
         promisseRefresh = apiClient
           .post("/auth/refresh")
@@ -69,15 +75,27 @@ export const requisitarApi = async (
   } catch (error) {
     const res = error.response;
     const corpo = res?.data;
-    throw new ApiError(
+    const mensagem =
       corpo?.message ||
-        corpo?.mensagem ||
-        "Não foi possível concluir a solicitação.",
-      {
-        status: res?.status,
-        code: corpo?.code,
-        details: corpo?.details,
-      },
-    );
+      corpo?.mensagem ||
+      "Não foi possível concluir a solicitação.";
+
+    const deveNotificar =
+      !rota.startsWith("/auth") &&
+      (!res ||
+        res.status >= 500 ||
+        (method !== "GET" &&
+          res.status !== 401 &&
+          corpo?.code !== "DADOS_INVALIDOS"));
+
+    if (deveNotificar) {
+      window.dispatchEvent(new CustomEvent("api:erro", { detail: mensagem }));
+    }
+
+    throw new ApiError(mensagem, {
+      status: res?.status,
+      code: corpo?.code,
+      details: corpo?.details,
+    });
   }
 };

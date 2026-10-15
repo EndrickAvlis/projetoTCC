@@ -131,10 +131,9 @@ Todas as telas operacionais (**Triagem**, **APM** e **Documentos**) compartilham
 - Redefinição administrativa de senhas de acesso.
 - Desativação temporária e reativação de contas de voluntários.
 
-#### Monitoramento de Filas
-- Visão panorâmica de todas as filas simultâneas em operação.
-- Identificação de guichês ativos e voluntários logados.
-- Recurso administrativo para reinício da sequência diária de senhas ou cancelamento de senhas extraviadas.
+#### Configurações Operacionais
+- Chave de liberação e pausa da locação de armários na APM em tempo real.
+- Monitoramento da última senha emitida e recurso administrativo para reinicialização da sequência diária de senhas.
 
 #### Relatórios e Prestação de Contas
 - **Relatório Financeiro da APM:** demonstrativo de arrecadação detalhado por forma de pagamento (Pix, Dinheiro, Cartão), produtos vendidos, armários locados e contribuições espontâneas.

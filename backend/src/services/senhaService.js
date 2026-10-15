@@ -59,6 +59,9 @@ export default class SenhaService extends BaseService {
           gte: inicioDia,
           lt: fimDia,
         },
+        statusSenha: {
+          not: "cancelada",
+        },
       },
       orderBy: {
         senhaCodigo: "desc",
@@ -82,6 +85,59 @@ export default class SenhaService extends BaseService {
         select: senhaSelect,
       },
     );
+  }
+
+  async reiniciarSequencia() {
+    const agora = new Date();
+    const { inicioDia, fimDia } = obterIntervaloDia(agora);
+
+    const senhasAfetadas = await this.model.updateMany({
+      where: {
+        dataHoraInicioSenha: {
+          gte: inicioDia,
+          lt: fimDia,
+        },
+        statusSenha: {
+          not: "cancelada",
+        },
+      },
+      data: {
+        statusSenha: "cancelada",
+        dataHoraFimSenha: agora,
+      },
+    });
+
+    return {
+      senhasCanceladas: senhasAfetadas.count,
+      proximaSenha: 1,
+    };
+  }
+
+  async obterUltimaSenhaDoDia() {
+    const agora = new Date();
+    const { inicioDia, fimDia } = obterIntervaloDia(agora);
+
+    const ultimaSenha = await this.model.findFirst({
+      where: {
+        dataHoraInicioSenha: {
+          gte: inicioDia,
+          lt: fimDia,
+        },
+        statusSenha: {
+          not: "cancelada",
+        },
+      },
+      orderBy: {
+        senhaCodigo: "desc",
+      },
+      select: {
+        senhaCodigo: true,
+      },
+    });
+
+    return {
+      ultimoNumero: ultimaSenha?.senhaCodigo ?? 0,
+    };
   }
 
   async alterarPrioridadeSenha(id, tipoSenha) {

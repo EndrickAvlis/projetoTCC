@@ -1,4 +1,4 @@
-import { useState } from "react";
+import * as React from "react";
 import * as FaIcons from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
@@ -17,18 +17,26 @@ const TELAS = [
 const TELAS_COM_GUICHE = ["triagem", "apm", "docs"];
 
 const LoginPage = () => {
-  const [nome, setNome] = useState("");
-  const [senha, setSenha] = useState("");
-  const [tela, setTela] = useState("");
-  const [guiche, setGuiche] = useState("");
-  const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
+  const [nome, setNome] = React.useState("");
+  const [senha, setSenha] = React.useState("");
+  const [tela, setTela] = React.useState("");
+  const [guiche, setGuiche] = React.useState("");
+  const [erro, setErro] = React.useState("");
+  const [carregando, setCarregando] = React.useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const exigeGuiche = TELAS_COM_GUICHE.includes(tela);
   const formularioInvalido =
     !nome || !senha || !tela || (exigeGuiche && !guiche);
+
+  React.useEffect(() => {
+    const mensagemSessao = sessionStorage.getItem("alerta_sessao");
+    if (mensagemSessao) {
+      setErro(mensagemSessao);
+      sessionStorage.removeItem("alerta_sessao");
+    }
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -57,19 +65,17 @@ const LoginPage = () => {
           Entrar no sistema
         </h1>
 
-        {erro && (
-          <div className="bg-status-danger-bg text-status-danger border border-status-danger rounded-md px-4 py-2 text-sm mb-4">
-            {erro}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Nome de usuário"
             size="md"
             placeholder="Digite seu usuário"
             value={nome}
-            onChange={(event) => setNome(event.target.value)}
+            onChange={(event) => {
+              setNome(event.target.value);
+              if (erro) setErro("");
+            }}
+            error={erro ? " " : ""}
             icon={<FaIcons.FaUser className="text-primary" />}
             iconPosition="left"
           />
@@ -80,7 +86,11 @@ const LoginPage = () => {
             type="password"
             placeholder="Digite sua senha"
             value={senha}
-            onChange={(event) => setSenha(event.target.value)}
+            onChange={(event) => {
+              setSenha(event.target.value);
+              if (erro) setErro("");
+            }}
+            error={erro}
             icon={<FaIcons.FaLock className="text-primary" />}
             iconPosition="left"
           />

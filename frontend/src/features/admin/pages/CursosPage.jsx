@@ -20,20 +20,15 @@ const CursosPage = () => {
   const [arquivado, setArquivado] = React.useState(false);
 
   const [salvando, setSalvando] = React.useState(false);
-  const [erroOperacao, setErroOperacao] = React.useState(null);
 
-  // Modal de Curso
   const [modalCursoAberto, setModalCursoAberto] = React.useState(false);
   const [cursoEmEdicao, setCursoEmEdicao] = React.useState(null);
 
-  // Modal de Período
   const [modalPeriodo, setModalPeriodo] = React.useState(null);
 
-  // Modal de Arquivamento
   const [cursoParaArquivamento, setCursoParaArquivamento] =
     React.useState(null);
 
-  // UI da Tabela
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
 
   const { cursos, total, carregando, erro, recarregar } = useCursos({
@@ -41,20 +36,16 @@ const CursosPage = () => {
     arquivado,
   });
 
-  //Adição e edição de cursos
   const fecharModalCurso = () => {
     setModalCursoAberto(false);
     setCursoEmEdicao(null);
-    setErroOperacao(null);
   };
   const abrirModalCurso = (curso = null) => {
-    setErroOperacao(null);
     setCursoEmEdicao(curso);
     setModalCursoAberto(true);
   };
   const handleSalvarCurso = async (dados) => {
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       if (cursoEmEdicao) {
@@ -65,29 +56,22 @@ const CursosPage = () => {
 
       fecharModalCurso();
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
   };
 
-  //Adição e edição de periodos
-  const fecharModalPeriodo = () => {
-    setModalPeriodo(null);
-    setErroOperacao(null);
-  };
-  const abrirModalPeriodo = (curso, periodo = null) => {
-    setErroOperacao(null);
+  const fecharModalPeriodo = () => setModalPeriodo(null);
+  const abrirModalPeriodo = (curso, periodo = null) =>
     setModalPeriodo({ curso, periodo });
-  };
   const handleSalvarPeriodo = async (dados) => {
     if (!modalPeriodo) return;
 
     const { curso, periodo } = modalPeriodo;
 
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       if (periodo) {
@@ -98,8 +82,8 @@ const CursosPage = () => {
 
       fecharModalPeriodo();
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
@@ -111,7 +95,6 @@ const CursosPage = () => {
     }
 
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       await cursoService.alterarArquivamentoCurso(
@@ -122,8 +105,8 @@ const CursosPage = () => {
       setCursoParaArquivamento(null);
 
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
@@ -213,7 +196,6 @@ const CursosPage = () => {
       cellClassName: "text-right",
       render: (curso) => (
         <TableMenuActions
-          labelAria={`Ações do curso ${curso.nome}`}
           itens={[
             !curso.arquivado && {
               label: "Adicionar período",
@@ -298,8 +280,11 @@ const CursosPage = () => {
       {erro && <Alert type="error" message={erro} />}
 
       {carregando ? (
-        <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center text-text-secondary">
-          Carregando cursos...
+        <div className="flex items-center justify-center rounded-xl border border-border bg-surface py-16 text-sm text-text-secondary">
+          <div className="flex flex-col items-center gap-2">
+            <FiIcons.FiLoader className="h-6 w-6 animate-spin text-primary" />
+            <span>Carregando cursos...</span>
+          </div>
         </div>
       ) : (
         <DataTable
@@ -320,7 +305,6 @@ const CursosPage = () => {
         onFechar={fecharModalCurso}
         onSalvar={handleSalvarCurso}
         salvando={salvando}
-        erro={erroOperacao}
       />
       <PeriodoModal
         aberto={Boolean(modalPeriodo)}
@@ -328,7 +312,6 @@ const CursosPage = () => {
         onFechar={fecharModalPeriodo}
         onSalvar={handleSalvarPeriodo}
         salvando={salvando}
-        erro={erroOperacao}
       />
       <ConfirmarModal
         aberto={Boolean(cursoParaArquivamento)}
@@ -349,7 +332,6 @@ const CursosPage = () => {
         }
         variante={cursoParaArquivamento?.arquivado ? "success" : "danger"}
         salvando={salvando}
-        erro={erroOperacao}
       />
     </section>
   );

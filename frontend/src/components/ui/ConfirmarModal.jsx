@@ -1,4 +1,3 @@
-import Alert from "./Alert";
 import Button from "./Button";
 import Modal from "./Modal";
 
@@ -12,7 +11,6 @@ const ConfirmarModal = ({
   textoCancelar = "Cancelar",
   variante = "danger", // "danger" | "success" | "primary"
   salvando = false,
-  erro = null,
   largura = "max-w-lg",
   children,
 }) => {
@@ -24,8 +22,6 @@ const ConfirmarModal = ({
       largura={largura}
     >
       <div className="space-y-5">
-        {erro && <Alert type="error" message={erro} />}
-
         {children ? (
           children
         ) : (

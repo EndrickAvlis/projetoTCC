@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import Alert from "../../../../../components/ui/Alert";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import InputMoeda from "../../../../../components/ui/InputMoeda";
@@ -17,7 +16,6 @@ const ArmarioModal = ({
   onFechar,
   onSalvar,
   salvando = false,
-  erro = null,
 }) => {
   const emEdicao = Boolean(armario);
 
@@ -54,17 +52,19 @@ const ArmarioModal = ({
     const newErrors = {};
     const preco = Number(dados.preco);
     const quantidade = Number(dados.quantidade);
+
     if (!Number.isFinite(preco) || preco <= 0) {
-      newErrors.preco = "Informe um preço maior que zero.";
+      newErrors.preco = "Insira o preço.";
     }
-    if (
-      dados.quantidade === "" ||
-      !Number.isInteger(quantidade) ||
-      quantidade < 0
-    ) {
-      newErrors.quantidade =
-        "Informe uma quantidade inteira maior ou igual a zero.";
+
+    if (dados.quantidade === "") {
+      newErrors.quantidade = "Insira a quantidade disponível.";
+    } else if (!Number.isInteger(quantidade)) {
+      newErrors.quantidade = "Informe uma quantidade inteira.";
+    } else if (quantidade < 0) {
+      newErrors.quantidade = "A quantidade deve ser maior ou igual a 0.";
     }
+
     setErros(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -72,7 +72,7 @@ const ArmarioModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!validarArmarioForm) return;
+    if (!validarArmarioForm()) return;
     onSalvar({
       preco: dados.preco,
       quantidade: Number(dados.quantidade),
@@ -89,7 +89,6 @@ const ArmarioModal = ({
       largura="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {erro && <Alert type="error" message={erro} />}
         {!emEdicao && (
           <p className="text-sm text-text-secondary">
             Informe o preço e a quantidade inicial para os armários.

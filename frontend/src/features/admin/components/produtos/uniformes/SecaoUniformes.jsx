@@ -22,7 +22,6 @@ const SecaoUniformes = () => {
 
   const [modalAberto, setModalAberto] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
-  const [erroOperacao, setErroOperacao] = React.useState(null);
   const [salvandoAcao, setSalvandoAcao] = React.useState(false);
 
   const [uniformeParaEstoque, setUniformeParaEstoque] = React.useState(null);
@@ -38,18 +37,15 @@ const SecaoUniformes = () => {
   const fecharModalUniforme = () => {
     setModalAberto(false);
     setUniformeEmEdicao(null);
-    setErroOperacao(null);
   };
 
   const abrirModalUniforme = (uniformeParaEdicao = null) => {
-    setErroOperacao(null);
     setUniformeEmEdicao(uniformeParaEdicao);
     setModalAberto(true);
   };
 
   const handleSalvarUniforme = async (dadosUniforme) => {
     setSalvando(true);
-    setErroOperacao(null);
     try {
       if (uniformeEmEdicao) {
         await produtoService.atualizarUniforme(
@@ -61,23 +57,17 @@ const SecaoUniformes = () => {
       }
       fecharModalUniforme();
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvando(false);
     }
-  };
-
-  const abrirMovimentacaoEstoque = (uniforme) => {
-    setErroOperacao(null);
-    setUniformeParaEstoque(uniforme);
   };
 
   const salvarMovimentacaoEstoque = async (movimentacao) => {
     if (!uniformeParaEstoque) return;
 
     setSalvandoAcao(true);
-    setErroOperacao(null);
 
     try {
       await produtoService.alterarEstoqueUniforme(
@@ -86,8 +76,8 @@ const SecaoUniformes = () => {
       );
       setUniformeParaEstoque(null);
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvandoAcao(false);
     }
@@ -97,7 +87,6 @@ const SecaoUniformes = () => {
     if (!uniformeParaArquivamento) return;
 
     setSalvandoAcao(true);
-    setErroOperacao(null);
 
     try {
       await produtoService.alterarArquivamentoUniforme(
@@ -106,8 +95,8 @@ const SecaoUniformes = () => {
       );
       setUniformeParaArquivamento(null);
       await recarregar();
-    } catch (error) {
-      setErroOperacao(error.message);
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
     } finally {
       setSalvandoAcao(false);
     }
@@ -176,15 +165,12 @@ const SecaoUniformes = () => {
               {
                 label: "Movimentar estoque",
                 icone: FiIcons.FiPackage,
-                onClick: () => abrirMovimentacaoEstoque(uniforme),
+                onClick: () => setUniformeParaEstoque(uniforme),
               },
               {
                 label: isArquivado ? "Desarquivar" : "Arquivar",
                 icone: isArquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
-                onClick: () => {
-                  setErroOperacao(null);
-                  setUniformeParaArquivamento(uniforme);
-                },
+                onClick: () => setUniformeParaArquivamento(uniforme),
                 variante: isArquivado ? "success" : "danger",
               },
             ]}
@@ -250,7 +236,6 @@ const SecaoUniformes = () => {
         onFechar={fecharModalUniforme}
         onSalvar={handleSalvarUniforme}
         salvando={salvando}
-        erro={erroOperacao}
       />
 
       <MovimentarEstoqueModal
@@ -263,7 +248,6 @@ const SecaoUniformes = () => {
         onFechar={() => setUniformeParaEstoque(null)}
         onSalvar={salvarMovimentacaoEstoque}
         salvando={salvandoAcao}
-        erro={erroOperacao}
       />
 
       <ConfirmarModal
@@ -291,7 +275,6 @@ const SecaoUniformes = () => {
             : "danger"
         }
         salvando={salvandoAcao}
-        erro={erroOperacao}
       />
     </section>
   );
