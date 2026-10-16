@@ -23,53 +23,52 @@ const status = z.union([
     .transform((v) => v === "ativo" || v === "true"),
 ]);
 
-export const criarVoluntarioSchema = z.object({
+const dadosCriarUsuario = z.object({
   nome,
   senha: senha.optional(),
   tipo: tipo.default("atendente"),
   status: status.default(true),
 });
 
-export const atualizarVoluntarioSchema = z.object({
+const dadosAtualizarUsuario = z.object({
   nome: nome.optional(),
   senha: senha.optional(),
   tipo: tipo.optional(),
   status: status.optional(),
 });
 
-export const buscarVoluntarioSchema = z.object({
-  id: z
-    .coerce
-    .number()
-    .int("O ID deve ser um número inteiro.")
-    .positive("O ID deve ser maior que zero.")
-    .optional(),
+const id = z.coerce
+  .number()
+  .int("O ID deve ser um número inteiro.")
+  .positive("O ID deve ser maior que zero.");
 
-  busca: z
-    .string()
-    .trim()
-    .max(100, "O nome deve ter no máximo 100 caracteres.")
-    .default("")
-    .optional(),
-
-  tipo: tipo.optional(),
-  status: status.optional(),
-});
-
-export const listarVoluntariosSchema = z.object({
-  query: buscarVoluntarioSchema,
-});
-
-export const criarVoluntarioRequisicaoSchema = z.object({
-  body: criarVoluntarioSchema,
-});
-
-export const atualizarVoluntarioRequisicaoSchema = z.object({
-  params: z.object({
-    id: z.coerce
-      .number()
-      .int("O ID deve ser um número inteiro.")
-      .positive("O ID deve ser maior que zero."),
+export const listarUsuariosSchema = z.object({
+  query: z.object({
+    id: id.optional(),
+    busca: z
+      .string()
+      .trim()
+      .max(100, "O nome deve ter no máximo 100 caracteres.")
+      .default("")
+      .optional(),
+    tipo: z.preprocess((v) => (v === "" ? undefined : v), tipo.optional()),
+    status: z.preprocess((v) => (v === "" ? undefined : v), status.optional()),
   }),
-  body: atualizarVoluntarioSchema,
+});
+
+export const criarUsuarioSchema = z.object({
+  body: dadosCriarUsuario,
+});
+
+export const atualizarUsuarioSchema = z.object({
+  params: z.object({
+    id,
+  }),
+  body: dadosAtualizarUsuario,
+});
+
+export const excluirUsuarioSchema = z.object({
+  params: z.object({
+    id,
+  }),
 });

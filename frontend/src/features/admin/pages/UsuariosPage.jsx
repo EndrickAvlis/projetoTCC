@@ -42,6 +42,7 @@ const UsuariosPage = () => {
   const [usuarioEmEdicao, setUsuarioEmEdicao] = React.useState(null);
   const [usuarioParaAlterarStatus, setUsuarioParaAlterarStatus] =
     React.useState(null);
+  const [usuarioParaExcluir, setUsuarioParaExcluir] = React.useState(null);
 
   const { usuarios, carregando, erro, recarregar } = useUsuarios({
     busca,
@@ -71,6 +72,21 @@ const UsuariosPage = () => {
 
       fecharModalUsuario();
       setUsuarioParaAlterarStatus(null);
+      await recarregar();
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleExcluirUsuario = async () => {
+    if (!usuarioParaExcluir) return;
+    setSalvando(true);
+
+    try {
+      await usuarioService.excluirUsuario(usuarioParaExcluir.id);
+      setUsuarioParaExcluir(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
@@ -109,7 +125,7 @@ const UsuariosPage = () => {
   const columnsUsuario = [
     {
       key: "nome",
-      label: "Usuário",
+      label: "Nome",
       render: (u) => {
         const ehProprioUsuario = u.id === usuarioLogado?.id;
         return (
@@ -126,12 +142,12 @@ const UsuariosPage = () => {
     },
     {
       key: "tipo",
-      label: "Função / Cargo",
+      label: "Tipo",
       render: (u) => renderBadgeTipo(u.tipo),
     },
     {
       key: "status",
-      label: "Situação",
+      label: "Status",
       render: (u) =>
         u.status ? (
           <Badge variant="success" dot>
@@ -154,6 +170,7 @@ const UsuariosPage = () => {
           ehAdmin || ehProprioUsuario || u.tipo === "atendente";
         const podeInativar =
           !ehProprioUsuario && (ehAdmin || u.tipo === "atendente");
+        const podeExcluir = !ehProprioUsuario && ehAdmin && !u.status;
 
         return (
           <TableMenuActions
@@ -170,6 +187,12 @@ const UsuariosPage = () => {
                 onClick: () => setUsuarioParaAlterarStatus(u),
                 variante: u.status ? "danger" : "success",
               },
+              podeExcluir && {
+                label: "Excluir",
+                icone: FiIcons.FiTrash2,
+                onClick: () => setUsuarioParaExcluir(u),
+                variante: "danger",
+              },
             ]}
           />
         );
@@ -182,16 +205,15 @@ const UsuariosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {usuariosOrdenados.length} usuário
-            {usuariosOrdenados.length === 1 ? "" : "s"}{" "}
-            {statusAtivo ? "ativo" : "inativo"}
-            {usuariosOrdenados.length === 1 ? "" : "s"} encontrado
-            {usuariosOrdenados.length === 1 ? "" : "s"}.
+            {(() => {
+              const s = usuariosOrdenados.length === 1 ? "" : "s";
+              return `${usuariosOrdenados.length} usuário${s} ${statusAtivo ? "ativo" : "inativo"}${s} encontrado${s}.`;
+            })()}
           </p>
         </div>
 
         <Button
-          leftIcon={<FiIcons.FiUserPlus />}
+          leftIcon={<FiIcons.FiPlus />}
           className="w-full sm:w-auto"
           onClick={() => abrirModalUsuario()}
         >
@@ -276,6 +298,17 @@ const UsuariosPage = () => {
           usuarioParaAlterarStatus?.status ? "Inativar" : "Ativar"
         }
         variante={usuarioParaAlterarStatus?.status ? "danger" : "success"}
+        salvando={salvando}
+      />
+
+      <ConfirmarModal
+        aberto={Boolean(usuarioParaExcluir)}
+        onFechar={() => setUsuarioParaExcluir(null)}
+        onConfirmar={handleExcluirUsuario}
+        titulo="Excluir usuário"
+        mensagem={`Tem certeza de que deseja excluir permanentemente o usuário ${usuarioParaExcluir?.nome}? Esta ação causará a exclusão de todos os dados associados a este usuário e não poderá ser desfeita.`}
+        textoConfirmar="Excluir definitivamente"
+        variante="danger"
         salvando={salvando}
       />
     </section>

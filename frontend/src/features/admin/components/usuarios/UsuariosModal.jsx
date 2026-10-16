@@ -1,6 +1,4 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
-
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
@@ -30,7 +28,6 @@ const UsuariosModal = ({
   const [nome, setNome] = React.useState("");
   const [tipo, setTipo] = React.useState("atendente");
   const [senha, setSenha] = React.useState("");
-  const [mostrarSenha, setMostrarSenha] = React.useState(false);
   const [erros, setErros] = React.useState({});
 
   const opcoesTipo = ehSupervisor ? OPCOES_TIPO_SUPERVISOR : OPCOES_TIPO_ADMIN;
@@ -45,7 +42,6 @@ const UsuariosModal = ({
         setTipo("atendente");
       }
       setSenha("");
-      setMostrarSenha(false);
       setErros({});
     }
   }, [aberto, usuario]);
@@ -121,7 +117,7 @@ const UsuariosModal = ({
 
         <div>
           <Input
-            type={mostrarSenha ? "text" : "password"}
+            type="password"
             label={emEdicao ? "Nova senha" : "Senha"}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
@@ -132,22 +128,6 @@ const UsuariosModal = ({
             }
             error={erros.senha}
             required={!emEdicao}
-            icon={
-              <button
-                type="button"
-                onClick={() => setMostrarSenha((v) => !v)}
-                className="cursor-pointer text-text-secondary hover:text-text-primary focus:outline-none"
-                title={mostrarSenha ? "Ocultar senha" : "Ver senha"}
-                tabIndex={-1}
-              >
-                {mostrarSenha ? (
-                  <FiIcons.FiEyeOff size={18} />
-                ) : (
-                  <FiIcons.FiEye size={18} />
-                )}
-              </button>
-            }
-            iconPosition="right"
           />
           {emEdicao && (
             <p className="mt-1 text-xs text-text-secondary">
