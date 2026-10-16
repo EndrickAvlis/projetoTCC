@@ -8,29 +8,29 @@ const mapearProdutosResposta = (produto) => ({
   preco: Number(produto.precoProduto),
   quantidade: produto.quantidadeProduto,
   tipo: produto.tipoProduto,
-  status: produto.statusItem,
+  status: produto.statusProduto,
 });
 
-export const criarProdutoAdmin = async (req, res) => {
-  const produto = await produtoService.criarProduto(req.validado.body);
+export const listarProdutos = async (req, res) => {
+  const produtos = await produtoService.listar(req.validado.query);
+
+  return res.json({
+    produtos: produtos.map(mapearProdutosResposta),
+    total: produtos.length,
+  });
+};
+
+export const criarProduto = async (req, res) => {
+  const produto = await produtoService.criar(req.validado.body);
 
   return res.status(201).json({
     produto: mapearProdutosResposta(produto),
   });
 };
 
-export const listarUniformes = async (req, res) => {
-  const uniformes = await produtoService.listarUniformes(req.validado.query);
-
-  return res.json({
-    uniformes: uniformes.map(mapearProdutosResposta),
-    total: uniformes.length,
-  });
-};
-
-export const atualizarProdutosAdmin = async (req, res) => {
+export const atualizarProduto = async (req, res) => {
   const { produtoId } = req.validado.params;
-  const produto = await produtoService.atualizarProduto(
+  const produto = await produtoService.atualizar(
     produtoId,
     req.validado.body,
   );
@@ -40,21 +40,7 @@ export const atualizarProdutosAdmin = async (req, res) => {
   });
 };
 
-export const alterarStatusProdutoAdmin = async (req, res) => {
-  const { produtoId } = req.validado.params;
-  const { status } = req.validado.body;
-
-  const produto = await produtoService.alterarStatusProduto(
-    produtoId,
-    status,
-  );
-
-  return res.json({
-    produto: mapearProdutosResposta(produto),
-  });
-};
-
-export const alterarEstoqueProdutoAdmin = async (req, res) => {
+export const atualizarEstoque = async (req, res) => {
   const { produtoId } = req.validado.params;
   const { operacao, quantidade } = req.validado.body;
 
@@ -69,10 +55,11 @@ export const alterarEstoqueProdutoAdmin = async (req, res) => {
   });
 };
 
-export const buscarConfiguracaoArmario = async (req, res) => {
-  const produto = await produtoService.buscarConfiguracaoArmario();
+export const excluirProduto = async (req, res) => {
+  const { produtoId } = req.validado.params;
+  const produto = await produtoService.excluir(produtoId);
 
   return res.json({
-    armario: mapearProdutosResposta(produto),
+    produto: mapearProdutosResposta(produto),
   });
 };

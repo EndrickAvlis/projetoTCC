@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarUniformesAdmin } from "../services/produtoService";
+import { listarProdutos } from "../services/produtoService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
@@ -14,12 +14,13 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
     setErro(null);
 
     try {
-      const res = await listarUniformesAdmin({
-        busca: buscaDebounced,
-        arquivado,
+      const res = await listarProdutos({
+        tipo: "uniforme",
+        status: !arquivado,
+        busca: buscaDebounced || undefined,
       });
 
-      setUniformes(res.uniformes ?? []);
+      setUniformes(res.produtos ?? []);
       setTotal(res.total ?? 0);
     } catch (error) {
       setUniformes([]);

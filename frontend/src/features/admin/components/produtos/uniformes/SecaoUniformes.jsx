@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
-import Alert from "../../../../../components/ui/Alert";
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import DataTable from "../../../../../components/ui/DataTable";
@@ -15,47 +14,37 @@ import UniformeSelector from "./UniformeSelector";
 import { useUniformes } from "../../../hooks/useUniformes";
 import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
+import { useAuth } from "../../../../../context/authContext";
 
 const SecaoUniformes = () => {
+  const { usuario: usuarioLogado } = useAuth();
+  const ehAdmin = usuarioLogado?.tipo === "admin";
+
   const [busca, setBusca] = React.useState("");
   const [arquivado, setArquivado] = React.useState(false);
-
-  const [modalAberto, setModalAberto] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
-  const [salvandoAcao, setSalvandoAcao] = React.useState(false);
-
-  const [uniformeParaEstoque, setUniformeParaEstoque] = React.useState(null);
-  const [uniformeEmEdicao, setUniformeEmEdicao] = React.useState(null);
-  const [uniformeParaArquivamento, setUniformeParaArquivamento] = React.useState(null);
+  const [modalAtivo, setModalAtivo] = React.useState(null);
 
   const { uniformes, total, carregando, erro, recarregar } = useUniformes({
     busca,
     arquivado,
   });
 
-  // Adição e edição de uniforme
-  const fecharModalUniforme = () => {
-    setModalAberto(false);
-    setUniformeEmEdicao(null);
-  };
-
-  const abrirModalUniforme = (uniformeParaEdicao = null) => {
-    setUniformeEmEdicao(uniformeParaEdicao);
-    setModalAberto(true);
-  };
-
   const handleSalvarUniforme = async (dadosUniforme) => {
     setSalvando(true);
     try {
-      if (uniformeEmEdicao) {
-        await produtoService.atualizarUniforme(
-          uniformeEmEdicao.id,
+      if (modalAtivo?.uniforme) {
+        await produtoService.atualizarProduto(
+          modalAtivo.uniforme.id,
           dadosUniforme
         );
       } else {
-        await produtoService.criarUniforme(dadosUniforme);
+        await produtoService.criarProduto({
+          ...dadosUniforme,
+          tipo: "uniforme",
+        });
       }
-      fecharModalUniforme();
+      setModalAtivo(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
@@ -65,40 +54,56 @@ const SecaoUniformes = () => {
   };
 
   const salvarMovimentacaoEstoque = async (movimentacao) => {
-    if (!uniformeParaEstoque) return;
+    if (!modalAtivo?.uniforme) return;
 
-    setSalvandoAcao(true);
+    setSalvando(true);
 
     try {
-      await produtoService.alterarEstoqueUniforme(
-        uniformeParaEstoque.id,
+      await produtoService.atualizarEstoque(
+        modalAtivo.uniforme.id,
         movimentacao
       );
-      setUniformeParaEstoque(null);
+      setModalAtivo(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
     } finally {
-      setSalvandoAcao(false);
+      setSalvando(false);
     }
   };
 
   const confirmarArquivamento = async () => {
-    if (!uniformeParaArquivamento) return;
+    if (!modalAtivo?.uniforme) return;
 
-    setSalvandoAcao(true);
+    setSalvando(true);
 
     try {
-      await produtoService.alterarArquivamentoUniforme(
-        uniformeParaArquivamento.id,
-        uniformeParaArquivamento.status !== "arquivado"
+      await produtoService.atualizarProduto(
+        modalAtivo.uniforme.id,
+        { status: !modalAtivo.uniforme.status }
       );
-      setUniformeParaArquivamento(null);
+      setModalAtivo(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
     } finally {
-      setSalvandoAcao(false);
+      setSalvando(false);
+    }
+  };
+
+  const handleExcluirUniforme = async () => {
+    if (!modalAtivo?.uniforme) return;
+
+    setSalvando(true);
+
+    try {
+      await produtoService.excluirProduto(modalAtivo.uniforme.id);
+      setModalAtivo(null);
+      await recarregar();
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -131,16 +136,16 @@ const SecaoUniformes = () => {
     },
     {
       key: "status",
-      label: "Situação",
+      label: "Status",
       render: (uniforme) => {
-        const isArquivado = uniforme.status === "arquivado";
+        const isAtivo = Boolean(uniforme.status);
         return (
           <Badge
-            variant={isArquivado ? "neutral" : "success"}
+            variant={isAtivo ? "success" : "neutral"}
             dot
             size="sm"
           >
-            {isArquivado ? "Arquivado" : "Ativo"}
+            {isAtivo ? "Ativo" : "Arquivado"}
           </Badge>
         );
       },
@@ -151,7 +156,8 @@ const SecaoUniformes = () => {
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (uniforme) => {
-        const isArquivado = uniforme.status === "arquivado";
+        const isArquivado = !uniforme.status;
+        const podeExcluir = ehAdmin && isArquivado;
 
         return (
           <TableMenuActions
@@ -160,18 +166,24 @@ const SecaoUniformes = () => {
               {
                 label: "Editar uniforme",
                 icone: FiIcons.FiEdit2,
-                onClick: () => abrirModalUniforme(uniforme),
+                onClick: () => setModalAtivo({ tipo: "edicao", uniforme }),
               },
               {
                 label: "Movimentar estoque",
                 icone: FiIcons.FiPackage,
-                onClick: () => setUniformeParaEstoque(uniforme),
+                onClick: () => setModalAtivo({ tipo: "estoque", uniforme }),
               },
               {
                 label: isArquivado ? "Desarquivar" : "Arquivar",
                 icone: isArquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
-                onClick: () => setUniformeParaArquivamento(uniforme),
+                onClick: () => setModalAtivo({ tipo: "arquivar", uniforme }),
                 variante: isArquivado ? "success" : "danger",
+              },
+              podeExcluir && {
+                label: "Excluir",
+                icone: FiIcons.FiTrash2,
+                onClick: () => setModalAtivo({ tipo: "excluir", uniforme }),
+                variante: "danger",
               },
             ]}
           />
@@ -189,16 +201,18 @@ const SecaoUniformes = () => {
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <p className="mt-1 text-text-secondary">
-          {total} uniforme{total === 1 ? "" : "s"}{" "}
-          {arquivado ? "arquivado" : "ativo"}
-          {total === 1 ? "" : "s"} encontrado
-          {total === 1 ? "" : "s"}.
+          {(() => {
+            const s = total === 1 ? "" : "s";
+            return `
+              ${total} uniforme${s} ${arquivado ? "arquivado" : "ativo"} 
+              encontrado${s}.`;
+          })()}
         </p>
 
         <Button
           leftIcon={<FiIcons.FiPlus />}
           className="w-full sm:w-auto"
-          onClick={() => abrirModalUniforme()}
+          onClick={() => setModalAtivo({ tipo: "cadastro" })}
         >
           Adicionar uniforme
         </Button>
@@ -211,70 +225,77 @@ const SecaoUniformes = () => {
         onAlterarArquivado={setArquivado}
       />
 
-      {erro && <Alert type="error" message={erro} />}
-
-      {carregando ? (
-        <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center text-text-secondary">
-          Carregando uniformes...
-        </div>
-      ) : (
-        <DataTable
-          columns={columnsUniforme}
-          data={uniformes}
-          getRowKey={(uniforme) => uniforme.id}
-          emptyMessage={
-            arquivado
-              ? "Nenhum uniforme arquivado encontrado."
-              : "Nenhum uniforme ativo encontrado."
-          }
-        />
-      )}
+      <DataTable
+        columns={columnsUniforme}
+        data={carregando ? [] : uniformes}
+        getRowKey={(uniforme) => uniforme.id}
+        emptyMessage={
+          erro
+            ? erro
+            : carregando
+              ? "Carregando uniformes..."
+              : arquivado
+                ? "Nenhum uniforme arquivado encontrado."
+                : "Nenhum uniforme ativo encontrado."
+        }
+      />
 
       <UniformeModal
-        aberto={modalAberto}
-        uniforme={uniformeEmEdicao}
-        onFechar={fecharModalUniforme}
+        aberto={modalAtivo?.tipo === "cadastro" || modalAtivo?.tipo === "edicao"}
+        uniforme={modalAtivo?.tipo === "edicao" ? modalAtivo.uniforme : null}
+        onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarUniforme}
         salvando={salvando}
       />
 
       <MovimentarEstoqueModal
         key={
-          uniformeParaEstoque
-            ? `estoque-${uniformeParaEstoque.id}`
+          modalAtivo?.tipo === "estoque"
+            ? `estoque-${modalAtivo.uniforme.id}`
             : "sem-uniforme-estoque"
         }
-        uniforme={uniformeParaEstoque}
-        onFechar={() => setUniformeParaEstoque(null)}
+        uniforme={modalAtivo?.tipo === "estoque" ? modalAtivo.uniforme : null}
+        onFechar={() => setModalAtivo(null)}
         onSalvar={salvarMovimentacaoEstoque}
-        salvando={salvandoAcao}
+        salvando={salvando}
       />
 
       <ConfirmarModal
-        aberto={Boolean(uniformeParaArquivamento)}
-        onFechar={() => setUniformeParaArquivamento(null)}
+        aberto={modalAtivo?.tipo === "arquivar"}
+        onFechar={() => setModalAtivo(null)}
         onConfirmar={confirmarArquivamento}
         titulo={
-          uniformeParaArquivamento?.status === "arquivado"
+          !modalAtivo?.uniforme?.status
             ? "Desarquivar uniforme"
             : "Arquivar uniforme"
         }
         mensagem={
-          uniformeParaArquivamento?.status === "arquivado"
-            ? `Deseja desarquivar o uniforme ${uniformeParaArquivamento?.nome}?`
-            : `Deseja arquivar o uniforme ${uniformeParaArquivamento?.nome}? Ele deixará de aparecer entre os uniformes ativos.`
+          !modalAtivo?.uniforme?.status
+            ? `Deseja desarquivar o uniforme ${modalAtivo?.uniforme?.nome}?`
+            : `Deseja arquivar o uniforme ${modalAtivo?.uniforme?.nome}? Ele deixará de aparecer entre os uniformes ativos.`
         }
         textoConfirmar={
-          uniformeParaArquivamento?.status === "arquivado"
+          !modalAtivo?.uniforme?.status
             ? "Desarquivar"
             : "Arquivar"
         }
         variante={
-          uniformeParaArquivamento?.status === "arquivado"
+          !modalAtivo?.uniforme?.status
             ? "success"
             : "danger"
         }
-        salvando={salvandoAcao}
+        salvando={salvando}
+      />
+
+      <ConfirmarModal
+        aberto={modalAtivo?.tipo === "excluir"}
+        onFechar={() => setModalAtivo(null)}
+        onConfirmar={handleExcluirUniforme}
+        titulo="Excluir uniforme"
+        mensagem={`Tem certeza de que deseja excluir permanentemente o uniforme ${modalAtivo?.uniforme?.nome}? Esta ação é irreversível e removerá todos os registros associados a este produto.`}
+        textoConfirmar="Excluir definitivamente"
+        variante="danger"
+        salvando={salvando}
       />
     </section>
   );

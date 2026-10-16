@@ -43,17 +43,16 @@ const ConfiguracoesPage = () => {
     void Promise.resolve().then(carregarUltimaSenha);
   }, [carregarUltimaSenha]);
 
-  const armarioDisponivel = armario?.status === "disponivel";
+  const armarioDisponivel = Boolean(armario?.status);
 
   const handleToggleArmario = async () => {
     if (!armario || salvandoArmario) return;
 
     setSalvandoArmario(true);
     try {
-      await produtoService.alterarDisponibilidadeArmario(
-        armario.id,
-        !armarioDisponivel,
-      );
+      await produtoService.atualizarProduto(armario.id, {
+        status: !armarioDisponivel,
+      });
       await recarregarArmario();
     } catch {
     } finally {

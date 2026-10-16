@@ -32,13 +32,6 @@ const tipoProduto = z
     }),
   );
 
-const dadosProduto = z.object({
-  nome: nomeProduto,
-  preco,
-  quantidade,
-  tipo: tipoProduto,
-});
-
 export const produtoIdSchema = z.object({
   params: z.object({
     produtoId: id,
@@ -46,7 +39,13 @@ export const produtoIdSchema = z.object({
 });
 
 export const criarProdutoSchema = z.object({
-  body: dadosProduto,
+  body: z.object({
+    nome: nomeProduto,
+    preco,
+    quantidade,
+    tipo: tipoProduto,
+    status: z.boolean().optional().default(true),
+  }),
 });
 
 export const atualizarProdutoSchema = z.object({
@@ -57,15 +56,7 @@ export const atualizarProdutoSchema = z.object({
     nome: nomeProduto.optional(),
     preco: preco.optional(),
     quantidade: quantidade.optional(),
-  }),
-});
-
-export const alterarStatusSchema = z.object({
-  params: z.object({
-    produtoId: id,
-  }),
-  body: z.object({
-    status: z.string().trim().toLowerCase(),
+    status: z.boolean().optional(),
   }),
 });
 
@@ -81,20 +72,13 @@ export const alterarEstoqueSchema = z.object({
   }),
 });
 
-export const buscarArmarioSchema = z.object({});
-
-export const listarUniformesSchema = z.object({
+export const listarProdutosSchema = z.object({
   query: z.object({
-    busca: z.string().trim().optional().default(""),
-    tipo: z
-      .enum(["uniforme"], {
-        error: "O tipo precisa ser uniforme.",
-      })
-      .default("uniforme"),
-    arquivado: z
-      .enum(["true", "false"], {
-        error: "O filtro arquivado deve ser true ou false.",
-      })
+    busca: z.string().trim().optional(),
+    tipo: z.enum(["uniforme", "armario"]).optional(),
+    status: z
+      .enum(["true", "false"])
+      .transform((v) => v === "true")
       .optional(),
   }),
 });

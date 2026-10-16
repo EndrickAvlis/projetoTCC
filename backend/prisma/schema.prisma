@@ -64,7 +64,7 @@ model Produto {
   precoProduto      Decimal @db.Decimal(5, 2)
   quantidadeProduto Int
   tipoProduto       String  @db.VarChar(20)
-  statusItem        String  @db.VarChar(20)
+  statusProduto     Boolean @default(true)
 
   itensCompra ItemCompra[]
 }

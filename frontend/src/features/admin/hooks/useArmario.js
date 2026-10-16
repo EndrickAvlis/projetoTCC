@@ -1,5 +1,5 @@
 import * as React from "react";
-import { buscarArmario } from "../services/produtoService";
+import { listarProdutos } from "../services/produtoService";
 
 export const useArmario = () => {
   const [armario, setArmario] = React.useState(null);
@@ -11,13 +11,9 @@ export const useArmario = () => {
     setErro(null);
 
     try {
-      const res = await buscarArmario();
-      setArmario(res.armario ?? null);
+      const res = await listarProdutos({ tipo: "armario" });
+      setArmario(res.produtos?.[0] ?? null);
     } catch (error) {
-      if (error.code === "ARMARIO_NAO_CONFIGURADO") {
-        setArmario(null);
-        return;
-      }
       setArmario(null);
       setErro(error.message);
     } finally {

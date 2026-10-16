@@ -6,8 +6,8 @@ import SecaoUniformes from "../components/produtos/uniformes/SecaoUniformes";
 import SecaoArmarios from "../components/produtos/armarios/SecaoArmarios";
 
 const abasProdutos = [
-  { id: "uniformes", label: "Uniformes", icone: FiIcons.FiTag },
-  { id: "armarios", label: "Armários", icone: FiIcons.FiBox },
+  { id: "uniformes", label: "Uniformes"},
+  { id: "armarios", label: "Armários"},
 ];
 
 const ProdutosPage = () => {
