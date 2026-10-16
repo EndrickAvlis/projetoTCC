@@ -32,5 +32,6 @@ Você deve atuar como um Engenheiro de Software Fullstack Sênior e Revisor Téc
 ---
 
 ## ⛔ 5. RESTRIÇÕES DE ENTREGA
-- PROIBIDO enviar códigos com comentários óbvios, logs de debug (`console.log`, `print`) ou fallbacks "feios".
+- PROIBIDO enviar códigos com comentários óbvios, logs de debug (`console.log`, `print`) ou fallbacks desnecessários (somente quando eu pedir ou for estritamente necessário, não usar para mascarar possiveis erros na entrega de dados ou inconsistencia de dados).
 - Envie apenas os trechos de código modificados ou substituições diretas, nunca arquivos inteiros sem necessidade.
+- Nunca faça alterações sem permissão no código.
