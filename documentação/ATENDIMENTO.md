@@ -142,30 +142,10 @@ Encerra a etapa atual da senha e transfere o aluno para o próximo posto na fila
   }
   ```
 
----
-
-### 3.5. Cancelar Atendimento
-Utilizado exclusivamente pelo Administrador ou Supervisor quando o aluno chamado não compareceu ao guichê após as tentativas de rechamada ou por outra inconsistência.
-
-* **Rota:** `POST /atendimentos/:id/cancelar`
-* **Parâmetro de URL:** `id` (ID da senha)
-* **Transação no Back-end (`prisma.$transaction`):**
-  1. Validar se o usuário autenticado possui o papel (`role`) de `admin` ou `supervisor` (`403 Forbidden`).
-  2. Localizar a senha correspondente ao ID.
-  3. Fechar o `HistoricoSenha` que estiver aberto para esta senha (definindo `dataHoraFimHistorico = new Date()`), caso ela estivesse em atendimento no momento do cancelamento.
-  4. Atualizar `Senha`:
-     - `statusSenha = 'cancelada'`
-     - `dataHoraFimSenha = new Date()`
-* **Resposta (HTTP 200):**
-  ```json
-  {
-    "mensagem": "Atendimento cancelado com sucesso pelo administrador."
-  }
-  ```
+retirei a rota de cancelamento, pois ela pertence a tela de postos do administrador.
 
 ---
-
-### 3.6. Retomar Atendimento Pendente
+### 3.5. Retomar Atendimento Pendente
 Utilizado quando um aluno que estava com pendência documental retorna com os documentos e tem seu atendimento reaberto no guichê.
 
 * **Rota:** `POST /atendimentos/:id/retomar`
