@@ -31,8 +31,8 @@ export const useAlunos = ({
         limite,
       });
 
-      setAlunos(res?.alunos ?? []);
-      setTotal(res?.total ?? 0);
+      setAlunos(res?.alunos);
+      setTotal(res?.total);
       if (typeof res?.totalAtivos === "number") {
         setTotalAtivos(res.totalAtivos);
       }

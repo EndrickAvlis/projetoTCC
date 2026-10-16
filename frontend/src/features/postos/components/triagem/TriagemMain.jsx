@@ -76,7 +76,6 @@ export const TriagemMain = () => {
     pendenciaSelecionada,
     selecionarPendencia,
     retomar,
-    //isso deve realmente ser assim?
     carregando: carregandoPendencias,
     erro: erroPendencias,
   } = usePendencias();
@@ -199,10 +198,6 @@ export const TriagemMain = () => {
         onSelecionar={setAbaAtiva}
         ariaLabel="Abas da triagem"
       />
-
-      {(erro || erroPendencias) && (
-        <Alert type="error" message={erro || erroPendencias} />
-      )}
 
       {abaAtiva === "atendimento" && (
         <div className="flex flex-col gap-6">

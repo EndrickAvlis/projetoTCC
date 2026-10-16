@@ -65,7 +65,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
           "curso": "Desenvolvimento de Sistemas",
           "classificacao": 1,
           "periodo": "manha",
-          "anoEscolar": 1
+          "ano": 1
         }
       ]
     }
@@ -96,7 +96,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
     "cursoId": 1,
     "classificacao": 1,
     "periodo": "manha",
-    "anoEscolar": 1
+    "ano": 1
   }
 }
 ```
@@ -144,7 +144,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
       "matricula": {
         "curso": "Desenvolvimento de Sistemas",
         "periodo": "manha",
-        "anoEscolar": 1
+        "ano": 1
       },
       "documentos": ["RG_CIN", "FOTO"],
       "registradaEm": "2026-10-09T20:15:00.000Z"
