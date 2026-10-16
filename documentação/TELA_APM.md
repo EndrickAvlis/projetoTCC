@@ -4,8 +4,8 @@
 
 A APM segue o mesmo padrão de ciclo de vida já consolidado na **Triagem**:
 1. **Operação de Negócio (Se houver):** Se o aluno adquirir produtos (`totalCompra > 0`), o frontend chama a rota de compra (`POST /compras`) para registrar o financeiro, baixar o estoque e gerar o código de retirada.
-2. **Encerramento do Atendimento (Universal):** O frontend chama a rota padrão de finalização (`POST /atendimento/finalizar`), que encerra o histórico da senha e avança o aluno para o próximo posto (`docs`).
-3. **Atendimento sem Compra:** Se o aluno não comprar nada (`totalCompra === 0`), apenas a rota `POST /atendimento/finalizar` é executada.
+2. **Encerramento do Atendimento (Universal):** O frontend chama a rota padrão de finalização (`POST /atendimentos/finalizar`), que encerra o histórico da senha e avança o aluno para o próximo posto (`docs`).
+3. **Atendimento sem Compra:** Se o aluno não comprar nada (`totalCompra === 0`), apenas a rota `POST /atendimentos/finalizar` é executada.
 
 ---
 
