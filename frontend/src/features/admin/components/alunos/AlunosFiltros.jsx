@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as FiIcons from 'react-icons/fi';
-import Input from "../../../../components/ui/Input"
-import Select from "../../../../components/ui/Select"
-import Button from "../../../../components/ui/Button"
+import Input from "../../../../components/ui/Input";
+import Select from "../../../../components/ui/Select";
+import TableFiltro from "../../../../components/ui/TableFiltro";
 
 const OPCOES = [
     { valor: "ATIVO", label: "Ativos" },
@@ -63,24 +63,12 @@ const AlunosFiltros = ({
                 </div>
             </div>
 
-            <div className="flex gap-1 rounded-btn border border-border p-1 bg-surface"
-                aria-label="Situação dos alunos">
-                {OPCOES.map((opcao) => {
-                    const ativo = status === opcao.valor;
-                    return (
-                        <Button
-                            key={opcao.valor}
-                            size="sm"
-                            variant={ativo ? "primary" : "secondary"}
-                            onClick={() => onAlterarStatus(opcao.valor)}
-                            aria-pressed={ativo}
-                            className={!ativo ? "bg-transparent text-text-secondary hover:bg-surface-muted" : ""}
-                        >
-                            {opcao.label}
-                        </Button>
-                    );
-                })}
-            </div>
+            <TableFiltro
+                options={OPCOES}
+                value={status}
+                onChange={onAlterarStatus}
+                ariaLabel="Situação dos alunos"
+            />
         </div>
     );
 };

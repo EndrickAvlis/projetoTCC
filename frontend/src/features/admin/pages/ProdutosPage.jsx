@@ -11,18 +11,18 @@ const abasProdutos = [
 ];
 
 const ProdutosPage = () => {
-  const [tipoSelecionado, setTipoSelecionado] = React.useState("uniformes");
+  const [abaAtiva, setAbaAtiva] = React.useState("uniformes");
 
   return (
     <div className="space-y-6">
       <Tabs
         itens={abasProdutos}
-        ativo={tipoSelecionado}
-        onSelecionar={setTipoSelecionado}
+        ativo={abaAtiva}
+        onSelecionar={setAbaAtiva}
         ariaLabel="Produtos"
       />
 
-      {tipoSelecionado === "uniformes" ? (
+      {abaAtiva === "uniformes" ? (
         <SecaoUniformes />
       ) : (
         <SecaoArmarios />

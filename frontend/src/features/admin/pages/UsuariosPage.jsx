@@ -6,6 +6,7 @@ import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
+import TableFiltro from "../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
 import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 
@@ -19,6 +20,11 @@ const OPCOES_FILTRO_TIPO = [
   { value: "admin", label: "Administradores" },
   { value: "supervisor", label: "Supervisores" },
   { value: "atendente", label: "Atendentes" },
+];
+
+const OPCOES_STATUS_USUARIO = [
+  { valor: true, label: "Ativos" },
+  { valor: false, label: "Inativos" },
 ];
 
 const UsuariosPage = () => {
@@ -216,31 +222,12 @@ const UsuariosPage = () => {
           )}
         </div>
 
-        <div className="flex rounded-btn border border-border p-1">
-          <button
-            type="button"
-            onClick={() => setStatusAtivo(true)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              statusAtivo
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Ativos
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusAtivo(false)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              !statusAtivo
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Inativos
-          </button>
-        </div>
+        <TableFiltro
+          options={OPCOES_STATUS_USUARIO}
+          value={statusAtivo}
+          onChange={setStatusAtivo}
+          ariaLabel="Situação dos usuários"
+        />
       </div>
       <DataTable
         columns={columnsUsuario}

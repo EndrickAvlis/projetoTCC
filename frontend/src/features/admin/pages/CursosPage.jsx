@@ -5,6 +5,7 @@ import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
+import TableFiltro from "../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
 
 import CursoModal from "../components/cursos/CursoModal";
@@ -14,6 +15,11 @@ import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
 import { useCursos } from "../hooks/useCursos";
 import * as cursoService from "../services/cursoService";
+
+const OPCOES_STATUS_CURSO = [
+  { valor: false, label: "Ativos" },
+  { valor: true, label: "Arquivados" },
+];
 
 const CursosPage = () => {
   const [busca, setBusca] = React.useState("");
@@ -250,31 +256,12 @@ const CursosPage = () => {
           className="max-w-xl"
         />
 
-        <div className="flex rounded-btn border border-border p-1">
-          <button
-            type="button"
-            onClick={() => setArquivado(false)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              !arquivado
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Ativos
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setArquivado(true)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              arquivado
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Arquivados
-          </button>
-        </div>
+        <TableFiltro
+          options={OPCOES_STATUS_CURSO}
+          value={arquivado}
+          onChange={setArquivado}
+          ariaLabel="Situação dos cursos"
+        />
       </div>
 
       {erro && <Alert type="error" message={erro} />}

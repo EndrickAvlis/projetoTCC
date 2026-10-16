@@ -1,6 +1,12 @@
 import * as FiIcons from "react-icons/fi";
 
 import Input from "../../../../../components/ui/Input";
+import TableFiltro from "../../../../../components/ui/TableFiltro";
+
+const OPCOES_UNIFORME = [
+    { valor: false, label: "Ativos" },
+    { valor: true, label: "Arquivados" },
+];
 
 const UniformeSelector = ({
     busca,
@@ -19,34 +25,12 @@ const UniformeSelector = ({
                 className="max-w-xl"
             />
 
-            <div
-                className="flex rounded-btn border border-border p-1"
-                aria-label="Situação dos uniformes"
-            >
-                <button
-                    type="button"
-                    onClick={() => onAlterarArquivado(false)}
-                    aria-pressed={!arquivado}
-                    className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${!arquivado
-                        ? "bg-primary text-text-inverse"
-                        : "text-text-secondary hover:bg-surface-muted"
-                        }`}
-                >
-                    Ativos
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => onAlterarArquivado(true)}
-                    aria-pressed={arquivado}
-                    className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${arquivado
-                        ? "bg-primary text-text-inverse"
-                        : "text-text-secondary hover:bg-surface-muted"
-                        }`}
-                >
-                    Arquivados
-                </button>
-            </div>
+            <TableFiltro
+                options={OPCOES_UNIFORME}
+                value={arquivado}
+                onChange={onAlterarArquivado}
+                ariaLabel="Situação dos uniformes"
+            />
         </div>
     );
 };
