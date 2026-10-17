@@ -18,7 +18,7 @@ const mapearCursoResposta = (curso) => ({
 
 
 
-export const listarCursosAdmin = async (req, res) => {
+export const listarCursos = async (req, res) => {
   const cursos = await cursoService.listarCursos(req.validado.query);
 
   return res.json({
@@ -27,7 +27,7 @@ export const listarCursosAdmin = async (req, res) => {
   });
 };
 
-export const criarCursoAdmin = async (req, res) => {
+export const criarCurso = async (req, res) => {
   const curso = await cursoService.criarCurso(req.validado.body);
 
   return res.status(201).json({
@@ -35,29 +35,18 @@ export const criarCursoAdmin = async (req, res) => {
   });
 };
 
-export const atualizarNomeCursoAdmin = async (req, res) => {
+export const atualizarCurso = async (req, res) => {
   const { cursoId } = req.validado.params;
-  const { nome } = req.validado.body;
-  const curso = await cursoService.atualizarNomeCurso(cursoId, nome);
+  const curso = await cursoService.atualizarCurso(cursoId, req.validado.body);
 
   return res.json({
     curso: mapearCursoResposta(curso),
   });
 };
 
-export const alterarArquivamentoCurso = async (req, res) => {
+export const criarPeriodo = async (req, res) => {
   const { cursoId } = req.validado.params;
-  const { arquivado } = req.validado.body;
-  const curso = await cursoService.arquivarCurso(cursoId, arquivado);
-
-  return res.json({
-    curso: mapearCursoResposta(curso),
-  });
-};
-
-export const criarPeriodoCursoAdmin = async (req, res) => {
-  const { cursoId } = req.validado.params;
-  const periodo = await cursoService.adicionarPeriodoCurso(
+  const periodo = await cursoService.criarPeriodo(
     cursoId,
     req.validado.body,
   );
@@ -67,9 +56,9 @@ export const criarPeriodoCursoAdmin = async (req, res) => {
   });
 };
 
-export const atualizarPeriodoCursoAdmin = async (req, res) => {
+export const atualizarPeriodo = async (req, res) => {
   const { cursoId, periodoId } = req.validado.params;
-  const periodo = await cursoService.atualizarPeriodoCurso(
+  const periodo = await cursoService.atualizarPeriodo(
     cursoId,
     periodoId,
     req.validado.body,
@@ -79,3 +68,13 @@ export const atualizarPeriodoCursoAdmin = async (req, res) => {
     periodo: mapearPeriodoResposta(periodo),
   });
 };
+
+export const excluirCurso = async (req, res) => {
+  const { cursoId } = req.validado.params;
+  const curso = await cursoService.excluir(cursoId);
+
+  return res.json({
+    curso: mapearCursoResposta(curso),
+  });
+};
+
