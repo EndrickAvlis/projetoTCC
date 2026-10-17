@@ -25,7 +25,7 @@ const SecaoUniformes = () => {
   const [salvando, setSalvando] = React.useState(false);
   const [modalAtivo, setModalAtivo] = React.useState(null);
 
-  const { uniformes, total, carregando, erro, recarregar } = useUniformes({
+  const { uniformes, total, carregando, recarregar } = useUniformes({
     busca,
     arquivado,
   });

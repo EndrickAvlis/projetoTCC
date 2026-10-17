@@ -4,18 +4,15 @@ import { listarProdutos } from "../services/produtoService";
 export const useArmario = () => {
   const [armario, setArmario] = React.useState(null);
   const [carregando, setCarregando] = React.useState(true);
-  const [erro, setErro] = React.useState(null);
 
   const carregarArmario = React.useCallback(async () => {
     setCarregando(true);
-    setErro(null);
 
     try {
       const res = await listarProdutos({ tipo: "armario" });
       setArmario(res.produtos?.[0] ?? null);
-    } catch (error) {
+    } catch {
       setArmario(null);
-      setErro(error.message);
     } finally {
       setCarregando(false);
     }
@@ -28,7 +25,6 @@ export const useArmario = () => {
   return {
     armario,
     carregando,
-    erro,
     recarregar: carregarArmario,
   };
 };
