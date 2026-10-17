@@ -5,37 +5,49 @@ import Alert from "../../../components/ui/Alert";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
+import Input from "../../../components/ui/Input";
+import Select from "../../../components/ui/Select";
+import TableFiltro from "../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
 
-import AlunosFiltros from "../components/alunos/AlunosFiltros";
 import ImportarAlunosModal from "../components/alunos/importacao/ImportarAlunosModal";
 
-import * as AlunosService from "../services/alunoService";
+import * as alunoService from "../services/alunoService";
 import { useAlunos } from "../hooks/useAlunos";
 import { useCursos } from "../hooks/useCursos";
 
+const OPCOES_STATUS_ALUNO = [
+  { valor: "ATIVO", label: "Ativos" },
+  { valor: "CANDIDATO", label: "Candidatos" },
+  { valor: "ARQUIVADO", label: "Arquivados" },
+];
+
 const AlunosPage = () => {
-  const [busca, setBusca] = React.useState("");
-  const [cursoId, setCursoId] = React.useState("");
-  const [status, setStatus] = React.useState("ATIVO");
+  const [filtros, setFiltros] = React.useState({
+    busca: "",
+    cursoId: "",
+    cidade: "",
+    status: "ATIVO",
+  });
   const [pagina, setPagina] = React.useState(1);
-  const [modalImportacaoAberto, setModalImportacaoAberto] =
-    React.useState(false);
-  const [cidade, setCidade] = React.useState("");
+  const [modalAtivo, setModalAtivo] = React.useState(null);
   const [cidades, setCidades] = React.useState([]);
+
+  const alterarFiltro = (campo, valor) => {
+    setFiltros((prev) => ({ ...prev, [campo]: valor }));
+    setPagina(1);
+  };
 
   const {
     alunos,
     total,
-    totalAtivos,
     carregando,
-    erro,
     recarregar: recarregarAlunos,
   } = useAlunos({
-    busca,
-    cursoId,
-    cidade,
-    status,
+    busca: filtros.busca,
+    cursoId: filtros.cursoId,
+    cidade: filtros.cidade,
+    status: filtros.status,
     pagina,
     limite: 6,
   });
@@ -45,7 +57,7 @@ const AlunosPage = () => {
   React.useEffect(() => {
     const carregarCidades = async () => {
       try {
-        const res = await AlunosService.listarCidadesAlunos();
+        const res = await alunoService.listarCidades();
         setCidades(res?.cidades ?? []);
       } catch {
         setCidades([]);
@@ -54,40 +66,13 @@ const AlunosPage = () => {
     carregarCidades();
   }, []);
 
-  const handleAlterarBusca = (novaBusca) => {
-    setBusca(novaBusca);
-    setPagina(1);
-  };
-
-  const handleAlterarCidade = (novaCidade) => {
-    setCidade(novaCidade);
-    setPagina(1);
-  };
-
-  const handleAlterarCurso = (novoCursoId) => {
-    setCursoId(novoCursoId);
-    setPagina(1);
-  };
-
-  const handleAlterarFiltroStatus = (novoStatus) => {
-    setStatus(novoStatus);
-    setPagina(1);
-  };
-
   const handleAtualizarStatusAluno = async (alunoId, novoStatus) => {
     try {
-      await AlunosService.atualizarDadosAluno(alunoId, { status: novoStatus });
+      await alunoService.atualizarAluno(alunoId, { status: novoStatus });
       recarregarAlunos();
     } catch {
       // Erro já exibido pelo Toast do apiClient
     }
-  };
-
-  const renderBadgeStatusAluno = (statusAluno) => {
-    if (statusAluno === "ATIVO") return <Badge variant="success" dot>Ativo</Badge>;
-    if (statusAluno === "CANDIDATO") return <Badge variant="primary" dot>Candidato</Badge>;
-    if (statusAluno === "ARQUIVADO") return <Badge variant="neutral" dot>Arquivado</Badge>;
-    return null;
   };
 
   const renderBadgeStatusMatricula = (statusMatricula) => {
@@ -107,8 +92,18 @@ const AlunosPage = () => {
       );
     }
 
-    return <span className="text-text-secondary text-xs">—</span>;
+    return <span className="text-xs text-text-secondary">—</span>;
   };
+
+  const opcoesCursos = cursos.map((curso) => ({
+    value: String(curso.id),
+    label: curso.nome,
+  }));
+
+  const opcoesCidades = cidades.map((c) => ({
+    value: c,
+    label: c,
+  }));
 
   const colunas = [
     {
@@ -135,7 +130,7 @@ const AlunosPage = () => {
             {aluno.curso || "—"}
           </p>
           {aluno.periodo && (
-            <p className="text-xs text-text-secondary capitalize">
+            <p className="text-xs capitalize text-text-secondary">
               Período: {aluno.periodo.toLowerCase()}
             </p>
           )}
@@ -147,7 +142,7 @@ const AlunosPage = () => {
       label: "Classificação",
       render: (aluno) =>
         aluno.classificacao ? (
-          <span className="font-semibold text-text-primary text-center">
+          <span className="text-center font-semibold text-text-primary">
             {aluno.classificacao}º
           </span>
         ) : (
@@ -205,76 +200,94 @@ const AlunosPage = () => {
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Alunos</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Consulte a lista de classificação, gerencie candidatos e acompanhe
-            as matrículas.
+          <p className="mt-1 text-text-secondary">
+            {(() => {
+              const labels = {
+                ATIVO: "ativo",
+                CANDIDATO: "candidato",
+                ARQUIVADO: "arquivado",
+              };
+              const labelAtual = labels[filtros.status] || "aluno";
+              const s = total === 1 ? "" : "s";
+
+              return `${total} aluno${s} ${labelAtual}${s} encontrado${s}`;
+            })()}
           </p>
         </div>
 
         <Button
           leftIcon={<FiIcons.FiUploadCloud size={18} />}
           className="w-full sm:w-auto"
-          onClick={() => setModalImportacaoAberto(true)}
+          onClick={() => setModalAtivo({ tipo: "importacao" })}
         >
           Importar lista de classificação
         </Button>
       </div>
 
-      <div className="flex items-center gap-4 rounded-xl border border-border bg-surface p-4 shadow-sm max-w-xs">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-status-success/10 text-status-success">
-          <FiIcons.FiUsers size={24} />
-        </div>
-        <div>
-          <p className="text-xs font-medium text-text-secondary">
-            Total de alunos ativos
-          </p>
-          <p className="text-2xl font-bold text-text-primary">{totalAtivos}</p>
-        </div>
-      </div>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+          <Input
+            value={filtros.busca}
+            onChange={(e) => alterarFiltro("busca", e.target.value)}
+            placeholder="Pesquisar por nome do aluno..."
+            icon={<FiIcons.FiSearch />}
+            size="md"
+            className="w-full sm:max-w-md"
+          />
 
-      <AlunosFiltros
-        busca={busca}
-        onAlterarBusca={handleAlterarBusca}
-        cidade={cidade}
-        onAlterarCidade={handleAlterarCidade}
-        cidades={cidades}
-        cursoId={cursoId}
-        onAlterarCurso={handleAlterarCurso}
-        status={status}
-        onAlterarStatus={handleAlterarFiltroStatus}
-        cursos={cursos}
-      />
+          <div className="w-full sm:w-64">
+            <Select
+              value={filtros.cursoId}
+              onChange={(e) => alterarFiltro("cursoId", e.target.value)}
+              placeholder="Todos os cursos"
+              options={opcoesCursos}
+              size="md"
+            />
+          </div>
 
-      {carregando && alunos.length === 0 ? (
-        <div className="flex items-center justify-center rounded-xl border border-border bg-surface py-16 text-sm text-text-secondary">
-          <div className="flex flex-col items-center gap-2">
-            <FiIcons.FiLoader className="h-6 w-6 animate-spin text-primary" />
-            <span>Carregando alunos...</span>
+          <div className="w-full sm:w-56">
+            <Select
+              value={filtros.cidade}
+              onChange={(e) => alterarFiltro("cidade", e.target.value)}
+              placeholder="Todas as cidades"
+              options={opcoesCidades}
+              size="md"
+            />
           </div>
         </div>
-      ) : (
-        <DataTable
-          columns={colunas}
-          data={alunos}
-          getRowKey={(aluno) => aluno.id}
-          emptyMessage="Nenhum aluno encontrado para os filtros selecionados."
-          alturaMinima="380px"
-          pagina={pagina}
-          limite={6}
-          total={total}
-          onPaginaChange={setPagina}
+
+        <TableFiltro
+          options={OPCOES_STATUS_ALUNO}
+          value={filtros.status}
+          onChange={(valor) => alterarFiltro("status", valor)}
+          ariaLabel="Situação dos alunos"
         />
-      )}
+      </div>
+
+      <DataTable
+        columns={colunas}
+        data={carregando ? [] : alunos}
+        getRowKey={(aluno) => aluno.id}
+        emptyMessage={
+          carregando
+            ? "Carregando alunos..."
+            : "Nenhum aluno encontrado para os filtros selecionados."
+        }
+        alturaMinima="380px"
+        pagina={pagina}
+        limite={6}
+        total={total}
+        onPaginaChange={setPagina}
+      />
 
       <ImportarAlunosModal
-        aberto={modalImportacaoAberto}
-        onFechar={() => setModalImportacaoAberto(false)}
+        aberto={modalAtivo?.tipo === "importacao"}
+        onFechar={() => setModalAtivo(null)}
         onSucesso={() => {
-          setStatus("CANDIDATO");
-          setPagina(1);
+          setModalAtivo(null);
+          alterarFiltro("status", "CANDIDATO");
           recarregarAlunos();
         }}
       />
@@ -283,3 +296,4 @@ const AlunosPage = () => {
 };
 
 export default AlunosPage;
+

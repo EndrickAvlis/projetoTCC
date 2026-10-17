@@ -8,7 +8,7 @@ import {
   decodificarCsv,
   parsearCsv,
   analisarCsvAlunos,
-} from "../../../services/importAlunoService";
+} from "./importAluno";
 
 const OPCOES_SEMESTRE = [
   { value: "1", label: "1º Semestre" },
@@ -135,11 +135,13 @@ const UploadCsv = ({
 
       if (onArquivoAnalisado) {
         onArquivoAnalisado({
-          arquivo: {
-            nome: arquivo.name,
-            tamanho: arquivo.size,
+          nomeArquivo: arquivo.name,
+          candidatosValidos: resultado.candidatosValidos,
+          gruposCursos: resultado.gruposCursos,
+          metricas: {
+            ...resultado.metricas,
+            totalLinhas: resultado.totalLinhas,
           },
-          resultado,
         });
       }
 
