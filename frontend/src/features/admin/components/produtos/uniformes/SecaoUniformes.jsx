@@ -230,13 +230,11 @@ const SecaoUniformes = () => {
         data={carregando ? [] : uniformes}
         getRowKey={(uniforme) => uniforme.id}
         emptyMessage={
-          erro
-            ? erro
-            : carregando
-              ? "Carregando uniformes..."
-              : arquivado
-                ? "Nenhum uniforme arquivado encontrado."
-                : "Nenhum uniforme ativo encontrado."
+          carregando
+            ? "Carregando uniformes..."
+            : arquivado
+              ? "Nenhum uniforme arquivado encontrado."
+              : "Nenhum uniforme ativo encontrado."
         }
       />
 
