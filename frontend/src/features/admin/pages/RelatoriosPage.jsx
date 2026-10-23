@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
-import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
@@ -11,7 +10,8 @@ import PainelReceita from "../components/relatorios/PainelReceita";
 import VendaDetalhesModal from "../components/relatorios/VendaDetalhesModal";
 import { useCursos } from "../hooks/useCursos";
 import { useUsuarios } from "../hooks/useUsuarios";
-import { exportarRelatorio } from "../services/relatorioService";
+import { useRelatorios } from "../hooks/useRelatorios";
+import { exportarRelatorio, detalheVenda } from "../services/relatorioService";
 import { formatarMoeda, formatarHora } from "../../../utils/formatters";
 
 const OPCOES_PERIODO = [
@@ -47,36 +47,40 @@ const FILTROS_INICIAIS = {
 const RelatoriosPage = () => {
   const [filtros, setFiltros] = React.useState(FILTROS_INICIAIS);
   const [pagina, setPagina] = React.useState(1);
-  const [totalVendas, setTotalVendas] = React.useState(0);
-  const [vendas, setVendas] = React.useState([]);
-  const [carregandoVendas, setCarregandoVendas] = React.useState(false);
   const [exportando, setExportando] = React.useState(false);
   const [modalAberto, setModalAberto] = React.useState(false);
   const [carregandoDetalhes, setCarregandoDetalhes] = React.useState(false);
   const [vendaSelecionada, setVendaSelecionada] = React.useState(null);
+  const {
+    resumoReceita,
+    vendas,
+    totalVendas,
+    carregando: carregandoVendas,
+  } = useRelatorios({ ...filtros, pagina, limite: 10 });
 
   const handleAbrirDetalhes = async (idVenda) => {
     setModalAberto(true);
     setCarregandoDetalhes(true);
-    setVendaSelecionada(null);
-    setCarregandoDetalhes(false);
+    try {
+      const res = await detalheVenda(idVenda);
+      setVendaSelecionada(res?.venda ?? null);
+    } catch {
+      setVendaSelecionada(null);
+    } finally {
+      setCarregandoDetalhes(false);
+    }
   };
-
-  const [resumoReceita, setResumoReceita] = React.useState({
-    totais: { totalArrecadado: 0, totalVendas: 0, ticketMedio: 0 },
-    porCategoria: {
-      uniformes: { valor: 0, quantidade: 0, porcentagem: 0 },
-      armarios: { valor: 0, quantidade: 0, porcentagem: 0 },
-      contribuicao: { valor: 0, quantidade: 0, porcentagem: 0 },
-    },
-    porPagamento: { dinheiro: 0, pix: 0, debito: 0, credito: 0 },
-  });
 
   const { cursos } = useCursos();
   const { usuarios } = useUsuarios();
 
   const alterarFiltro = (campo, valor) => {
     setFiltros((prev) => ({ ...prev, [campo]: valor }));
+    setPagina(1);
+  };
+
+  const limparFiltros = () => {
+    setFiltros(FILTROS_INICIAIS);
     setPagina(1);
   };
 
@@ -143,20 +147,19 @@ const RelatoriosPage = () => {
       setExportando(true);
       const blob = await exportarRelatorio(filtros);
       const url = window.URL.createObjectURL(
-        new Blob([blob], { type: "text/csv;charset=utf-8;" })
+        new Blob([blob], { type: "text/csv;charset=utf-8;" }),
       );
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute(
         "download",
-        `extrato-vendas-${new Date().toISOString().split("T")[0]}.csv`
+        `extrato-vendas-${new Date().toISOString().split("T")[0]}.csv`,
       );
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      // Falha tratada pelo interceptor global de notificações da API
     } finally {
       setExportando(false);
     }
@@ -164,29 +167,32 @@ const RelatoriosPage = () => {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end">
+      <header className="flex items-center justify-between">
+        <p className=" text-text-secondary">
+          {totalVendas}{" "}
+          {totalVendas === 1 ? "venda encontrada." : "vendas encontradas."}
+        </p>
+
         <Button
           variant="primary"
           leftIcon={<FiIcons.FiDownload size={18} />}
           onClick={handleExportar}
           loading={exportando}
           disabled={exportando}
-          className="w-full sm:w-auto"
         >
           {exportando ? "Exportando..." : "Exportar Relatório"}
         </Button>
       </header>
 
       <section className="rounded-2xl border border-border bg-surface p-4 space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <TableFiltro
               options={OPCOES_PERIODO}
               value={filtros.periodo}
               onChange={(valor) => alterarFiltro("periodo", valor)}
               ariaLabel="Filtro de período"
             />
-
             {filtros.periodo === "PERSONALIZADO" && (
               <div className="flex items-center gap-2">
                 <Input
@@ -207,14 +213,10 @@ const RelatoriosPage = () => {
               </div>
             )}
           </div>
-
-          <p className="text-sm text-text-secondary">
-            {totalVendas} vendas encontradas
-          </p>
         </div>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="w-full lg:flex-[1.5] lg:min-w-60">
+        <div className="flex items-center gap-3">
+          <div className="flex-[1.74]">
             <Select
               placeholder="Todos os cursos"
               value={filtros.cursoId}
@@ -227,7 +229,7 @@ const RelatoriosPage = () => {
             />
           </div>
 
-          <div className="w-full lg:flex-1 lg:min-w-42.5">
+          <div className="flex-1">
             <Select
               placeholder="Todas as formas"
               value={filtros.formaPagamento}
@@ -237,7 +239,7 @@ const RelatoriosPage = () => {
             />
           </div>
 
-          <div className="w-full lg:flex-1 lg:min-w-42.5">
+          <div className="flex-1">
             <Select
               placeholder="Todas as entradas"
               value={filtros.tipoReceita}
@@ -247,7 +249,7 @@ const RelatoriosPage = () => {
             />
           </div>
 
-          <div className="w-full lg:flex-1 lg:min-w-42.5">
+          <div className="flex-1">
             <Select
               placeholder="Todos os atendentes"
               value={filtros.atendenteId}
@@ -264,31 +266,19 @@ const RelatoriosPage = () => {
             variant="secondary"
             size="md"
             leftIcon={<FiIcons.FiRotateCcw size={15} />}
-            onClick={() => setFiltros(FILTROS_INICIAIS)}
-            className="w-full sm:w-auto shrink-0 px-3.5"
+            onClick={limparFiltros}
+            className="shrink-0 px-3.5"
             title="Limpar filtros"
           >
             Limpar
           </Button>
         </div>
       </section>
-
-      {/* 2. Painel de Receita Consolidada */}
-      <PainelReceita resumoReceita={resumoReceita} carregando={false} />
-
-      {/* 3. Extrato Analítico de Vendas */}
+      <PainelReceita
+        resumoReceita={resumoReceita}
+        carregando={carregandoVendas}
+      />
       <section className="space-y-4">
-        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-base font-bold text-text-primary">
-              Extrato de Vendas
-            </h2>
-            <p className="text-xs text-text-secondary">
-              Listagem analítica das vendas registradas no período filtrado.
-            </p>
-          </div>
-        </div>
-
         <DataTable
           columns={colunasVendas}
           data={vendas}
@@ -304,8 +294,6 @@ const RelatoriosPage = () => {
           }
         />
       </section>
-
-      {/* 4. Modal de Comprovante de Venda */}
       <VendaDetalhesModal
         venda={vendaSelecionada}
         aberto={modalAberto}

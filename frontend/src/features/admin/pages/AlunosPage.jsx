@@ -71,7 +71,6 @@ const AlunosPage = () => {
       await alunoService.atualizarAluno(alunoId, { status: novoStatus });
       recarregarAlunos();
     } catch {
-      // Erro já exibido pelo Toast do apiClient
     }
   };
 
@@ -212,7 +211,7 @@ const AlunosPage = () => {
               const labelAtual = labels[filtros.status] || "aluno";
               const s = total === 1 ? "" : "s";
 
-              return `${total} aluno${s} ${labelAtual}${s} encontrado${s}`;
+              return `${total} aluno${s} ${labelAtual}${s} encontrado${s}.`;
             })()}
           </p>
         </div>
