@@ -18,6 +18,13 @@ export const mapearAluno = (aluno) => {
     periodo: matricula?.periodo,
     classificacao: matricula?.classificacao,
     statusMatricula: matricula?.statusMatricula,
+    matriculas: (aluno.cursosAluno ?? []).map((vinculo) => ({
+      cursoId: vinculo.codCurso,
+      curso: vinculo.curso?.nomeCurso,
+      classificacao: vinculo.classificacao,
+      periodo: vinculo.periodo,
+      anoEscolar: vinculo.anoEscolar,
+    })),
   };
 };
 

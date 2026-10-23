@@ -8,6 +8,8 @@ import voluntarioRoutes from "./routes/usuarioRoutes.js";
 import produtosRoutes from "./routes/produtosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import alunoRoutes from "./routes/alunoRoutes.js";
+import atendimentoRoutes from "./routes/atendimentoRoutes.js";
+import triagemRoutes from "./routes/triagemRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import cookieParser from "cookie-parser";
 
@@ -30,6 +32,8 @@ app.use("/voluntarios", voluntarioRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/auth", authRoutes);
 app.use("/alunos", alunoRoutes);
+app.use("/atendimento", atendimentoRoutes);
+app.use("/", triagemRoutes);
 
 app.get("/", (req, res) => {
   res.json({
