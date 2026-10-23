@@ -32,9 +32,9 @@ export const login = async (req, res, next) => {
 
 export const renovarAccessToken = async (req, res, next) => {
     try{
-        const token = await authService.renovarAccessToken(req.cookies.refreshToken);
+        const accessToken = await authService.renovarAccessToken(req.cookies.refreshToken);
 
-        res.cookie('accessToken', token.accessToken, {
+        res.cookie('accessToken', accessToken, {
                 path: "/",
                 httpOnly: true,     // Impede acesso via JavaScript (document.cookie)
                 secure: isProd,       // Exige HTTPS (mantenha como true em produção)
