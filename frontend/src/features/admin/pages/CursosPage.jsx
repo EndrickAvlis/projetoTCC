@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
-import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
@@ -284,20 +283,16 @@ const CursosPage = () => {
         />
       </div>
 
-      {erro && <Alert type="error" message={erro} />}
-
       <DataTable
         columns={columnsCurso}
         data={carregando ? [] : cursos}
         getRowKey={(curso) => curso.id}
         emptyMessage={
-          erro
-            ? erro
-            : carregando
-              ? "Carregando cursos..."
-              : arquivado
-                ? "Nenhum curso arquivado encontrado."
-                : "Nenhum curso ativo encontrado."
+          carregando
+            ? "Carregando cursos..."
+            : arquivado
+              ? "Nenhum curso arquivado encontrado."
+              : "Nenhum curso ativo encontrado."
         }
       />
 

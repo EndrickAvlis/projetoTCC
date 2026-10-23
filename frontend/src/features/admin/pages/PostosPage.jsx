@@ -7,9 +7,9 @@ import SecaoFilas from "../components/postos/filas/SecaoFilas";
 import SecaoAuditoria from "../components/postos/auditoria/SecaoAuditoria";
 
 const abasPostos = [
-  { id: "atendimento", label: "Atendimento", icone: FiActivity },
-  { id: "filas", label: "Filas", icone: FiList },
-  { id: "auditoria", label: "Auditoria", icone: FiClock },
+  { id: "atendimento", label: "Atendimento" },
+  { id: "filas", label: "Filas"},
+  { id: "auditoria", label: "Auditoria" },
 ];
 
 const PostosPage = () => {
@@ -17,13 +17,6 @@ const PostosPage = () => {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-text-primary">Postos</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Acompanhamento em tempo real, monitoramento de filas e histórico de atendimentos.
-        </p>
-      </header>
-
       <Tabs
         itens={abasPostos}
         ativo={abaAtiva}

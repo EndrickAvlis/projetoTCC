@@ -62,11 +62,6 @@ const SecaoAtendimento = () => {
     periodoCurso: periodoCurso || undefined,
   });
 
-  const opcoesCursos = cursos.map((c) => ({
-    value: String(c.id),
-    label: c.nome,
-  }));
-
   React.useEffect(() => {
     const fecharAoClicarFora = (e) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target)) {
@@ -111,7 +106,7 @@ const SecaoAtendimento = () => {
             size="md"
             value={cursoId}
             onChange={(e) => setCursoId(e.target.value)}
-            options={opcoesCursos}
+            options={cursos.map((c) => ({ value: c.id, label: c.nome }))}
             placeholder="Todos os cursos"
           />
         </div>
