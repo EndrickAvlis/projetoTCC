@@ -100,6 +100,26 @@ Permite que o atendente recupere o atendimento em andamento caso a página seja 
   }
   ```
 
+edição:
+* **Resposta quando há atendimento mas não tem aluno cadastrado na senha (triagem) (HTTP200)**
+  ```json
+    {
+      "senha": {
+        "id": 12,
+        "codigo": 104,
+        "prioritaria": false,
+        "etapa": "apm",
+        "aluno": {
+          "idAluno": null,
+          "nome": null
+        }
+      },
+      "atendimento": {
+        "idHistorico": 84,
+        "iniciadoEm": "2026-10-09T21:00:00.000Z"
+      }
+    }
+    ```
 ---
 
 ### 3.3. Rechamar Senha no Painel

@@ -183,26 +183,31 @@ export default class SenhaService extends BaseService {
     }
 
     let proximaEtapa = "finalizada";
+    let statusSenha = "aguardando";
 
     switch(etapaAtual){
       case "triagem":
-        proximaEtapa = "apm"
+        proximaEtapa = "apm";
+        statusSenha = "aguardando";
       break;
       case "apm":
-        proximaEtapa = "docs"
+        proximaEtapa = "docs";
+        statusSenha = "aguardando";
       break;
       case "docs":
-        proximaEtapa = "finalizada"
+        proximaEtapa = "docs";
+        statusSenha = "finalizada";
       break;
       default:
-        proximaEtapa = "finalizada"
+        proximaEtapa = "docs";
+        statusSenha = "aguardando";
       break;
     }
 
-    super.atualizar(id,
+    return super.atualizar(id,
       {
         etapaSenha: proximaEtapa,
-        statusSenha: "aguardando"
+        statusSenha: statusSenha
       }
     )
   }

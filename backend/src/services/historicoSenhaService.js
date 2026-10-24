@@ -16,7 +16,7 @@ export default class HistoricoSenhaService extends BaseService {
         });
     }
 
-    async listarAtendimentoAberto(idUsuario, idSenha, etapa){
+    async listarAtendimentoAbertoComSenha(idUsuario, idSenha, etapa){
         return await prisma.historicoSenha.findFirst({
             where:{
                 codSenha: idSenha,
