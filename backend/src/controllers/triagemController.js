@@ -21,7 +21,9 @@ export const registrarPendencias = async (req, res) => {
 };
 
 export const listarPendencias = async (req, res) => {
-  const resultado = await triagemService.listarPendencias(req.validado.query.etapa);
+  const resultado = await triagemService.listarPendencias(
+    req.validado.query.etapa,
+  );
   return res.status(200).json(resultado);
 };
 
@@ -36,28 +38,32 @@ export const retomarAtendimento = async (req, res) => {
 
 export const finalizarAtendimento = async (req, res) => {
   const resultado = await triagemService.finalizarAtendimento(
-    req.validado.body.senhaId, req.usuario.id,
+    req.validado.body.senhaId,
+    req.usuario.id,
   );
   return res.status(200).json(resultado);
 };
 
 export const iniciarAtendimento = async (req, res) => {
   const resultado = await triagemService.iniciarAtendimento(
-    req.validado.body.senhaId, req.usuario.id,
+    req.validado.body.senhaId,
+    req.usuario.id,
   );
   return res.status(200).json(resultado);
 };
 
 export const cancelarAtendimento = async (req, res) => {
   const resultado = await triagemService.cancelarAtendimento(
-    req.validado.body.senhaId, req.usuario.id,
+    req.validado.body.senhaId,
+    req.usuario.id,
   );
   return res.status(200).json(resultado);
 };
 
 export const recuperarAtendimento = async (req, res) => {
   const resultado = await triagemService.recuperarAtendimento(
-    req.validado.params.etapa, req.usuario.id,
+    req.validado.params.etapa,
+    req.usuario.id,
   );
   return res.status(200).json(resultado);
 };
