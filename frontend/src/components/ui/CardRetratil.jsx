@@ -99,7 +99,7 @@ const CardRetratil = ({
             </div>
 
             {resumo && (
-              <div className="hidden md:flex items-center gap-4 text-xs text-text-secondary">
+              <div className="flex items-center gap-4 text-xs text-text-secondary">
                 {resumo}
               </div>
             )}

@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
-import Alert from "../../../components/ui/Alert";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
@@ -145,7 +144,7 @@ const AlunosPage = () => {
             {aluno.classificacao}º
           </span>
         ) : (
-          <span className="text-text-secondary">X</span>
+          <span className="text-text-secondary">-</span>
         ),
     },
     {
@@ -172,7 +171,7 @@ const AlunosPage = () => {
       cellClassName: "text-right",
       render: (aluno) => (
         <TableMenuActions
-          labelAria={`Ações do aluno ${aluno.nome}`}
+          label={`Ações do aluno ${aluno.nome}`}
           itens={[
             aluno.status === "CANDIDATO" && {
               label: "Ativar Aluno",
@@ -202,17 +201,7 @@ const AlunosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {(() => {
-              const labels = {
-                ATIVO: "ativo",
-                CANDIDATO: "candidato",
-                ARQUIVADO: "arquivado",
-              };
-              const labelAtual = labels[filtros.status] || "aluno";
-              const s = total === 1 ? "" : "s";
-
-              return `${total} aluno${s} ${labelAtual}${s} encontrado${s}.`;
-            })()}
+            {total} {total === 1 ? "aluno" : "alunos"} {filtros.status === "ATIVO" ? "ativo" : filtros.status === "CANDIDATO" ? "candidato" : "arquivado"}{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
           </p>
         </div>
 
@@ -267,13 +256,10 @@ const AlunosPage = () => {
 
       <DataTable
         columns={colunas}
-        data={carregando ? [] : alunos}
+        data={alunos}
+        carregando={carregando}
         getRowKey={(aluno) => aluno.id}
-        emptyMessage={
-          carregando
-            ? "Carregando alunos..."
-            : "Nenhum aluno encontrado para os filtros selecionados."
-        }
+        emptyMessage="Nenhum aluno encontrado para os filtros selecionados."
         alturaMinima="380px"
         pagina={pagina}
         limite={6}

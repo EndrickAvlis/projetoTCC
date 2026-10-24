@@ -124,7 +124,7 @@ const SecaoUniformes = () => {
     },
     {
       key: "quantidade",
-      label: "Quantidade",
+      label: "Estoque",
       headerClassName: "text-center",
       cellClassName: "text-center",
       render: (uniforme) => (
@@ -201,12 +201,7 @@ const SecaoUniformes = () => {
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <p className="mt-1 text-text-secondary">
-          {(() => {
-            const s = total === 1 ? "" : "s";
-            return `
-              ${total} uniforme${s} ${arquivado ? "arquivado" : "ativo"} 
-              encontrado${s}.`;
-          })()}
+          {total} {total === 1 ? "uniforme" : "uniformes"} {arquivado ? "arquivado" : "ativo"}{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
         </p>
 
         <Button
@@ -227,14 +222,13 @@ const SecaoUniformes = () => {
 
       <DataTable
         columns={columnsUniforme}
-        data={carregando ? [] : uniformes}
+        data={uniformes}
+        carregando={carregando}
         getRowKey={(uniforme) => uniforme.id}
         emptyMessage={
-          carregando
-            ? "Carregando uniformes..."
-            : arquivado
-              ? "Nenhum uniforme arquivado encontrado."
-              : "Nenhum uniforme ativo encontrado."
+          arquivado
+            ? "Nenhum uniforme arquivado encontrado."
+            : "Nenhum uniforme ativo encontrado."
         }
       />
 

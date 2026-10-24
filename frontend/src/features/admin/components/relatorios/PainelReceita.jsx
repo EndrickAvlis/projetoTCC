@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
 import { formatarMoeda } from "../../../../utils/formatters";
 
 const CATALOGO = [
@@ -7,22 +6,22 @@ const CATALOGO = [
     chave: "uniformes",
     label: "Uniformes",
     cor: "bg-primary",
-    unidade: "peça",
-    unidadePlural: "peças",
+    unidade: "peça vendida",
+    unidadePlural: "peças vendidas",
   },
   {
     chave: "armarios",
     label: "Armários",
     cor: "bg-emerald-500",
-    unidade: "unidade",
-    unidadePlural: "unidades",
+    unidade: "locação realizada",
+    unidadePlural: "locações realizadas",
   },
   {
     chave: "contribuicao",
-    label: "Doação APM",
+    label: "Contribuição APM",
     cor: "bg-amber-500",
-    unidade: "doação",
-    unidadePlural: "doações",
+    unidade: "doação recebida",
+    unidadePlural: "doações recebidas",
   },
 ];
 
@@ -54,7 +53,7 @@ const PainelReceita = ({ resumoReceita, carregando = false }) => {
           <div className="mt-3 flex flex-col items-start gap-1 text-xs text-text-secondary">
             <span className="inline-flex items-center gap-1 text-sm font-medium text-text-primary">
               {totais.totalVendas}{" "}
-              {totais.totalVendas === 1 ? "venda" : "vendas"}
+              {totais.totalVendas === 1 ? "venda realizada" : "vendas realizadas"}
             </span>
             <span>
               Ticket médio:{" "}

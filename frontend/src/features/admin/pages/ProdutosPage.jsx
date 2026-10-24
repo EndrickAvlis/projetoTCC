@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
 
 import Tabs from "../../../components/ui/Tabs";
 import SecaoUniformes from "../components/produtos/uniformes/SecaoUniformes";

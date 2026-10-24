@@ -1,7 +1,7 @@
 // src/components/ui/ActionMenu.jsx
 import * as React from "react";
 import { createPortal } from "react-dom";
-import * as FiIcons from "react-icons/fi";
+import { FiMoreVertical } from "react-icons/fi";
 
 const ActionMenu = ({ itens = [], label = "Ações" }) => {
   const [aberto, setAberto] = React.useState(false);
@@ -59,7 +59,7 @@ const ActionMenu = ({ itens = [], label = "Ações" }) => {
         aria-label={label}
         title="Ações"
       >
-        <FiIcons.FiMoreVertical size={18} />
+        <FiMoreVertical size={18} />
       </button>
 
       {aberto &&

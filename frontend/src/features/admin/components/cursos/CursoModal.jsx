@@ -59,7 +59,6 @@ const CursoModal = ({
     }
   };
 
-  //Validar formulário
   const validarCursoForm = () => {
     const newErrors = {};
     if (!nome.trim()) {

@@ -1,7 +1,6 @@
 import * as React from "react";
 import Select from "../../../../../components/ui/Select";
 import Input from "../../../../../components/ui/Input";
-import Button from "../../../../../components/ui/Button";
 import Card from "../../../../../components/ui/Card";
 import { useAtendimento } from "../../../hooks/postos/useAtendimento";
 import { useCursos } from "../../../hooks/useCursos";
@@ -50,9 +49,6 @@ const SecaoAtendimento = () => {
   const [dataInicio, setDataInicio] = React.useState("");
   const [dataFim, setDataFim] = React.useState("");
 
-  const [popoverAberto, setPopoverAberto] = React.useState(false);
-  const popoverRef = React.useRef(null);
-
   const { cursos } = useCursos();
   const { cards, finalizadasPorHora, cursosAtivos } = useAtendimento({
     tipoPeriodo,
@@ -62,29 +58,8 @@ const SecaoAtendimento = () => {
     periodoCurso: periodoCurso || undefined,
   });
 
-  React.useEffect(() => {
-    const fecharAoClicarFora = (e) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
-        setPopoverAberto(false);
-      }
-    };
-
-    if (popoverAberto) {
-      document.addEventListener("mousedown", fecharAoClicarFora);
-    }
-    return () => {
-      document.removeEventListener("mousedown", fecharAoClicarFora);
-    };
-  }, [popoverAberto]);
-
   const handleTipoPeriodoChange = (e) => {
-    const valor = e.target.value;
-    setTipoPeriodo(valor);
-    if (valor === "personalizado") {
-      setPopoverAberto(true);
-    } else {
-      setPopoverAberto(false);
-    }
+    setTipoPeriodo(e.target.value);
   };
 
   const rotuloPeriodoAtual =
@@ -92,16 +67,10 @@ const SecaoAtendimento = () => {
       ? `${dataInicio} a ${dataFim}`
       : OPCOES_TIPO_PERIODO.find((o) => o.value === tipoPeriodo)?.label;
 
-  const opcoesPeriodo = OPCOES_TIPO_PERIODO.map((op) =>
-    op.value === "personalizado" && dataInicio && dataFim
-      ? { ...op, label: `${dataInicio} até ${dataFim}` }
-      : op
-  );
-
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4 items-start border-b border-border pb-4">
-        <div className="col-span-2">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
+        <div className="flex-1 min-w-56">
           <Select
             size="md"
             value={cursoId}
@@ -111,7 +80,7 @@ const SecaoAtendimento = () => {
           />
         </div>
 
-        <div className="col-span-1">
+        <div className="w-56">
           <Select
             size="md"
             value={periodoCurso}
@@ -121,46 +90,35 @@ const SecaoAtendimento = () => {
           />
         </div>
 
-        <div className="col-span-1 relative">
+        <div className="w-56">
           <Select
             size="md"
             value={tipoPeriodo}
             onChange={handleTipoPeriodoChange}
-            options={opcoesPeriodo}
+            options={OPCOES_TIPO_PERIODO}
             placeholder={null}
           />
-
-          {popoverAberto && (
-            <div
-              ref={popoverRef}
-              className="absolute right-0 top-full mt-2 z-30 w-72 p-4 bg-surface rounded-xl border border-border shadow-xl space-y-3"
-            >
-              <h5 className="text-xs font-semibold text-text-primary">
-                Intervalo personalizado
-              </h5>
-
-              <div className="space-y-2">
-                <Input
-                  type="date"
-                  label="Data Inicial"
-                  size="sm"
-                  value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
-                />
-                <Input
-                  type="date"
-                  label="Data Final"
-                  size="sm"
-                  value={dataFim}
-                  onChange={(e) => {
-                    setDataFim(e.target.value);
-                    if (e.target.value) setPopoverAberto(false);
-                  }}
-                />
-              </div>
-            </div>
-          )}
         </div>
+
+        {tipoPeriodo === "personalizado" && (
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              size="md"
+              value={dataInicio}
+              onChange={(e) => setDataInicio(e.target.value)}
+              ariaLabel="Data inicial"
+            />
+            <span className="text-sm text-text-secondary">até</span>
+            <Input
+              type="date"
+              size="md"
+              value={dataFim}
+              onChange={(e) => setDataFim(e.target.value)}
+              ariaLabel="Data final"
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-4 gap-4">

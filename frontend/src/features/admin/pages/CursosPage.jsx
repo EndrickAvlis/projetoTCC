@@ -129,8 +129,8 @@ const CursosPage = () => {
         <div>
           <p className="font-semibold text-text-primary">{curso.nome}</p>
           <p className="mt-1 text-xs text-text-secondary">
-            {curso.periodos.length} período
-            {curso.periodos.length === 1 ? "" : "s"}
+            {(curso.periodos?.length ?? 0)} período
+            {curso.periodos?.length === 1 ? "" : "s"}
           </p>
         </div>
       ),
@@ -139,8 +139,9 @@ const CursosPage = () => {
       key: "periodos",
       label: "Períodos",
       render: (curso) => {
-        const primeiroPeriodo = curso.periodos[0];
-        const periodosRestantes = curso.periodos.slice(1);
+        const periodos = curso.periodos || [];
+        const primeiroPeriodo = periodos[0];
+        const periodosRestantes = periodos.slice(1);
         const expandido = cursoExpandido === curso.id;
         return primeiroPeriodo ? (
           <div className="space-y-1.5">
@@ -249,10 +250,7 @@ const CursosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {(() => {
-              const s = total === 1 ? "" : "s";
-              return `${total} curso${s} ${arquivado ? "arquivado" : "ativo"}${s} encontrado${s}.`;
-            })()}
+            {total} {total === 1 ? "curso" : "cursos"} {arquivado ? "arquivado" : "ativo"}{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
           </p>
         </div>
 
@@ -285,14 +283,13 @@ const CursosPage = () => {
 
       <DataTable
         columns={columnsCurso}
-        data={carregando ? [] : cursos}
+        data={cursos}
+        carregando={carregando}
         getRowKey={(curso) => curso.id}
         emptyMessage={
-          carregando
-            ? "Carregando cursos..."
-            : arquivado
-              ? "Nenhum curso arquivado encontrado."
-              : "Nenhum curso ativo encontrado."
+          arquivado
+            ? "Nenhum curso arquivado encontrado."
+            : "Nenhum curso ativo encontrado."
         }
       />
 

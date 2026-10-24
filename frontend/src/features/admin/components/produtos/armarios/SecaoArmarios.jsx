@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import { FiGrid } from "react-icons/fi";
 
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
@@ -98,7 +98,7 @@ const SecaoArmarios = () => {
             <div>
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-primary/10 p-3 text-primary">
-                  <FiIcons.FiGrid size={22} />
+                  <FiGrid size={22} />
                 </div>
 
                 <div>

@@ -158,7 +158,7 @@ const UsuariosPage = () => {
 
         return (
           <TableMenuActions
-            labelAria={`Ações do usuário ${u.nome}`}
+            label={`Ações do usuário ${u.nome}`}
             itens={[
               podeEditar && {
                 label: "Editar",
@@ -189,10 +189,7 @@ const UsuariosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {(() => {
-              const s = usuariosOrdenados.length === 1 ? "" : "s";
-              return `${usuariosOrdenados.length} usuário${s} ${statusAtivo ? "ativo" : "inativo"}${s} encontrado${s}.`;
-            })()}
+            {usuariosOrdenados.length} {usuariosOrdenados.length === 1 ? "usuário" : "usuários"} {statusAtivo ? "ativo" : "inativo"}{usuariosOrdenados.length === 1 ? "" : "s"} encontrado{usuariosOrdenados.length === 1 ? "" : "s"}.
           </p>
         </div>
 
@@ -238,14 +235,13 @@ const UsuariosPage = () => {
 
       <DataTable
         columns={columnsUsuario}
-        data={carregando ? [] : usuariosOrdenados}
+        data={usuariosOrdenados}
+        carregando={carregando}
         getRowKey={(u) => u.id}
         emptyMessage={
-          carregando
-            ? "Carregando usuários..."
-            : statusAtivo
-              ? "Nenhum usuário ativo encontrado."
-              : "Nenhum usuário inativo encontrado."
+          statusAtivo
+            ? "Nenhum usuário ativo encontrado."
+            : "Nenhum usuário inativo encontrado."
         }
       />
 

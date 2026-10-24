@@ -1,6 +1,6 @@
 import * as React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import * as FiIcons from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiLogOut } from "react-icons/fi";
 import { useAuth } from "../../../context/authContext";
 import * as AdminNavigation from "../constants/adminNavigation";
 
@@ -48,13 +48,14 @@ const AdminLogoutButton = ({ collapsed }) => {
       type="button"
       onClick={handleLogout}
       disabled={loggingOut}
-      className={`flex items-center gap-3 w-full px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-muted rounded-md transition-colors ${
-        collapsed ? "justify-center" : ""
+      className={`flex items-center rounded-xl py-3 text-sm font-medium transition-colors text-admin-sidebar-text hover:bg-admin-sidebar-hover w-full ${
+        collapsed ? "justify-center px-0" : "gap-3 px-3"
       }`}
       title="Sair"
+      aria-label="Sair do sistema"
     >
-      <FiIcons.FiLogOut className="h-5 w-5 shrink-0" />
-      {!collapsed && <span className="text-sm font-medium">Sair</span>}
+      <FiLogOut size={19} className="shrink-0" />
+      {!collapsed && <span className="whitespace-nowrap">Sair</span>}
     </button>
   );
 };
@@ -78,7 +79,7 @@ const AdminSideBar = ({ collapsed, onToggle }) => {
                         aria-label={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
                         className="rounded-lg p-2 text-admin-sidebar-text transition-colors hover:bg-admin-sidebar-hover"
                     >
-                        {collapsed ? <FiIcons.FiChevronRight size={20} /> : <FiIcons.FiChevronLeft size={20} />}
+                        {collapsed ? <FiChevronRight size={20} /> : <FiChevronLeft size={20} />}
                     </button>
                 </div>
             </div>

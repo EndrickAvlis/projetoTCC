@@ -2,15 +2,18 @@ import * as React from "react";
 import Modal from "../../../../components/ui/Modal";
 import Badge from "../../../../components/ui/Badge";
 import Button from "../../../../components/ui/Button";
-import { formatarSenha, formatarHora } from "../../../../utils/formatters";
+import { formatarSenha, formatarDataHora, formatarHora } from "../../../../utils/formatters";
 import { transferirSenha, cancelarSenha } from "../../services/postosService";
 import { alterarPrioridade } from "../../../postos/services/filaService";
 import { POSTOS, CORES_STATUS, NOMES_DOCUMENTOS } from "../../constants/postos";
 
 const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
-  const [processando, setProcessando] = React.useState(false);
+  const [carregando, setCarregando] = React.useState(false);
   const [confirmandoCancelamento, setConfirmandoCancelamento] =
     React.useState(false);
+  React.useEffect(() => {
+    setConfirmandoCancelamento(false);
+  }, [aberto, senha?.id]);
 
   if (!aberto || !senha) return null;
 
@@ -19,13 +22,13 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
   const postosDestino = POSTOS.filter((p) => p !== senha.posto);
 
   const executar = async (acao) => {
-    setProcessando(true);
+    setCarregando(true);
     try {
       await acao();
       onAtualizar?.();
       onFechar();
     } finally {
-      setProcessando(false);
+      setCarregando(false);
     }
   };
 
@@ -65,8 +68,9 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
               <span className="text-xs text-text-secondary block">
                 Curso / Período
               </span>
-              <span className="font-medium text-text-primary">
-                {senha.curso.nome} • {senha.curso.periodo}
+              <span className="font-medium text-text-primary flex flex-col">
+                <p>{senha.curso.nome}</p>
+                <p>{senha.curso.periodo}</p>
               </span>
             </div>
           )}
@@ -80,22 +84,55 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
             </div>
           )}
 
-          {senha.emitidaEm && (
-            <div>
-              <span className="text-xs text-text-secondary block">
-                Emitida em
-              </span>
-              <span className="font-medium text-text-primary">
-                {formatarHora(senha.emitidaEm)}
-              </span>
-            </div>
-          )}
-
           {senha.guiche && (
             <div>
               <span className="text-xs text-text-secondary block">Guichê</span>
               <span className="font-medium text-text-primary">
                 Guichê {senha.guiche}
+              </span>
+            </div>
+          )}
+
+          {senha.emitidaEm && (
+            <div>
+              <span className="text-xs text-text-secondary block">
+                Senha emitida em
+              </span>
+              <span className="font-medium text-text-primary">
+                {formatarDataHora(senha.emitidaEm)}
+              </span>
+            </div>
+          )}
+
+          {senha.iniciadoEm && (
+            <div>
+              <span className="text-xs text-text-secondary block">
+                Atendimento iniciado às
+              </span>
+              <span className="font-medium text-text-primary">
+                {formatarHora(senha.iniciadoEm)}
+              </span>
+            </div>
+          )}
+
+          {senha.registradaEm && (
+            <div>
+              <span className="text-xs text-text-secondary block">
+                Registrada em
+              </span>
+              <span className="font-medium text-text-primary">
+                {formatarDataHora(senha.registradaEm)}
+              </span>
+            </div>
+          )}
+
+          {senha.encerradaEm && (
+            <div>
+              <span className="text-xs text-text-secondary block">
+                Senha encerrada em
+              </span>
+              <span className="font-medium text-text-primary">
+                {formatarDataHora(senha.encerradaEm)}
               </span>
             </div>
           )}
@@ -112,7 +149,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
           )}
         </div>
 
-        {senha.documentos && (
+        {senha.documentos?.length > 0 && (
           <div className="rounded-lg bg-surface-muted p-3 border border-border">
             <span className="text-xs font-semibold text-text-secondary block mb-1.5">
               Documentos pendentes:
@@ -143,7 +180,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
                   onClick={() =>
                     executar(() => transferirSenha(senha.id, posto))
                   }
-                  disabled={processando}
+                  disabled={carregando}
                 >
                   {posto}
                 </Button>
@@ -163,7 +200,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
                   variant="danger"
                   size="sm"
                   onClick={() => executar(() => cancelarSenha(senha.id))}
-                  loading={processando}
+                  loading={carregando}
                 >
                   Sim
                 </Button>
@@ -171,7 +208,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
                   variant="secondary"
                   size="sm"
                   onClick={() => setConfirmandoCancelamento(false)}
-                  disabled={processando}
+                  disabled={carregando}
                 >
                   Não
                 </Button>
@@ -181,7 +218,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
                 variant="danger"
                 size="sm"
                 onClick={() => setConfirmandoCancelamento(true)}
-                disabled={processando}
+                disabled={carregando}
               >
                 Cancelar Senha
               </Button>
@@ -193,7 +230,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
               onClick={() =>
                 executar(() => alterarPrioridade(senha.id, !senha.prioritaria))
               }
-              loading={processando}
+              loading={carregando}
             >
               {senha.prioritaria ? "Remover prioridade" : "Tornar prioritária"}
             </Button>

@@ -2,7 +2,7 @@ import { FiAlertCircle, FiClock, FiFileText } from "react-icons/fi";
 import Badge from "../../../../components/ui/Badge";
 import Button from "../../../../components/ui/Button";
 import { DOCUMENTOS_TRIAGEM } from "../../constants/triagem";
-import { formatarHora, formatarSenha } from "../../../../utils/formatters";
+import { formatarDataHora, formatarSenha } from "../../../../utils/formatters";
 
 const obterRotuloDocumento = (chave) => {
   const doc = DOCUMENTOS_TRIAGEM.find((d) => d.value === chave);
@@ -85,7 +85,7 @@ export const DetalhePendencia = ({
         {registradaEm && (
           <div className="flex items-center gap-1.5 text-xs text-text-secondary pt-1">
             <FiClock className="h-3.5 w-3.5 text-text-secondary" />
-            <span>Pendente desde: {formatarHora(registradaEm)}</span>
+            <span>Pendente desde: {formatarDataHora(registradaEm)}</span>
           </div>
         )}
       </div>

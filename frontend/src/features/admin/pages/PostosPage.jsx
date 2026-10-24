@@ -1,5 +1,4 @@
 import * as React from "react";
-import { FiActivity, FiList, FiClock } from "react-icons/fi";
 
 import Tabs from "../../../components/ui/Tabs";
 import SecaoAtendimento from "../components/postos/atendimento/SecaoAtendimento";

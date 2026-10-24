@@ -6,13 +6,11 @@ export const useAuditoria = ({
   busca = "",
   status = "",
   tipoPeriodo = "hoje",
-  periodo,
   dataInicio,
   dataFim,
   pagina = 1,
   limite = 7,
 } = {}) => {
-  const periodoEfetivo = periodo || tipoPeriodo;
   const buscaDebounced = useDebounce(busca, 300);
   const [senhas, setSenhas] = React.useState([]);
   const [total, setTotal] = React.useState(0);
@@ -25,7 +23,7 @@ export const useAuditoria = ({
       const res = await dadosAuditoria({
         busca: buscaDebounced,
         status,
-        tipoPeriodo: periodoEfetivo,
+        tipoPeriodo,
         dataInicio,
         dataFim,
         pagina,
@@ -38,7 +36,7 @@ export const useAuditoria = ({
     finally {
       if (!silencioso) setCarregando(false);
     }
-  }, [buscaDebounced, status, periodoEfetivo, dataInicio, dataFim, pagina, limite]);
+  }, [buscaDebounced, status, tipoPeriodo, dataInicio, dataFim, pagina, limite]);
 
   React.useEffect(() => {
     carregar();

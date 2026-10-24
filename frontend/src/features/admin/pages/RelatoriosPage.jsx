@@ -12,7 +12,7 @@ import { useCursos } from "../hooks/useCursos";
 import { useUsuarios } from "../hooks/useUsuarios";
 import { useRelatorios } from "../hooks/useRelatorios";
 import { exportarRelatorio, detalheVenda } from "../services/relatorioService";
-import { formatarMoeda, formatarHora } from "../../../utils/formatters";
+import { formatarMoeda, formatarDataHora } from "../../../utils/formatters";
 
 const OPCOES_PERIODO = [
   { valor: "HOJE", label: "Hoje" },
@@ -90,7 +90,7 @@ const RelatoriosPage = () => {
       label: "Data / Hora",
       render: (venda) => (
         <span className="text-xs font-medium text-text-primary">
-          {formatarHora(venda.dataHora)}
+          {formatarDataHora(venda.dataHora)}
         </span>
       ),
     },
@@ -216,7 +216,7 @@ const RelatoriosPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex-[1.74]">
+          <div className="flex-2">
             <Select
               placeholder="Todos os cursos"
               value={filtros.cursoId}
@@ -282,16 +282,13 @@ const RelatoriosPage = () => {
         <DataTable
           columns={colunasVendas}
           data={vendas}
+          carregando={carregandoVendas}
           getRowKey={(v) => v.id}
           pagina={pagina}
           limite={10}
           total={totalVendas}
           onPaginaChange={setPagina}
-          emptyMessage={
-            carregandoVendas
-              ? "Carregando movimentações..."
-              : "Nenhuma venda registrada para os filtros selecionados."
-          }
+          emptyMessage="Nenhuma venda registrada para os filtros selecionados."
         />
       </section>
       <VendaDetalhesModal
