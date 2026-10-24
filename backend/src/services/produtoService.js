@@ -49,7 +49,8 @@ export default class ProdutoService extends BaseService {
   }
 
   async criar({ nome, preco, quantidade, tipo, status = true }) {
-    const nomeLimpo = tipo === "armario" ? "Armário" : nome.trim().toUpperCase();
+    const nomeLimpo =
+      tipo === "armario" ? "Armário" : nome.trim().toUpperCase();
 
     if (tipo === "uniforme") {
       const produtoExistente = await prisma.produto.findFirst({
@@ -167,62 +168,49 @@ export default class ProdutoService extends BaseService {
   }
 
   async alterarEstoque(produtoId, operacao, quantidade) {
-    return prisma.$transaction(async (transacao) => {
-      const produto = await transacao.produto.findUnique({
-        where: {
-          idProduto: produtoId,
+    const produto = await super.buscarPorId(produtoId, {
+      select: produtoSelect,
+    });
+
+    if (!produto) {
+      throw produtoNaoEncontrado();
+    }
+
+    if (produto.tipoProduto !== "uniforme") {
+      throw new AppError(
+        "A operação de estoque não é permitida para este produto.",
+        {
+          status: 422,
+          code: "OPERACAO_ESTOQUE_NAO_PERMITIDA",
         },
-        select: produtoSelect,
-      });
+      );
+    }
 
-      if (!produto) {
-        throw produtoNaoEncontrado();
-      }
+    let novaQuantidade = produto.quantidadeProduto;
 
-      if (produto.tipoProduto !== "uniforme") {
-        throw new AppError(
-          "A operação de estoque não é permitida para este produto.",
-          {
-            status: 422,
-            code: "OPERACAO_ESTOQUE_NAO_PERMITIDA",
+    if (operacao === "adicionar") {
+      novaQuantidade += quantidade;
+    } else if (operacao === "diminuir") {
+      if (quantidade > produto.quantidadeProduto) {
+        throw new AppError("Não foi possível alterar o estoque.", {
+          status: 409,
+          code: "ESTOQUE_INSUFICIENTE",
+          details: {
+            quantidadeDisponivel: produto.quantidadeProduto,
+            quantidadeSolicitada: quantidade,
           },
-        );
+        });
       }
 
-      let novaQuantidade = produto.quantidadeProduto;
+      novaQuantidade -= quantidade;
+    } else if (operacao === "corrigir") {
+      novaQuantidade = quantidade;
+    }
 
-      if (operacao === "adicionar") {
-        novaQuantidade += quantidade;
-      }
-
-      if (operacao === "diminuir") {
-        if (quantidade > produto.quantidadeProduto) {
-          throw new AppError("Não foi possível alterar o estoque.", {
-            status: 409,
-            code: "ESTOQUE_INSUFICIENTE",
-            details: {
-              quantidadeDisponivel: produto.quantidadeProduto,
-              quantidadeSolicitada: quantidade,
-            },
-          });
-        }
-
-        novaQuantidade -= quantidade;
-      }
-
-      if (operacao === "corrigir") {
-        novaQuantidade = quantidade;
-      }
-
-      return transacao.produto.update({
-        where: {
-          idProduto: produtoId,
-        },
-        data: {
-          quantidadeProduto: novaQuantidade,
-        },
-        select: produtoSelect,
-      });
+    return this.model.update({
+      where: { idProduto: produtoId },
+      data: { quantidadeProduto: novaQuantidade },
+      select: produtoSelect,
     });
   }
 

@@ -32,7 +32,7 @@ app.use("/usuarios", usuarioRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/auth", authRoutes);
 app.use("/alunos", alunoRoutes);
-app.use("/atendimento", atendimentoRoutes);
+app.use("/atendimentos", atendimentoRoutes);
 app.use("/relatorios", relatorioRoutes);
 
 app.get("/", (req, res) => {

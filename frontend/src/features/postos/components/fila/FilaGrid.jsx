@@ -16,9 +16,9 @@ const FilaGrid = ({ senhas, onSelecionarSenha, desabilitada = false }) => {
       ].join(" ")}
       disabled={desabilitada}
       onClick={() => onSelecionarSenha(senha)}
-      aria-label={`Chamar senha ${senha.numero}`}
+      aria-label={`Chamar senha ${senha.codigo}`}
     >
-      {formatarSenha(senha.numero)}
+      {formatarSenha(senha.codigo)}
     </button>
   );
 

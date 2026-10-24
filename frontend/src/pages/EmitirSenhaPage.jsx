@@ -95,7 +95,7 @@ const EmitirSenhaPage = () => {
             </p>
 
             <p className="mt-2 text-6xl font-extrabold leading-none text-text-primary sm:text-8xl">
-              {senha ? formatarSenha(senha.numero) : ""}
+              {senha ? formatarSenha(senha.codigo) : ""}
             </p>
           </section>
           {erro && (

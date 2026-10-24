@@ -49,16 +49,40 @@ Registra o momento em que o aluno se sentou no guichê e o atendimento começou 
   }
   ```
 * **Responsabilidades do Back-end:**
-  1. Validar se a senha existe e está na etapa do posto.
+  1. Validar se a senha existe, se está na etapa do posto e se está em atendimento (`statusSenha = 'em_atendimento'`).
   2. Criar ou confirmar abertura do registro em `HistoricoSenha` contendo `codSenha = senha.idSenha`, `codVoluntario = voluntarioAutenticado.idVoluntario`, `etapaHistorico = senha.etapaSenha` e `dataHoraInicioHistorico = new Date()`.
-* **Resposta (HTTP 200):**
+  3. Buscar e retornar os dados cadastrais e de matrícula do aluno vinculado à senha (necessários para os postos de **APM** e **Documentos**).
+* **Resposta com aluno vinculado (APM e Docs) (HTTP 200):**
   ```json
   {
     "mensagem": "Atendimento iniciado com sucesso.",
     "atendimento": {
       "idHistorico": 84,
       "iniciadoEm": "2026-10-09T21:00:00.000Z"
+    },
+    "aluno": {
+      "id": 15,
+      "nome": "Endrick Silva Souza",
+      "cidade": "São José do Rio Preto",
+      "sexo": "Masculino",
+      "escolaridadePublica": true,
+      "status": "CANDIDATO",
+      "curso": "Desenvolvimento de Sistemas",
+      "periodo": "integral",
+      "classificacao": 12,
+      "statusMatricula": "PENDENTE"
     }
+  }
+  ```
+* **Resposta sem aluno vinculado (Triagem antes do cadastro) (HTTP 200):**
+  ```json
+  {
+    "mensagem": "Atendimento iniciado com sucesso.",
+    "atendimento": {
+      "idHistorico": 84,
+      "iniciadoEm": "2026-10-09T21:00:00.000Z"
+    },
+    "aluno": null
   }
   ```
 
@@ -70,7 +94,7 @@ Permite que o atendente recupere o atendimento em andamento caso a página seja 
 * **Rota:** `GET /atendimentos/ativo`
 * **Responsabilidades do Back-end:**
   1. Buscar se o voluntário autenticado (`idVoluntario`) possui algum registro de senha sob sua responsabilidade com `statusSenha = 'em_atendimento'`.
-  2. Incluir os dados do aluno (`nomeAluno`, curso) vinculados a essa senha ativa.
+  2. Incluir os dados completos do aluno (`nomeAluno`, cidade, sexo, escolaridade pública, status e dados de curso/matrícula) vinculados a essa senha ativa.
   3. Buscar o `HistoricoSenha` correspondente ativo (sem `dataHoraFimHistorico`).
 * **Resposta com atendimento ativo (HTTP 200):**
   ```json
@@ -80,10 +104,36 @@ Permite que o atendente recupere o atendimento em andamento caso a página seja 
       "codigo": 104,
       "prioritaria": false,
       "etapa": "apm",
+      "status": "em_atendimento",
       "aluno": {
-        "idAluno": 15,
-        "nome": "Endrick Silva Souza"
+        "id": 15,
+        "nome": "Endrick Silva Souza",
+        "cidade": "São José do Rio Preto",
+        "sexo": "Masculino",
+        "escolaridadePublica": true,
+        "status": "CANDIDATO",
+        "curso": "Desenvolvimento de Sistemas",
+        "periodo": "integral",
+        "classificacao": 12,
+        "statusMatricula": "PENDENTE"
       }
+    },
+    "atendimento": {
+      "idHistorico": 84,
+      "iniciadoEm": "2026-10-09T21:00:00.000Z"
+    }
+  }
+  ```
+* **Resposta quando há atendimento ativo sem aluno cadastrado (Triagem) (HTTP 200):**
+  ```json
+  {
+    "senha": {
+      "id": 12,
+      "codigo": 104,
+      "prioritaria": false,
+      "etapa": "triagem",
+      "status": "em_atendimento",
+      "aluno": null
     },
     "atendimento": {
       "idHistorico": 84,
@@ -98,27 +148,6 @@ Permite que o atendente recupere o atendimento em andamento caso a página seja 
     "atendimento": null
   }
   ```
-
-edição:
-* **Resposta quando há atendimento mas não tem aluno cadastrado na senha (triagem) (HTTP200)**
-  ```json
-    {
-      "senha": {
-        "id": 12,
-        "codigo": 104,
-        "prioritaria": false,
-        "etapa": "apm",
-        "aluno": {
-          "idAluno": null,
-          "nome": null
-        }
-      },
-      "atendimento": {
-        "idHistorico": 84,
-        "iniciadoEm": "2026-10-09T21:00:00.000Z"
-      }
-    }
-    ```
 ---
 
 ### 3.3. Rechamar Senha no Painel
@@ -142,60 +171,32 @@ Aciona o painel de chamadas sonoro/visual para reanunciar o número da senha. O 
 ---
 
 ### 3.4. Finalizar Atendimento
-Encerra a etapa atual da senha e transfere o aluno para o próximo posto na fila.
+Encerra a etapa atual da senha e transfere o aluno para o próximo posto na fila (ou conclui a matrícula caso seja o posto de Documentos).
 
-* **Rota:** `POST /atendimentos/:id/finalizar`
-* **Parâmetro de URL:** `id` (ID da senha)
+* **Rota:** `POST /atendimentos/finalizar`
+* **Body:**
+  ```json
+  {
+    "senhaId": 12
+  }
+  ```
 * **Transação no Back-end (`prisma.$transaction`):**
-  1. Localizar a senha e verificar se `statusSenha == 'em_atendimento'` e se pertence ao voluntário autenticado.
+Mori pesquisa o que são transações no prisma, elas servem para executar varias mudanças no banco em tabelas diferentes sem ocorrer de uma delas dar erro e as outras serem executadas. Em uma transação ou tudo da certo ou nada é feito.
+  1. Localizar a senha e verificar se `statusSenha == 'em_atendimento'` e se pertence à etapa do voluntário.
   2. Fechar o `HistoricoSenha` aberto associado a esta senha e voluntário (`dataHoraFimHistorico = new Date()`).
-  3. Calcular a próxima etapa:
+  3. Calcular a transição de etapa e status:
      - Se `etapaSenha == 'triagem'` ➔ próxima etapa: `'apm'`, `statusSenha = 'aguardando'`.
      - Se `etapaSenha == 'apm'` ➔ próxima etapa: `'docs'`, `statusSenha = 'aguardando'`.
-     - Se `etapaSenha == 'docs'` ➔ `etapaSenha = 'docs'`, `statusSenha = 'finalizada'`, `dataHoraFimSenha = new Date()`.
-  4. Atualizar a `Senha`.
+     - Se `etapaSenha == 'docs'` (Conclusão Definitiva de Matrícula):
+       - `etapaSenha = 'docs'`, `statusSenha = 'finalizada'`, `dataHoraFimSenha = new Date()`.
+       - Atualizar cadastro do aluno: `statusAluno = 'ATIVO'`.
+       - Atualizar a matrícula vinculada (`CursoAluno`): `statusMatricula = 'ATIVA'`.
+  4. Atualizar a `Senha` e as entidades do aluno vinculadas.
 * **Resposta (HTTP 200):**
   ```json
   {
     "mensagem": "Atendimento finalizado com sucesso.",
     "proximaEtapa": "docs"
-  }
-  ```
-
-retirei a rota de cancelamento, pois ela pertence a tela de postos do administrador.
-
----
-### 3.5. Retomar Atendimento Pendente
-Utilizado quando um aluno que estava com pendência documental retorna com os documentos e tem seu atendimento reaberto no guichê.
-
-* **Rota:** `POST /atendimentos/:id/retomar`
-* **Parâmetro de URL:** `id` (ID da senha)
-* **Body:**
-  ```json
-  {
-    "etapa": "triagem"
-  }
-  ```
-* **Transação no Back-end (`prisma.$transaction`):**
-  1. Validar se o voluntário já possui outro atendimento ativo nesta etapa (`409 Conflict`).
-  2. Validar se a senha fornecida está com `statusSenha = 'pendente'`.
-  3. Atualizar `Senha`: `statusSenha = 'em_atendimento'`.
-  4. Criar novo `HistoricoSenha` (`codSenha = senha.idSenha`, `codVoluntario = voluntarioAutenticado.idVoluntario`, `etapaHistorico = body.etapa`, `dataHoraInicioHistorico = new Date()`).
-* **Resposta (HTTP 200):**
-  ```json
-  {
-    "mensagem": "Atendimento retomado com sucesso.",
-    "senha": {
-      "id": 15,
-      "codigo": 42,
-      "tipoSenha": false,
-      "etapa": "triagem",
-      "status": "em_atendimento"
-    },
-    "atendimento": {
-      "idHistorico": 102,
-      "iniciadoEm": "2026-10-09T20:30:00.000Z"
-    }
   }
   ```
 
