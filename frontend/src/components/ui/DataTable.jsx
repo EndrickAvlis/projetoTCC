@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Button from "./Button";
 
 const gerarTokensPagina = (atual, totalPaginas) => {
@@ -26,6 +26,7 @@ const DataTable = ({
   data = [],
   getRowKey,
   emptyMessage = "Nenhum registro encontrado.",
+  carregando = false,
   alturaMaxima = "28rem",
   alturaMinima,
   pagina,
@@ -67,7 +68,19 @@ const DataTable = ({
           </thead>
 
           <tbody className="divide-y divide-border">
-            {data.length === 0 ? (
+            {carregando ? (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-5 py-12 text-center text-sm text-text-secondary"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <span>Carregando dados...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : data.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
@@ -117,7 +130,7 @@ const DataTable = ({
               aria-label="Página anterior"
               className="px-2"
             >
-              <FiIcons.FiChevronLeft size={16} />
+              <FiChevronLeft size={16} />
             </Button>
 
             {tokens.map((token, index) => {
@@ -158,7 +171,7 @@ const DataTable = ({
               aria-label="Próxima página"
               className="px-2"
             >
-              <FiIcons.FiChevronRight size={16} />
+              <FiChevronRight size={16} />
             </Button>
           </div>
         </div>

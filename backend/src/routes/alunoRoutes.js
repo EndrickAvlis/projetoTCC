@@ -2,14 +2,11 @@ import { Router } from "express";
 import * as alunoController from "../controllers/alunoController.js";
 import * as alunos from "../schemas/SchemaAlunos.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
+import * as auth from "../middlewares/authMiddleware.js";
 
 const alunoRoutes = Router();
 
-alunoRoutes.post(
-  "/",
-  validarRequisicao(alunos.criarAlunoSchema),
-  alunoController.criarAluno,
-);
+alunoRoutes.use(auth.accessValidator);
 
 alunoRoutes.get(
   "/",
@@ -19,28 +16,19 @@ alunoRoutes.get(
 
 alunoRoutes.get("/cidades", alunoController.listarCidades);
 
-alunoRoutes.get(
-  "/:id",
-  validarRequisicao(alunos.consultarAlunoSchema),
-  alunoController.consultarAluno,
-);
-
 alunoRoutes.patch(
   "/:id",
-  validarRequisicao(alunos.editarAlunoSchema),
-  alunoController.editarAluno,
-);
-
-alunoRoutes.post(
-  "/:id/matriculas",
-  validarRequisicao(alunos.adicionarMatriculaSchema),
-  alunoController.adicionarMatricula,
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(alunos.atualizarAlunoSchema),
+  alunoController.atualizarAluno,
 );
 
 alunoRoutes.post(
   "/importar",
+  auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(alunos.importarAlunosSchema),
   alunoController.importarAlunos,
 );
 
 export default alunoRoutes;
+

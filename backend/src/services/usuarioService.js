@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import BaseService from "./baseService.js";
 import bcrypt from "bcrypt";
+import AppError from "../errors/AppError.js";
 
 const usuarioSelect = {
   idVoluntario: true,
@@ -9,31 +10,30 @@ const usuarioSelect = {
   statusVoluntario: true,
 };
 
+const usuarioNaoEncontrado = () =>
+  new AppError("Usuário não encontrado.", {
+    status: 404,
+    code: "USUARIO_NAO_ENCONTRADO",
+  });
+
 export default class UsuarioService extends BaseService {
   constructor() {
     super(prisma.voluntario, "idVoluntario");
   }
 
-  async listar({ id, busca = "", tipo, status } = {}) {
-    const buscaLimpa = typeof busca === "string" ? busca.trim() : "";
-
+  async listar({ id, busca, tipo, status } = {}) {
     return super.listar(
       {
-        ...(id && { idVoluntario: id }),
-        ...(tipo && { tipoVoluntario: tipo }),
-        ...(status !== undefined && { statusVoluntario: status }),
-        ...(buscaLimpa && {
-          nomeVoluntario: {
-            contains: buscaLimpa,
-            mode: "insensitive",
-          },
-        }),
+        idVoluntario: id,
+        tipoVoluntario: tipo,
+        statusVoluntario: status,
+        nomeVoluntario: busca
+          ? { contains: busca, mode: "insensitive" }
+          : undefined,
       },
       {
         select: usuarioSelect,
-        orderBy: {
-          nomeVoluntario: "asc",
-        },
+        orderBy: { nomeVoluntario: "asc" },
       },
     );
   }
@@ -58,10 +58,7 @@ export default class UsuarioService extends BaseService {
     const usuario = await super.buscarPorId(id);
 
     if (!usuario) {
-      throw new AppError("Usuário não encontrado.", {
-        status: 404,
-        code: "USUARIO_NAO_ENCONTRADO",
-      });
+      throw usuarioNaoEncontrado();
     }
 
     return super.atualizar(
@@ -76,4 +73,51 @@ export default class UsuarioService extends BaseService {
     );
   }
 
+  async excluir(id) {
+    const usuario = await super.buscarPorId(id);
+
+    if (!usuario) {
+      throw usuarioNaoEncontrado();
+    }
+
+    if (usuario.statusVoluntario) {
+      throw new AppError("Apenas usuários desativados podem ser excluídos.", {
+        status: 400,
+        code: "USUARIO_ATIVO",
+      });
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const compras = await tx.compra.findMany({
+        where: { codVoluntario: id },
+        select: { idCompra: true },
+      });
+
+      const comprasIds = compras.map((c) => c.idCompra);
+
+      if (comprasIds.length > 0) {
+        await tx.itemCompra.deleteMany({
+          where: { codCompra: { in: comprasIds } },
+        });
+        await tx.pagamento.deleteMany({
+          where: { codCompra: { in: comprasIds } },
+        });
+        await tx.contribuicao.deleteMany({
+          where: { codCompra: { in: comprasIds } },
+        });
+        await tx.compra.deleteMany({
+          where: { codVoluntario: id },
+        });
+      }
+
+      await tx.historicoSenha.deleteMany({
+        where: { codVoluntario: id },
+      });
+
+      return tx.voluntario.delete({
+        where: { idVoluntario: id },
+        select: usuarioSelect,
+      });
+    });
+  }
 }

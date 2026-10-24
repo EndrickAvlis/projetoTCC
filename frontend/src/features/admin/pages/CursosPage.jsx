@@ -1,60 +1,55 @@
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
-import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
+import TableFiltro from "../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
+import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 
 import CursoModal from "../components/cursos/CursoModal";
 import PeriodoModal from "../components/cursos/PeriodoModal";
-import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
 import { useCursos } from "../hooks/useCursos";
 import * as cursoService from "../services/cursoService";
+import { useAuth } from "../../../context/authContext";
+
+const OPCOES_STATUS_CURSO = [
+  { valor: false, label: "Ativos" },
+  { valor: true, label: "Arquivados" },
+];
 
 const CursosPage = () => {
+  const { usuario: usuarioLogado } = useAuth();
+  const ehAdmin = usuarioLogado?.tipo === "admin";
+
   const [busca, setBusca] = React.useState("");
   const [arquivado, setArquivado] = React.useState(false);
 
   const [salvando, setSalvando] = React.useState(false);
-
-  const [modalCursoAberto, setModalCursoAberto] = React.useState(false);
-  const [cursoEmEdicao, setCursoEmEdicao] = React.useState(null);
-
-  const [modalPeriodo, setModalPeriodo] = React.useState(null);
-
-  const [cursoParaArquivamento, setCursoParaArquivamento] =
-    React.useState(null);
-
+  const [modalAtivo, setModalAtivo] = React.useState(null);
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
 
-  const { cursos, total, carregando, erro, recarregar } = useCursos({
+  const { cursos, total, carregando, recarregar } = useCursos({
     busca,
     arquivado,
   });
 
-  const fecharModalCurso = () => {
-    setModalCursoAberto(false);
-    setCursoEmEdicao(null);
-  };
-  const abrirModalCurso = (curso = null) => {
-    setCursoEmEdicao(curso);
-    setModalCursoAberto(true);
-  };
   const handleSalvarCurso = async (dados) => {
     setSalvando(true);
 
     try {
-      if (cursoEmEdicao) {
-        await cursoService.atualizarNomeCurso(cursoEmEdicao.id, dados.nome);
+      if (modalAtivo?.curso) {
+        await cursoService.atualizarCurso(modalAtivo.curso.id, {
+          nome: dados.nome,
+        });
       } else {
         await cursoService.criarCurso(dados);
       }
 
-      fecharModalCurso();
+      setModalAtivo(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
@@ -63,24 +58,20 @@ const CursosPage = () => {
     }
   };
 
-  const fecharModalPeriodo = () => setModalPeriodo(null);
-  const abrirModalPeriodo = (curso, periodo = null) =>
-    setModalPeriodo({ curso, periodo });
   const handleSalvarPeriodo = async (dados) => {
-    if (!modalPeriodo) return;
+    if (!modalAtivo?.curso) return;
 
-    const { curso, periodo } = modalPeriodo;
-
+    const { curso, periodo } = modalAtivo;
     setSalvando(true);
 
     try {
       if (periodo) {
-        await cursoService.atualizarPeriodoCurso(curso.id, periodo.id, dados);
+        await cursoService.atualizarPeriodo(curso.id, periodo.id, dados);
       } else {
-        await cursoService.criarPeriodoCurso(curso.id, dados);
+        await cursoService.criarPeriodo(curso.id, dados);
       }
 
-      fecharModalPeriodo();
+      setModalAtivo(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
@@ -90,20 +81,16 @@ const CursosPage = () => {
   };
 
   const confirmarArquivamento = async () => {
-    if (!cursoParaArquivamento) {
-      return;
-    }
+    if (!modalAtivo?.curso) return;
 
     setSalvando(true);
 
     try {
-      await cursoService.alterarArquivamentoCurso(
-        cursoParaArquivamento.id,
-        !cursoParaArquivamento.arquivado,
-      );
+      await cursoService.atualizarCurso(modalAtivo.curso.id, {
+        arquivado: !modalAtivo.curso.arquivado,
+      });
 
-      setCursoParaArquivamento(null);
-
+      setModalAtivo(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
@@ -111,6 +98,23 @@ const CursosPage = () => {
       setSalvando(false);
     }
   };
+
+  const handleExcluirCurso = async () => {
+    if (!modalAtivo?.curso) return;
+
+    setSalvando(true);
+
+    try {
+      await cursoService.excluirCurso(modalAtivo.curso.id);
+      setModalAtivo(null);
+      await recarregar();
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   const alternarPeriodos = (cursoId) => {
     setCursoExpandido((cursoAtual) =>
       cursoAtual === cursoId ? null : cursoId,
@@ -125,8 +129,8 @@ const CursosPage = () => {
         <div>
           <p className="font-semibold text-text-primary">{curso.nome}</p>
           <p className="mt-1 text-xs text-text-secondary">
-            {curso.periodos.length} período
-            {curso.periodos.length === 1 ? "" : "s"}
+            {(curso.periodos?.length ?? 0)} período
+            {curso.periodos?.length === 1 ? "" : "s"}
           </p>
         </div>
       ),
@@ -135,8 +139,9 @@ const CursosPage = () => {
       key: "periodos",
       label: "Períodos",
       render: (curso) => {
-        const primeiroPeriodo = curso.periodos[0];
-        const periodosRestantes = curso.periodos.slice(1);
+        const periodos = curso.periodos || [];
+        const primeiroPeriodo = periodos[0];
+        const periodosRestantes = periodos.slice(1);
         const expandido = cursoExpandido === curso.id;
         return primeiroPeriodo ? (
           <div className="space-y-1.5">
@@ -145,7 +150,12 @@ const CursosPage = () => {
               onEditar={
                 curso.arquivado
                   ? null
-                  : () => abrirModalPeriodo(curso, primeiroPeriodo)
+                  : () =>
+                      setModalAtivo({
+                        tipo: "periodo",
+                        curso,
+                        periodo: primeiroPeriodo,
+                      })
               }
             />
 
@@ -157,7 +167,12 @@ const CursosPage = () => {
                     onEditar={
                       curso.arquivado
                         ? null
-                        : () => abrirModalPeriodo(curso, periodoCurso)
+                        : () =>
+                            setModalAtivo({
+                              tipo: "periodo",
+                              curso,
+                              periodo: periodoCurso,
+                            })
                     }
                   />
                 </div>
@@ -194,28 +209,39 @@ const CursosPage = () => {
       label: "Ações",
       headerClassName: "text-right",
       cellClassName: "text-right",
-      render: (curso) => (
-        <TableMenuActions
-          itens={[
-            !curso.arquivado && {
-              label: "Adicionar período",
-              icone: FiIcons.FiPlus,
-              onClick: () => abrirModalPeriodo(curso),
-            },
-            {
-              label: "Editar nome",
-              icone: FiIcons.FiEdit2,
-              onClick: () => abrirModalCurso(curso),
-            },
-            {
-              label: curso.arquivado ? "Desarquivar" : "Arquivar",
-              icone: curso.arquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
-              onClick: () => setCursoParaArquivamento(curso),
-              variante: curso.arquivado ? "success" : "danger",
-            },
-          ]}
-        />
-      ),
+      render: (curso) => {
+        const podeExcluir = ehAdmin && curso.arquivado;
+
+        return (
+          <TableMenuActions
+            label={`Ações do curso ${curso.nome}`}
+            itens={[
+              !curso.arquivado && {
+                label: "Adicionar período",
+                icone: FiIcons.FiPlus,
+                onClick: () => setModalAtivo({ tipo: "periodo", curso }),
+              },
+              {
+                label: "Editar nome",
+                icone: FiIcons.FiEdit2,
+                onClick: () => setModalAtivo({ tipo: "curso", curso }),
+              },
+              {
+                label: curso.arquivado ? "Desarquivar" : "Arquivar",
+                icone: curso.arquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
+                onClick: () => setModalAtivo({ tipo: "arquivar", curso }),
+                variante: curso.arquivado ? "success" : "danger",
+              },
+              podeExcluir && {
+                label: "Excluir",
+                icone: FiIcons.FiTrash2,
+                onClick: () => setModalAtivo({ tipo: "excluir", curso }),
+                variante: "danger",
+              },
+            ]}
+          />
+        );
+      },
     },
   ];
 
@@ -224,17 +250,14 @@ const CursosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {total} curso{total === 1 ? "" : "s"}{" "}
-            {arquivado ? "arquivado" : "ativo"}
-            {total === 1 ? "" : "s"} encontrado
-            {total === 1 ? "" : "s"}.
+            {total} {total === 1 ? "curso" : "cursos"} {arquivado ? "arquivado" : "ativo"}{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
           </p>
         </div>
 
         <Button
           leftIcon={<FiIcons.FiPlus />}
           className="w-full sm:w-auto"
-          onClick={() => abrirModalCurso()}
+          onClick={() => setModalAtivo({ tipo: "curso" })}
         >
           Adicionar curso
         </Button>
@@ -250,87 +273,71 @@ const CursosPage = () => {
           className="max-w-xl"
         />
 
-        <div className="flex rounded-btn border border-border p-1">
-          <button
-            type="button"
-            onClick={() => setArquivado(false)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              !arquivado
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Ativos
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setArquivado(true)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              arquivado
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Arquivados
-          </button>
-        </div>
+        <TableFiltro
+          options={OPCOES_STATUS_CURSO}
+          value={arquivado}
+          onChange={setArquivado}
+          ariaLabel="Situação dos cursos"
+        />
       </div>
 
-      {erro && <Alert type="error" message={erro} />}
-
-      {carregando ? (
-        <div className="flex items-center justify-center rounded-xl border border-border bg-surface py-16 text-sm text-text-secondary">
-          <div className="flex flex-col items-center gap-2">
-            <FiIcons.FiLoader className="h-6 w-6 animate-spin text-primary" />
-            <span>Carregando cursos...</span>
-          </div>
-        </div>
-      ) : (
-        <DataTable
-          columns={columnsCurso}
-          data={cursos}
-          getRowKey={(curso) => curso.id}
-          emptyMessage={
-            arquivado
-              ? "Nenhum curso arquivado encontrado."
-              : "Nenhum curso ativo encontrado."
-          }
-        />
-      )}
+      <DataTable
+        columns={columnsCurso}
+        data={cursos}
+        carregando={carregando}
+        getRowKey={(curso) => curso.id}
+        emptyMessage={
+          arquivado
+            ? "Nenhum curso arquivado encontrado."
+            : "Nenhum curso ativo encontrado."
+        }
+      />
 
       <CursoModal
-        aberto={modalCursoAberto}
-        curso={cursoEmEdicao}
-        onFechar={fecharModalCurso}
+        aberto={modalAtivo?.tipo === "curso"}
+        curso={modalAtivo?.curso}
+        onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarCurso}
         salvando={salvando}
       />
+
       <PeriodoModal
-        aberto={Boolean(modalPeriodo)}
-        periodo={modalPeriodo?.periodo}
-        onFechar={fecharModalPeriodo}
+        aberto={modalAtivo?.tipo === "periodo"}
+        periodo={modalAtivo?.periodo}
+        onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarPeriodo}
         salvando={salvando}
       />
+
       <ConfirmarModal
-        aberto={Boolean(cursoParaArquivamento)}
-        onFechar={() => setCursoParaArquivamento(null)}
+        aberto={modalAtivo?.tipo === "arquivar"}
+        onFechar={() => setModalAtivo(null)}
         onConfirmar={confirmarArquivamento}
         titulo={
-          cursoParaArquivamento?.arquivado
+          modalAtivo?.curso?.arquivado
             ? "Desarquivar curso"
             : "Arquivar curso"
         }
         mensagem={
-          cursoParaArquivamento?.arquivado
-            ? `Deseja desarquivar o curso ${cursoParaArquivamento?.nome}?`
-            : `Deseja arquivar o curso ${cursoParaArquivamento?.nome}? As matrículas dos períodos serão fechadas.`
+          modalAtivo?.curso?.arquivado
+            ? `Deseja desarquivar o curso ${modalAtivo?.curso?.nome}?`
+            : `Deseja arquivar o curso ${modalAtivo?.curso?.nome}? As matrículas dos períodos serão fechadas.`
         }
         textoConfirmar={
-          cursoParaArquivamento?.arquivado ? "Desarquivar" : "Arquivar"
+          modalAtivo?.curso?.arquivado ? "Desarquivar" : "Arquivar"
         }
-        variante={cursoParaArquivamento?.arquivado ? "success" : "danger"}
+        variante={modalAtivo?.curso?.arquivado ? "success" : "danger"}
+        salvando={salvando}
+      />
+
+      <ConfirmarModal
+        aberto={modalAtivo?.tipo === "excluir"}
+        onFechar={() => setModalAtivo(null)}
+        onConfirmar={handleExcluirCurso}
+        titulo="Excluir curso"
+        mensagem={`Tem certeza de que deseja excluir permanentemente o curso ${modalAtivo?.curso?.nome}? Esta ação é irreversível e removerá todos os registros associados a este curso.`}
+        textoConfirmar="Excluir definitivamente"
+        variante="danger"
         salvando={salvando}
       />
     </section>
@@ -338,3 +345,4 @@ const CursosPage = () => {
 };
 
 export default CursosPage;
+

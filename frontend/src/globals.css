@@ -36,6 +36,31 @@
   --color-status-danger: #b42318;
   --color-status-danger-bg: #fee4e2;
 
+  /* Postos operacionais e pendencias */
+  --color-triagem: #207a4d;
+  --color-triagem-dark: #165737;
+  --color-triagem-bg: #e9f7ef;
+  --color-triagem-border: #b7e0c9;
+  --color-triagem-text: #207a4d;
+
+  --color-apm: #b85c08;
+  --color-apm-dark: #8a4404;
+  --color-apm-bg: #fff1e5;
+  --color-apm-border: #f8d8ba;
+  --color-apm-text: #b85c08;
+
+  --color-docs: #7042a3;
+  --color-docs-dark: #542f7e;
+  --color-docs-bg: #f3ecfa;
+  --color-docs-border: #d8c5ee;
+  --color-docs-text: #7042a3;
+
+  --color-pendencias: #9a6700;
+  --color-pendencias-dark: #785101;
+  --color-pendencias-bg: #fff6d8;
+  --color-pendencias-border: #efd89b;
+  --color-pendencias-text: #854d0e;
+
   /* Area administrativa */
   --color-admin-sidebar: #0a2647;
   --color-admin-sidebar-hover: #12365f;
@@ -120,4 +145,9 @@
   .animate-offer-expand {
     animation: none;
   }
+}
+
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
 }

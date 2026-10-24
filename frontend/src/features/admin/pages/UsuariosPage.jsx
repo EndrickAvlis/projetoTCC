@@ -6,6 +6,7 @@ import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
+import TableFiltro from "../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
 import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 
@@ -21,6 +22,11 @@ const OPCOES_FILTRO_TIPO = [
   { value: "atendente", label: "Atendentes" },
 ];
 
+const OPCOES_STATUS_USUARIO = [
+  { valor: true, label: "Ativos" },
+  { valor: false, label: "Inativos" },
+];
+
 const UsuariosPage = () => {
   const { usuario: usuarioLogado } = useAuth();
   const ehSupervisor = usuarioLogado?.tipo === "supervisor";
@@ -31,29 +37,15 @@ const UsuariosPage = () => {
   const [statusAtivo, setStatusAtivo] = React.useState(true);
 
   const [salvando, setSalvando] = React.useState(false);
+  const [modalAtivo, setModalAtivo] = React.useState(null);
 
-  const [modalUsuarioAberto, setModalUsuarioAberto] = React.useState(false);
-  const [usuarioEmEdicao, setUsuarioEmEdicao] = React.useState(null);
-  const [usuarioParaAlterarStatus, setUsuarioParaAlterarStatus] =
-    React.useState(null);
-
-  const { usuarios, carregando, erro, recarregar } = useUsuarios({
+  const { usuarios, carregando, recarregar } = useUsuarios({
     busca,
     tipo: ehSupervisor ? "" : tipoFiltro,
     status: statusAtivo,
   });
 
-  const abrirModalUsuario = (usuario = null) => {
-    setUsuarioEmEdicao(usuario);
-    setModalUsuarioAberto(true);
-  };
-
-  const fecharModalUsuario = () => {
-    setModalUsuarioAberto(false);
-    setUsuarioEmEdicao(null);
-  };
-
-  const handleSalvarUsuario = async (dados, id = usuarioEmEdicao?.id) => {
+  const handleSalvarUsuario = async (dados, id = modalAtivo?.usuario?.id) => {
     setSalvando(true);
 
     try {
@@ -63,8 +55,22 @@ const UsuariosPage = () => {
         await usuarioService.criarUsuario(dados);
       }
 
-      fecharModalUsuario();
-      setUsuarioParaAlterarStatus(null);
+      setModalAtivo(null);
+      await recarregar();
+    } catch {
+      // Erro já exibido pelo Toast do apiClient
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleExcluirUsuario = async () => {
+    if (!modalAtivo?.usuario) return;
+    setSalvando(true);
+
+    try {
+      await usuarioService.excluirUsuario(modalAtivo.usuario.id);
+      setModalAtivo(null);
       await recarregar();
     } catch {
       // Erro já exibido pelo Toast do apiClient
@@ -103,7 +109,7 @@ const UsuariosPage = () => {
   const columnsUsuario = [
     {
       key: "nome",
-      label: "Usuário",
+      label: "Nome",
       render: (u) => {
         const ehProprioUsuario = u.id === usuarioLogado?.id;
         return (
@@ -120,12 +126,12 @@ const UsuariosPage = () => {
     },
     {
       key: "tipo",
-      label: "Função / Cargo",
+      label: "Tipo",
       render: (u) => renderBadgeTipo(u.tipo),
     },
     {
       key: "status",
-      label: "Situação",
+      label: "Status",
       render: (u) =>
         u.status ? (
           <Badge variant="success" dot>
@@ -148,21 +154,28 @@ const UsuariosPage = () => {
           ehAdmin || ehProprioUsuario || u.tipo === "atendente";
         const podeInativar =
           !ehProprioUsuario && (ehAdmin || u.tipo === "atendente");
+        const podeExcluir = !ehProprioUsuario && ehAdmin && !u.status;
 
         return (
           <TableMenuActions
-            labelAria={`Ações do usuário ${u.nome}`}
+            label={`Ações do usuário ${u.nome}`}
             itens={[
               podeEditar && {
                 label: "Editar",
                 icone: FiIcons.FiEdit2,
-                onClick: () => abrirModalUsuario(u),
+                onClick: () => setModalAtivo({ tipo: "edicao", usuario: u }),
               },
               podeInativar && {
                 label: u.status ? "Inativar" : "Ativar",
                 icone: u.status ? FiIcons.FiUserX : FiIcons.FiUserCheck,
-                onClick: () => setUsuarioParaAlterarStatus(u),
+                onClick: () => setModalAtivo({ tipo: "status", usuario: u }),
                 variante: u.status ? "danger" : "success",
+              },
+              podeExcluir && {
+                label: "Excluir",
+                icone: FiIcons.FiTrash2,
+                onClick: () => setModalAtivo({ tipo: "excluir", usuario: u }),
+                variante: "danger",
               },
             ]}
           />
@@ -176,18 +189,14 @@ const UsuariosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {usuariosOrdenados.length} usuário
-            {usuariosOrdenados.length === 1 ? "" : "s"}{" "}
-            {statusAtivo ? "ativo" : "inativo"}
-            {usuariosOrdenados.length === 1 ? "" : "s"} encontrado
-            {usuariosOrdenados.length === 1 ? "" : "s"}.
+            {usuariosOrdenados.length} {usuariosOrdenados.length === 1 ? "usuário" : "usuários"} {statusAtivo ? "ativo" : "inativo"}{usuariosOrdenados.length === 1 ? "" : "s"} encontrado{usuariosOrdenados.length === 1 ? "" : "s"}.
           </p>
         </div>
 
         <Button
-          leftIcon={<FiIcons.FiUserPlus />}
+          leftIcon={<FiIcons.FiPlus />}
           className="w-full sm:w-auto"
-          onClick={() => abrirModalUsuario()}
+          onClick={() => setModalAtivo({ tipo: "cadastro" })}
         >
           Adicionar usuário
         </Button>
@@ -216,79 +225,69 @@ const UsuariosPage = () => {
           )}
         </div>
 
-        <div className="flex rounded-btn border border-border p-1">
-          <button
-            type="button"
-            onClick={() => setStatusAtivo(true)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              statusAtivo
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Ativos
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusAtivo(false)}
-            className={`rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
-              !statusAtivo
-                ? "bg-primary text-text-inverse"
-                : "text-text-secondary hover:bg-surface-muted"
-            }`}
-          >
-            Inativos
-          </button>
-        </div>
+        <TableFiltro
+          options={OPCOES_STATUS_USUARIO}
+          value={statusAtivo}
+          onChange={setStatusAtivo}
+          ariaLabel="Situação dos usuários"
+        />
       </div>
+
       <DataTable
         columns={columnsUsuario}
-        data={carregando ? [] : usuariosOrdenados}
+        data={usuariosOrdenados}
+        carregando={carregando}
         getRowKey={(u) => u.id}
         emptyMessage={
-          erro
-            ? erro
-            : carregando
-              ? "Carregando usuários..."
-              : statusAtivo
-                ? "Nenhum usuário ativo encontrado."
-                : "Nenhum usuário inativo encontrado."
+          statusAtivo
+            ? "Nenhum usuário ativo encontrado."
+            : "Nenhum usuário inativo encontrado."
         }
       />
 
       <UsuariosModal
-        aberto={modalUsuarioAberto}
-        usuario={usuarioEmEdicao}
+        aberto={modalAtivo?.tipo === "cadastro" || modalAtivo?.tipo === "edicao"}
+        usuario={modalAtivo?.tipo === "edicao" ? modalAtivo.usuario : null}
         usuarioLogado={usuarioLogado}
-        onFechar={fecharModalUsuario}
+        onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarUsuario}
         salvando={salvando}
       />
 
       <ConfirmarModal
-        aberto={Boolean(usuarioParaAlterarStatus)}
-        onFechar={() => setUsuarioParaAlterarStatus(null)}
+        aberto={modalAtivo?.tipo === "status"}
+        onFechar={() => setModalAtivo(null)}
         onConfirmar={() =>
           handleSalvarUsuario(
-            { status: !usuarioParaAlterarStatus.status },
-            usuarioParaAlterarStatus.id,
+            { status: !modalAtivo?.usuario?.status },
+            modalAtivo?.usuario?.id,
           )
         }
         titulo={
-          usuarioParaAlterarStatus?.status
+          modalAtivo?.usuario?.status
             ? "Inativar usuário"
             : "Ativar usuário"
         }
         mensagem={
-          usuarioParaAlterarStatus?.status
-            ? `Deseja realmente inativar o acesso de ${usuarioParaAlterarStatus?.nome}? O usuário não conseguirá mais entrar no sistema.`
-            : `Deseja reativar o acesso de ${usuarioParaAlterarStatus?.nome}?`
+          modalAtivo?.usuario?.status
+            ? `Deseja realmente inativar o acesso de ${modalAtivo?.usuario?.nome}? O usuário não conseguirá mais entrar no sistema.`
+            : `Deseja reativar o acesso de ${modalAtivo?.usuario?.nome}?`
         }
         textoConfirmar={
-          usuarioParaAlterarStatus?.status ? "Inativar" : "Ativar"
+          modalAtivo?.usuario?.status ? "Inativar" : "Ativar"
         }
-        variante={usuarioParaAlterarStatus?.status ? "danger" : "success"}
+        variante={modalAtivo?.usuario?.status ? "danger" : "success"}
+        salvando={salvando}
+      />
+
+      <ConfirmarModal
+        aberto={modalAtivo?.tipo === "excluir"}
+        onFechar={() => setModalAtivo(null)}
+        onConfirmar={handleExcluirUsuario}
+        titulo="Excluir usuário"
+        mensagem={`Tem certeza de que deseja excluir permanentemente o usuário ${modalAtivo?.usuario?.nome}? Esta ação causará a exclusão de todos os dados associados a este usuário e não poderá ser desfeita.`}
+        textoConfirmar="Excluir definitivamente"
+        variante="danger"
         salvando={salvando}
       />
     </section>

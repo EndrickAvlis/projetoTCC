@@ -1,28 +1,39 @@
-// Rotas HTTP relacionadas aos voluntários.
 import { Router } from "express";
-import * as VoluntarioController from "../controllers/usuarioController.js";
+import * as usuarioController from "../controllers/usuarioController.js";
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
-import * as ValidatorVoluntario from "../schemas/SchemaUsuario.js";
+import * as usuarioSchema from "../schemas/SchemaUsuario.js";
 import * as auth from "../middlewares/authMiddleware.js";
 
-const voluntarioRoutes = Router();
+const usuarioRoutes = Router();
 
-voluntarioRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor"]));
+usuarioRoutes.use(
+  auth.accessValidator,
+  auth.validarRole(["admin", "supervisor"]),
+);
 
-voluntarioRoutes.get(
+usuarioRoutes.get(
   "/",
-  validarRequisicao(ValidatorVoluntario.listarVoluntariosSchema),
-  VoluntarioController.listarVoluntarios,
+  validarRequisicao(usuarioSchema.listarUsuariosSchema),
+  usuarioController.listarUsuarios,
 );
-voluntarioRoutes.post(
+
+usuarioRoutes.post(
   "/",
-  validarRequisicao(ValidatorVoluntario.criarVoluntarioRequisicaoSchema),
-  VoluntarioController.criarVoluntario,
+  validarRequisicao(usuarioSchema.criarUsuarioSchema),
+  usuarioController.criarUsuario,
 );
-voluntarioRoutes.patch(
+
+usuarioRoutes.patch(
   "/:id",
-  validarRequisicao(ValidatorVoluntario.atualizarVoluntarioRequisicaoSchema),
-  VoluntarioController.atualizarVoluntario,
+  validarRequisicao(usuarioSchema.atualizarUsuarioSchema),
+  usuarioController.atualizarUsuario,
 );
 
-export default voluntarioRoutes;
+usuarioRoutes.delete(
+  "/:id",
+  auth.validarRole(["admin"]),
+  validarRequisicao(usuarioSchema.excluirUsuarioSchema),
+  usuarioController.excluirUsuario,
+);
+
+export default usuarioRoutes;

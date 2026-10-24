@@ -10,7 +10,6 @@ import DocumentosPendentes from "./DocumentosPendentes";
 import PendenciasGrid from "./PendenciasGrid";
 import DetalhePendencia from "./DetalhePendencia";
 import Tabs from "../../../../components/ui/Tabs";
-import Alert from "../../../../components/ui/Alert";
 
 const DADOS_INICIAIS = {
   nome: "",
@@ -63,11 +62,9 @@ export const TriagemMain = () => {
     senhaAtual,
     atendimentoAtual,
     carregando,
-    erro,
     finalizar,
     limparAtendimento,
     setCarregando,
-    setErro,
   } = useAtendimento();
 
   const {
@@ -77,7 +74,6 @@ export const TriagemMain = () => {
     selecionarPendencia,
     retomar,
     carregando: carregandoPendencias,
-    erro: erroPendencias,
   } = usePendencias();
 
   const [abaAtiva, setAbaAtiva] = React.useState("atendimento");
@@ -121,7 +117,6 @@ export const TriagemMain = () => {
 
     try {
       setCarregando(true);
-      setErro(null);
 
       if (dadosAluno.nome.trim() && dadosAluno.curso) {
         await TriagemService.salvarAluno(
@@ -137,8 +132,8 @@ export const TriagemMain = () => {
 
       limparAtendimento();
       handleLimparFormulario();
-    } catch (error) {
-      setErro(error.message);
+    } catch {
+      // Erro tratado globalmente pelo apiClient
     } finally {
       setCarregando(false);
     }
@@ -147,7 +142,6 @@ export const TriagemMain = () => {
   const handleFinalizar = async () => {
     try {
       setCarregando(true);
-      setErro(null);
 
       await TriagemService.salvarAluno(
         senhaAtual.id,
@@ -156,8 +150,8 @@ export const TriagemMain = () => {
 
       await finalizar();
       handleLimparFormulario();
-    } catch (error) {
-      setErro(error.message);
+    } catch {
+      // Erro tratado globalmente pelo apiClient
     } finally {
       setCarregando(false);
     }

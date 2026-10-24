@@ -1,74 +1,27 @@
 import { requisitarApi } from "../../../services/apiClient";
 
-const criarUrlProduto = (produtoId) =>
-  `/produtos/${encodeURIComponent(produtoId)}`;
+export const listarProdutos = (params) =>
+  requisitarApi("/produtos", { params });
 
-const alterarStatusProduto = (produtoId, status) =>
-  requisitarApi(`${criarUrlProduto(produtoId)}/status`, {
-    method: "PATCH",
-    body: { status },
-  });
-
-export const listarUniformesAdmin = ({
-  busca = "",
-  arquivado = false,
-} = {}) => {
-  const params = new URLSearchParams({
-    tipo: "uniforme",
-    arquivado: String(arquivado),
-  });
-
-  const buscaLimpa = busca.trim();
-
-  if (buscaLimpa) {
-    params.set("busca", buscaLimpa);
-  }
-
-  return requisitarApi(`/produtos?${params.toString()}`);
-};
-
-export const criarUniforme = (dados) =>
+export const criarProduto = (dados) =>
   requisitarApi("/produtos", {
     method: "POST",
-    body: {
-      ...dados,
-      tipo: "uniforme",
-    },
+    body: dados,
   });
 
-export const criarArmario = (dados) =>
-  requisitarApi("/produtos", {
-    method: "POST",
-    body: {
-      ...dados,
-      nome: "Armário",
-      tipo: "armario",
-    },
-  });
-
-export const atualizarUniforme = (produtoId, dados) =>
-  requisitarApi(criarUrlProduto(produtoId), {
+export const atualizarProduto = (produtoId, dados) =>
+  requisitarApi(`/produtos/${produtoId}`, {
     method: "PATCH",
     body: dados,
   });
 
-export const alterarArquivamentoUniforme = (produtoId, arquivado) =>
-  alterarStatusProduto(produtoId, arquivado ? "arquivado" : "ativo");
-
-export const alterarEstoqueUniforme = (produtoId, alteracao) =>
-  requisitarApi(`${criarUrlProduto(produtoId)}/alterarEstoque`, {
-    method: "PATCH",
-    body: alteracao,
-  });
-
-export const buscarArmario = () =>
-  requisitarApi("/produtos/armario");
-
-export const atualizarArmario = (produtoId, dados) =>
-  requisitarApi(criarUrlProduto(produtoId), {
+export const atualizarEstoque = (produtoId, dados) =>
+  requisitarApi(`/produtos/${produtoId}/estoque`, {
     method: "PATCH",
     body: dados,
   });
 
-export const alterarDisponibilidadeArmario = (produtoId, disponivel) =>
-  alterarStatusProduto(produtoId, disponivel ? "disponivel" : "indisponivel");
+export const excluirProduto = (produtoId) =>
+  requisitarApi(`/produtos/${produtoId}`, {
+    method: "DELETE",
+  });

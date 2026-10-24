@@ -24,75 +24,30 @@ const statusAluno = z
     }),
   );
 
-export const criarAlunoSchema = z.object({
-  body: z.object({
-    nome: nomeAluno,
-    anoProcesso: z.coerce.number().int().positive().optional(),
-    semestreProcesso: z.coerce.number().int().min(1).max(2).optional(),
-    escolaridadePublica: z.boolean().optional().default(false),
-    cidade: z.string().trim().max(100).optional(),
-    sexo: z.string().trim().max(20).optional(),
-  }),
-});
-
 export const listarAlunosSchema = z.object({
   query: z.object({
     nome: z.string().trim().optional().default(""),
-    cidade: z.string().trim().optional(),
-    cursoId: id.optional(),
-    status: statusAluno.optional(),
+    cidade: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.string().trim().optional(),
+    ),
+    cursoId: z.preprocess((v) => (v === "" ? undefined : v), id.optional()),
+    status: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      statusAluno.optional(),
+    ),
     pagina: z.coerce.number().int().positive().optional().default(1),
     limite: z.coerce.number().int().positive().optional().default(10),
   }),
 });
 
-export const consultarAlunoSchema = z.object({
-  params: z.object({
-    id: id,
-  }),
-});
-
-export const editarAlunoSchema = z.object({
-  params: z.object({
-    id: id,
-  }),
-  body: z
-    .object({
-      nome: nomeAluno.optional(),
-      status: statusAluno.optional(),
-    })
-    .refine(
-      (dados) => dados.nome !== undefined || dados.status !== undefined,
-      {
-        message: "Informe ao menos um campo para atualização (nome ou status).",
-      },
-    ),
-});
-
-export const adicionarMatriculaSchema = z.object({
+export const atualizarAlunoSchema = z.object({
   params: z.object({
     id: id,
   }),
   body: z.object({
-    cursoId: id,
-  }),
-});
-
-export const editarMatriculaSchema = z.object({
-  params: z.object({
-    id: id,
-  }),
-  body: z.object({
-    cursoId: id.optional(),
-  }),
-});
-
-export const removerMatriculaSchema = z.object({
-  params: z.object({
-    id: id,
-  }),
-  body: z.object({
-    cursoId: id,
+    nome: nomeAluno.optional(),
+    status: statusAluno.optional(),
   }),
 });
 

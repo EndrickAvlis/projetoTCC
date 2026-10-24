@@ -2,7 +2,6 @@ import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 import Toggle from "../../../components/ui/Toggle";
@@ -22,10 +21,10 @@ const ConfiguracoesPage = () => {
 
   const [modalResetAberto, setModalResetAberto] = React.useState(false);
   const [reiniciando, setReiniciando] = React.useState(false);
-  const [mensagemSucesso, setMensagemSucesso] = React.useState(null);
 
   const [ultimoNumero, setUltimoNumero] = React.useState(null);
-  const [carregandoUltimaSenha, setCarregandoUltimaSenha] = React.useState(true);
+  const [carregandoUltimaSenha, setCarregandoUltimaSenha] =
+    React.useState(true);
 
   const carregarUltimaSenha = React.useCallback(async () => {
     setCarregandoUltimaSenha(true);
@@ -33,27 +32,25 @@ const ConfiguracoesPage = () => {
       const res = await configuracoesService.buscarUltimaSenha();
       setUltimoNumero(res.ultimoNumero ?? 0);
     } catch {
-      setUltimoNumero(0);
     } finally {
       setCarregandoUltimaSenha(false);
     }
   }, []);
 
   React.useEffect(() => {
-    void Promise.resolve().then(carregarUltimaSenha);
+    carregarUltimaSenha();
   }, [carregarUltimaSenha]);
 
-  const armarioDisponivel = armario?.status === "disponivel";
+  const armarioDisponivel = Boolean(armario?.status);
 
   const handleToggleArmario = async () => {
     if (!armario || salvandoArmario) return;
 
     setSalvandoArmario(true);
     try {
-      await produtoService.alterarDisponibilidadeArmario(
-        armario.id,
-        !armarioDisponivel,
-      );
+      await produtoService.atualizarProduto(armario.id, {
+        status: !armarioDisponivel,
+      });
       await recarregarArmario();
     } catch {
     } finally {
@@ -64,12 +61,9 @@ const ConfiguracoesPage = () => {
   const handleReiniciarSequencia = async () => {
     setReiniciando(true);
     try {
-      const res = await configuracoesService.reiniciarSequenciaSenhas();
+      await configuracoesService.reiniciarSequenciaSenhas();
       setModalResetAberto(false);
       setUltimoNumero(0);
-      setMensagemSucesso(
-        res.message || "Sequência reiniciada. A próxima senha será 001.",
-      );
     } catch {
     } finally {
       setReiniciando(false);
@@ -78,21 +72,6 @@ const ConfiguracoesPage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Configurações</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Gerenciamento operacional e atalhos rápidos do sistema.
-        </p>
-      </div>
-
-      {mensagemSucesso && (
-        <Alert
-          type="success"
-          message={mensagemSucesso}
-          onClose={() => setMensagemSucesso(null)}
-        />
-      )}
-
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-6 shadow-xs">
           <div>
@@ -104,12 +83,15 @@ const ConfiguracoesPage = () => {
                 <h2 className="text-base font-semibold text-text-primary">
                   Locação de Armários
                 </h2>
-                <p className="text-xs text-text-secondary">Disponibilidade na APM</p>
+                <p className="text-xs text-text-secondary">
+                  Disponibilidade na APM
+                </p>
               </div>
             </div>
 
             <p className="mt-4 text-sm text-text-secondary">
-              Define se o guichê da APM pode oferecer armários para locação aos novos alunos durante o atendimento.
+              Define se o guichê da APM pode oferecer armários para locação aos
+              novos alunos durante o atendimento.
             </p>
           </div>
 
@@ -140,7 +122,8 @@ const ConfiguracoesPage = () => {
             </div>
 
             <p className="mt-4 text-sm text-text-secondary">
-              Cancela as senhas de hoje que não foram finalizadas e zera o contador diário de volta para 1.
+              Cancela as senhas de hoje que não foram finalizadas e zera o
+              contador diário de volta para 1.
             </p>
 
             <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-surface-muted px-4 py-3">
@@ -150,9 +133,7 @@ const ConfiguracoesPage = () => {
               <span className="text-base font-bold text-text-primary">
                 {carregandoUltimaSenha
                   ? "Carregando..."
-                  : ultimoNumero && ultimoNumero > 0
-                    ? formatarSenha(ultimoNumero)
-                    : "Nenhuma"}
+                  : formatarSenha(ultimoNumero) || "Nenhuma"}
               </span>
             </div>
           </div>
@@ -184,7 +165,8 @@ const ConfiguracoesPage = () => {
             </div>
 
             <p className="mt-4 text-sm text-text-secondary">
-              Acesse a tela de emissão de senhas configurada para totens, tablets ou guichês de entrada.
+              Acesse a tela de emissão de senhas configurada para totens,
+              tablets ou guichês de entrada.
             </p>
           </div>
 
@@ -219,13 +201,19 @@ const ConfiguracoesPage = () => {
       >
         <div className="space-y-3 text-sm text-text-secondary">
           <p>
-            Esta ação irá <strong className="font-semibold text-status-danger">cancelar todas as senhas não finalizadas emitidas hoje</strong> e reiniciar o contador diário.
+            Esta ação irá{" "}
+            <strong className="font-semibold text-status-danger">
+              cancelar todas as senhas não finalizadas emitidas hoje
+            </strong>{" "}
+            e reiniciar o contador diário.
           </p>
           <p>
-            A próxima senha gerada no totem iniciará novamente pelo número <strong className="font-semibold text-text-primary">001</strong>.
+            A próxima senha gerada no totem iniciará novamente pelo número{" "}
+            <strong className="font-semibold text-text-primary">001</strong>.
           </p>
           <p className="text-xs text-text-disabled">
-            O histórico de atendimentos anteriores permanece preservado no banco para auditoria.
+            O histórico de atendimentos anteriores permanece preservado no banco
+            para auditoria.
           </p>
         </div>
       </ConfirmarModal>

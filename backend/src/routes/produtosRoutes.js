@@ -1,22 +1,45 @@
 import { Router } from "express";
 import * as produtosController from "../controllers/produtoController.js";
-
 import * as produtos from "../schemas/SchemaProdutos.js";
-
 import { validarRequisicao } from "../middlewares/validarRequisicao.js";
+import * as auth from "../middlewares/authMiddleware.js";
 
 const produtosRoutes = Router();
 
-produtosRoutes.post("/",validarRequisicao(produtos.criarProdutoSchema),produtosController.criarProdutoAdmin,);
+produtosRoutes.use(auth.accessValidator);
 
-produtosRoutes.get("/",validarRequisicao(produtos.listarUniformesSchema), produtosController.listarUniformes,);
+produtosRoutes.get(
+  "/",
+  validarRequisicao(produtos.listarProdutosSchema),
+  produtosController.listarProdutos,
+);
 
-produtosRoutes.get("/armario",produtosController.buscarConfiguracaoArmario,);
+produtosRoutes.post(
+  "/",
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(produtos.criarProdutoSchema),
+  produtosController.criarProduto,
+);
 
-produtosRoutes.patch("/:produtoId",validarRequisicao(produtos.atualizarProdutoSchema),produtosController.atualizarProdutosAdmin,);
+produtosRoutes.patch(
+  "/:produtoId",
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(produtos.atualizarProdutoSchema),
+  produtosController.atualizarProduto,
+);
 
-produtosRoutes.patch("/:produtoId/status",validarRequisicao(produtos.alterarStatusSchema),produtosController.alterarStatusProdutoAdmin,);
+produtosRoutes.patch(
+  "/:produtoId/estoque",
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(produtos.alterarEstoqueSchema),
+  produtosController.atualizarEstoque,
+);
 
-produtosRoutes.patch("/:produtoId/alterarEstoque",validarRequisicao(produtos.alterarEstoqueSchema),produtosController.alterarEstoqueProdutoAdmin,);
+produtosRoutes.delete(
+  "/:produtoId",
+  auth.validarRole(["admin"]),
+  validarRequisicao(produtos.produtoIdSchema),
+  produtosController.excluirProduto,
+);
 
 export default produtosRoutes;
