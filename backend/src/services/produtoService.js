@@ -8,7 +8,7 @@ const produtoSelect = {
   precoProduto: true,
   quantidadeProduto: true,
   tipoProduto: true,
-  statusItem: true,
+  statusProduto: true,
 };
 
 const produtoNaoEncontrado = () =>
@@ -91,7 +91,7 @@ export default class ProdutoService extends BaseService {
         precoProduto: preco,
         quantidadeProduto: quantidade,
         tipoProduto: tipo,
-        statusItem: tipo === "armario" ? "indisponivel" : "ativo",
+        status: tipo === "armario" ? "indisponivel" : "ativo",
       },
       {
         select: produtoSelect,
@@ -106,12 +106,12 @@ export default class ProdutoService extends BaseService {
   } = {}) {
     const buscaLimpa = busca.trim();
 
-    const statusItem = arquivado === "true" ? "arquivado" : "ativo";
+    const statusProduto = arquivado === "true" ? "arquivado" : "ativo";
 
     return super.listar(
       {
         tipoProduto: tipo,
-        statusItem,
+        statusProduto,
         ...(buscaLimpa && {
           nomeProduto: {
             contains: buscaLimpa,
@@ -228,7 +228,7 @@ export default class ProdutoService extends BaseService {
     return super.atualizar(
       produtoId,
       {
-        statusItem: status,
+        statusProduto: status,
       },
       {
         select: produtoSelect,
