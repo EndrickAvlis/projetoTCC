@@ -11,13 +11,6 @@ export const recuperarAtendimento = async (etapa) => {
   return requisitarApi(`/atendimentos/recuperar/${encodeURIComponent(etapa)}`);
 };
 
-export const rechamarSenha = async (senhaId, etapa) => {
-  return requisitarApi("/atendimentos/rechamar", {
-    method: "POST",
-    body: { senhaId, etapa },
-  });
-};
-
 export const finalizarAtendimento = async (senhaId) => {
   return requisitarApi("/atendimentos/finalizar", {
     method: "POST",

@@ -94,7 +94,7 @@ export const AtendimentoProvider = ({ children }) => {
     try {
       setCarregando(true);
       setErro(null);
-      return await atendimentoService.rechamarSenha(
+      return await filaService.rechamarSenha(
         senhaAtual.id,
         senhaAtual.etapa,
       );
