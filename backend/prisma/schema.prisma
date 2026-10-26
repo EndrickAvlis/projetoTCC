@@ -156,6 +156,7 @@ model CursoAluno {
   codCurso        Int
   codAluno        Int
   classificacao   Int?
+  anoEscolar      Int?
   statusMatricula StatusMatricula @default(PENDENTE)
   periodo         Periodo?
 
