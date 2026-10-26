@@ -1,6 +1,7 @@
 import * as React from "react";
-import * as FaIcons from "react-icons/fa";
+import { FaUser, FaLock } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import Alert from "../components/ui/Alert";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
@@ -8,7 +9,6 @@ import { useAuth } from "../context/authContext";
 
 const TELAS = [
   { value: "admin", label: "Administrador" },
-  { value: "secretaria", label: "Secretaria" },
   { value: "triagem", label: "Triagem" },
   { value: "apm", label: "APM" },
   { value: "docs", label: "Docs" },
@@ -61,9 +61,15 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-page p-4">
       <div className="bg-surface border border-border rounded-lg p-8 max-w-md w-full shadow-sm">
-        <h1 className="text-body font-bold text-primary text-center mb-6">
+        <h1 className="text-title font-bold text-primary text-center mb-6">
           Entrar no sistema
         </h1>
+
+        {erro && (
+          <div className="mb-4">
+            <Alert type="error" message={erro} onClose={() => setErro("")} />
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -75,8 +81,7 @@ const LoginPage = () => {
               setNome(event.target.value);
               if (erro) setErro("");
             }}
-            error={erro ? " " : ""}
-            icon={<FaIcons.FaUser className="text-primary" />}
+            icon={<FaUser className="text-primary" />}
             iconPosition="left"
           />
 
@@ -90,8 +95,7 @@ const LoginPage = () => {
               setSenha(event.target.value);
               if (erro) setErro("");
             }}
-            error={erro}
-            icon={<FaIcons.FaLock className="text-primary" />}
+            icon={<FaLock className="text-primary" />}
             iconPosition="left"
           />
 

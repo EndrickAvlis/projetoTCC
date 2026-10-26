@@ -203,7 +203,6 @@ Transfere uma senha em fila de espera para outro posto de atendimento.
 * **Resposta (`200 OK`):**
 ```json
 {
-  "message": "Senha transferida com sucesso.",
   "senha": {
     "id": 42,
     "codigo": 42,
@@ -231,7 +230,6 @@ Utilizado exclusivamente pelo Administrador ou Supervisor diretamente pelo paine
 * **Resposta (`200 OK`):**
 ```json
 {
-  "message": "Atendimento cancelado com sucesso pelo administrador.",
   "senha": {
     "id": 42,
     "codigo": 42,
@@ -271,27 +269,9 @@ Utilizado exclusivamente pelo Administrador ou Supervisor diretamente pelo paine
      * `rg_cin`: RG / CIN
      * `cpf_cin`: CPF / CIN
      * `historico_ensino_fundamental`: Histórico Escolar
-     * `comprovante_residencia`: Comprovante de Residência
      * `comprovante_escolaridade_publica`: Comprovante de Escola Pública
    * O campo `documentosPendentes` na tabela `Senha` deve armazenar o array de chaves (`documentos: string[]`) e a data do registro (`registradaEm: ISO string`).
 
----
-
-## 4. Arquitetura Sugerida para o Backend
-
-Para respeitar os padrões estabelecidos no projeto (KISS, Camadas Diretas sem overengineering):
-
-```text
-backend/src/
-├── routes/
-│   └── postosRoutes.js         # Rotas /postos com accessValidator e role check
-├── controllers/
-│   └── postosController.js     # Extração de params e respostas HTTP
-├── schemas/
-│   └── SchemaPostos.js         # Validações Zod para params, query e body
-└── services/
-    └── postosService.js        # Consultas Prisma, transações e métricas
-```
 
 Registrar no `backend/src/app.js`:
 ```javascript

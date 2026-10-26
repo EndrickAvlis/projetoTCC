@@ -3,7 +3,6 @@ import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
 import GraficoFinalizadasHora from "./features/admin/components/postos/atendimento/GraficoFinalizadasHora";
 import CursosAtivos from "./features/admin/components/postos/atendimento/CursosAtivos";
-import SenhaPendente from "./features/admin/components/postos/filas/SenhaPendente";
 import SenhaModal from "./features/admin/components/postos/SenhaModal";
 
 const MOCK_FINALIZADAS_HORA = [
@@ -184,15 +183,21 @@ const Testes = () => {
           </Button>
         </div>
 
-        <div className="space-y-2">
-          <SenhaPendente
-            senha={MOCK_SENHA_PENDENTE_1}
-            onSelecionar={setSenhaSelecionada}
-          />
-          <SenhaPendente
-            senha={MOCK_SENHA_PENDENTE_2}
-            onSelecionar={setSenhaSelecionada}
-          />
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setSenhaSelecionada(MOCK_SENHA_PENDENTE_1)}
+          >
+            Abrir Modal (Pendente 1)
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setSenhaSelecionada(MOCK_SENHA_PENDENTE_2)}
+          >
+            Abrir Modal (Pendente 2)
+          </Button>
         </div>
       </section>
 

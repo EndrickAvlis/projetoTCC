@@ -8,7 +8,7 @@ const produtoSelect = {
   precoProduto: true,
   quantidadeProduto: true,
   tipoProduto: true,
-  statusItem: true,
+  statusProduto: true,
 };
 
 const produtoNaoEncontrado = () =>
@@ -17,44 +17,10 @@ const produtoNaoEncontrado = () =>
     code: "PRODUTO_NAO_ENCONTRADO",
   });
 
-const armarioNaoConfigurado = () =>
-  new AppError("Armário não configurado.", {
-    status: 404,
-    code: "ARMARIO_NAO_CONFIGURADO",
-  });
-
 const uniformeJaCadastrado = () =>
   new AppError("Este uniforme já está cadastrado.", {
     status: 409,
     code: "UNIFORME_JA_CADASTRADO",
-  });
-
-const armarioJaConfigurado = () =>
-  new AppError("O armário já está configurado.", {
-    status: 409,
-    code: "ARMARIO_JA_CONFIGURADO",
-  });
-
-const estoqueInsuficiente = (quantidadeDisponivel, quantidadeSolicitada) =>
-  new AppError("Não foi possível alterar o estoque.", {
-    status: 409,
-    code: "ESTOQUE_INSUFICIENTE",
-    details: {
-      quantidadeDisponivel,
-      quantidadeSolicitada,
-    },
-  });
-
-const operacaoEstoqueNaoPermitida = () =>
-  new AppError("A operação de estoque não é permitida para este produto.", {
-    status: 422,
-    code: "OPERACAO_ESTOQUE_NAO_PERMITIDA",
-  });
-
-const statusProdutoInvalido = () =>
-  new AppError("Status inválido para este produto.", {
-    status: 422,
-    code: "STATUS_PRODUTO_INVALIDO",
   });
 
 export default class ProdutoService extends BaseService {
@@ -62,11 +28,37 @@ export default class ProdutoService extends BaseService {
     super(prisma.produto, "idProduto");
   }
 
-  async criarProduto({ nome, preco, quantidade, tipo }) {
-    const nomeLimpo = nome.trim().toUpperCase();
+  async listar({ busca = "", tipo, status } = {}) {
+    const buscaLimpa = busca?.trim();
+
+    return super.listar(
+      {
+        tipoProduto: tipo,
+        statusProduto: status,
+        nomeProduto: buscaLimpa
+          ? { contains: buscaLimpa, mode: "insensitive" }
+          : undefined,
+      },
+      {
+        select: produtoSelect,
+        orderBy: {
+          nomeProduto: "asc",
+        },
+      },
+    );
+  }
+
+  async criar({ nome, preco, quantidade, tipo, status = true }) {
+    const nomeLimpo =
+      tipo === "armario" ? "Armário" : nome.trim().toUpperCase();
 
     if (tipo === "uniforme") {
-      const produtoExistente = await this.obterPorNome(nomeLimpo);
+      const produtoExistente = await prisma.produto.findFirst({
+        where: {
+          tipoProduto: "uniforme",
+          nomeProduto: nomeLimpo,
+        },
+      });
 
       if (produtoExistente) {
         throw uniformeJaCadastrado();
@@ -81,17 +73,20 @@ export default class ProdutoService extends BaseService {
       });
 
       if (armarioExistente) {
-        throw armarioJaConfigurado();
+        throw new AppError("O armário já está configurado.", {
+          status: 409,
+          code: "ARMARIO_JA_CONFIGURADO",
+        });
       }
     }
 
     return super.criar(
       {
-        nomeProduto: tipo === "armario" ? "Armário" : nomeLimpo,
+        nomeProduto: nomeLimpo,
         precoProduto: preco,
         quantidadeProduto: quantidade,
         tipoProduto: tipo,
-        statusItem: tipo === "armario" ? "indisponivel" : "ativo",
+        statusProduto: status,
       },
       {
         select: produtoSelect,
@@ -99,46 +94,7 @@ export default class ProdutoService extends BaseService {
     );
   }
 
-  async listarUniformes({
-    busca = "",
-    arquivado = "false",
-    tipo = "uniforme",
-  } = {}) {
-    const buscaLimpa = busca.trim();
-
-    const statusItem = arquivado === "true" ? "arquivado" : "ativo";
-
-    return super.listar(
-      {
-        tipoProduto: tipo,
-        statusItem,
-        ...(buscaLimpa && {
-          nomeProduto: {
-            contains: buscaLimpa,
-            mode: "insensitive",
-          },
-        }),
-      },
-      {
-        select: produtoSelect,
-        orderBy: {
-          nomeProduto: "asc",
-        },
-      },
-    );
-  }
-
-  async obterPorNome(nome) {
-    return prisma.produto.findFirst({
-      where: {
-        tipoProduto: "uniforme",
-        nomeProduto: nome,
-      },
-      select: produtoSelect,
-    });
-  }
-
-  async atualizarProduto(produtoId, dados) {
+  async atualizar(produtoId, dados) {
     const produto = await super.buscarPorId(produtoId, {
       select: produtoSelect,
     });
@@ -202,12 +158,16 @@ export default class ProdutoService extends BaseService {
       dadosAtualizacao.quantidadeProduto = dados.quantidade;
     }
 
+    if (dados.status !== undefined) {
+      dadosAtualizacao.statusProduto = dados.status;
+    }
+
     return super.atualizar(produtoId, dadosAtualizacao, {
       select: produtoSelect,
     });
   }
 
-  async alterarStatusProduto(produtoId, status) {
+  async alterarEstoque(produtoId, operacao, quantidade) {
     const produto = await super.buscarPorId(produtoId, {
       select: produtoSelect,
     });
@@ -216,85 +176,72 @@ export default class ProdutoService extends BaseService {
       throw produtoNaoEncontrado();
     }
 
-    const statusValidos =
-      produto.tipoProduto === "uniforme"
-        ? ["ativo", "arquivado"]
-        : ["disponivel", "indisponivel"];
-
-    if (!statusValidos.includes(status)) {
-      throw statusProdutoInvalido();
+    if (produto.tipoProduto !== "uniforme") {
+      throw new AppError(
+        "A operação de estoque não é permitida para este produto.",
+        {
+          status: 422,
+          code: "OPERACAO_ESTOQUE_NAO_PERMITIDA",
+        },
+      );
     }
 
-    return super.atualizar(
-      produtoId,
-      {
-        statusItem: status,
-      },
-      {
-        select: produtoSelect,
-      },
-    );
-  }
+    let novaQuantidade = produto.quantidadeProduto;
 
-  async alterarEstoque(produtoId, operacao, quantidade) {
-    return prisma.$transaction(async (transacao) => {
-      const produto = await transacao.produto.findUnique({
-        where: {
-          idProduto: produtoId,
-        },
-        select: produtoSelect,
-      });
-
-      if (!produto) {
-        throw produtoNaoEncontrado();
+    if (operacao === "adicionar") {
+      novaQuantidade += quantidade;
+    } else if (operacao === "diminuir") {
+      if (quantidade > produto.quantidadeProduto) {
+        throw new AppError("Não foi possível alterar o estoque.", {
+          status: 409,
+          code: "ESTOQUE_INSUFICIENTE",
+          details: {
+            quantidadeDisponivel: produto.quantidadeProduto,
+            quantidadeSolicitada: quantidade,
+          },
+        });
       }
 
-      if (produto.tipoProduto !== "uniforme") {
-        throw operacaoEstoqueNaoPermitida();
-      }
+      novaQuantidade -= quantidade;
+    } else if (operacao === "corrigir") {
+      novaQuantidade = quantidade;
+    }
 
-      let novaQuantidade = produto.quantidadeProduto;
-
-      if (operacao === "adicionar") {
-        novaQuantidade += quantidade;
-      }
-
-      if (operacao === "diminuir") {
-        if (quantidade > produto.quantidadeProduto) {
-          throw estoqueInsuficiente(produto.quantidadeProduto, quantidade);
-        }
-
-        novaQuantidade -= quantidade;
-      }
-
-      if (operacao === "corrigir") {
-        novaQuantidade = quantidade;
-      }
-
-      return transacao.produto.update({
-        where: {
-          idProduto: produtoId,
-        },
-        data: {
-          quantidadeProduto: novaQuantidade,
-        },
-        select: produtoSelect,
-      });
+    return this.model.update({
+      where: { idProduto: produtoId },
+      data: { quantidadeProduto: novaQuantidade },
+      select: produtoSelect,
     });
   }
 
-  async buscarConfiguracaoArmario() {
-    const produto = await prisma.produto.findFirst({
-      where: {
-        tipoProduto: "armario",
-      },
+  async excluir(produtoId) {
+    const produto = await super.buscarPorId(produtoId, {
       select: produtoSelect,
     });
 
     if (!produto) {
-      throw armarioNaoConfigurado();
+      throw produtoNaoEncontrado();
     }
 
-    return produto;
+    if (produto.statusProduto) {
+      throw new AppError(
+        "Apenas produtos desativados ou arquivados podem ser excluídos.",
+        {
+          status: 400,
+          code: "PRODUTO_ATIVO",
+        },
+      );
+    }
+
+    return prisma.$transaction(async (tx) => {
+      await tx.itemCompra.deleteMany({
+        where: { codProduto: produtoId },
+      });
+
+      return tx.produto.delete({
+        where: { idProduto: produtoId },
+        select: produtoSelect,
+      });
+    });
   }
 }

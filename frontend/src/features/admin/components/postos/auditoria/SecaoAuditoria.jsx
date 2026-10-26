@@ -20,12 +20,9 @@ const SecaoAuditoria = () => {
   const [dataFim, setDataFim] = React.useState("");
   const [pagina, setPagina] = React.useState(1);
 
-  const [popoverAberto, setPopoverAberto] = React.useState(false);
-  const popoverRef = React.useRef(null);
-
   const [senhaSelecionada, setSenhaSelecionada] = React.useState(null);
 
-  const { senhas, total, recarregar } = useAuditoria({
+  const { senhas, total, carregando, recarregar } = useAuditoria({
     busca,
     status: status || undefined,
     tipoPeriodo,
@@ -35,47 +32,20 @@ const SecaoAuditoria = () => {
     limite: 7,
   });
 
-  React.useEffect(() => {
-    const fecharAoClicarFora = (e) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
-        setPopoverAberto(false);
-      }
-    };
-
-    if (popoverAberto) {
-      document.addEventListener("mousedown", fecharAoClicarFora);
-    }
-    return () => {
-      document.removeEventListener("mousedown", fecharAoClicarFora);
-    };
-  }, [popoverAberto]);
-
   const handleBuscaChange = (e) => {
     setBusca(e.target.value);
     setPagina(1);
   };
 
   const handleTipoPeriodoChange = (e) => {
-    const valor = e.target.value;
-    setTipoPeriodo(valor);
+    setTipoPeriodo(e.target.value);
     setPagina(1);
-    if (valor === "personalizado") {
-      setPopoverAberto(true);
-    } else {
-      setPopoverAberto(false);
-    }
   };
 
   const handleStatusChange = (novoStatus) => {
     setStatus(novoStatus);
     setPagina(1);
   };
-
-  const opcoesPeriodo = OPCOES_TIPO_PERIODO.map((op) =>
-    op.value === "personalizado" && dataInicio && dataFim
-      ? { ...op, label: `${dataInicio} até ${dataFim}` }
-      : op
-  );
 
   const colunas = [
     {
@@ -163,46 +133,41 @@ const SecaoAuditoria = () => {
             />
           </div>
 
-          <div className="w-full sm:w-72 relative">
+          <div className="w-full sm:w-56">
             <Select
               size="md"
               value={tipoPeriodo}
               onChange={handleTipoPeriodoChange}
-              options={opcoesPeriodo}
+              options={OPCOES_TIPO_PERIODO}
               placeholder={null}
             />
-
-            {popoverAberto && (
-              <div
-                ref={popoverRef}
-                className="absolute left-0 top-full mt-2 z-30 w-72 p-4 bg-surface rounded-xl border border-border shadow-xl space-y-3"
-              >
-                <h5 className="text-xs font-semibold text-text-primary">
-                  Intervalo personalizado
-                </h5>
-
-                <div className="space-y-2">
-                  <Input
-                    type="date"
-                    label="Data Inicial"
-                    size="sm"
-                    value={dataInicio}
-                    onChange={(e) => setDataInicio(e.target.value)}
-                  />
-                  <Input
-                    type="date"
-                    label="Data Final"
-                    size="sm"
-                    value={dataFim}
-                    onChange={(e) => {
-                      setDataFim(e.target.value);
-                      if (e.target.value) setPopoverAberto(false);
-                    }}
-                  />
-                </div>
-              </div>
-            )}
           </div>
+
+          {tipoPeriodo === "personalizado" && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                size="md"
+                value={dataInicio}
+                onChange={(e) => {
+                  setDataInicio(e.target.value);
+                  setPagina(1);
+                }}
+                ariaLabel="Data de início"
+              />
+              <span className="text-sm text-text-secondary">até</span>
+              <Input
+                type="date"
+                size="md"
+                value={dataFim}
+                onChange={(e) => {
+                  setDataFim(e.target.value);
+                  setPagina(1);
+                }}
+                ariaLabel="Data de fim"
+              />
+            </div>
+          )}
         </div>
 
         <TableFiltro
@@ -216,6 +181,7 @@ const SecaoAuditoria = () => {
       <DataTable
         columns={colunas}
         data={senhas}
+        carregando={carregando}
         getRowKey={(senha) => senha.id}
         emptyMessage="Nenhuma senha encontrada para os filtros selecionados."
         alturaMinima="380px"

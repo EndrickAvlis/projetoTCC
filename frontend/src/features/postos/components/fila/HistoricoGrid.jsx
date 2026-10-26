@@ -6,7 +6,7 @@ const HistoricoGrid = ({ senhas }) => {
       key={senha.id}
       className="min-h-16 rounded-btn border border-border bg-surface-muted px-2 py-2 text-center font-bold text-text-secondary"
     >
-      {formatarSenha(senha.numero)}
+      {formatarSenha(senha.codigo)}
     </div>
   );
 

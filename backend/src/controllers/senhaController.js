@@ -4,7 +4,7 @@ const senhaService = new SenhaService();
 
 const senhaResposta = (senha) => ({
   id: senha.idSenha,
-  numero: senha.senhaCodigo,
+  codigo: senha.senhaCodigo,
   emitidaEm: senha.dataHoraInicioSenha,
   etapa: senha.etapaSenha,
   status: senha.statusSenha,

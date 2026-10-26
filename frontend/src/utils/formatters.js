@@ -37,7 +37,7 @@ export const formatarSenha = (codigo) => {
   return `A${String(numero).padStart(3, "0")}`;
 };
 
-export const formatarHora = (dataIso) => {
+export const formatarDataHora = (dataIso) => {
   if (!dataIso) return "";
   try {
     return new Date(dataIso).toLocaleString("pt-BR", {
@@ -48,3 +48,16 @@ export const formatarHora = (dataIso) => {
     return dataIso;
   }
 };
+
+export const formatarHora = (dataIso) => {
+  if (!dataIso) return "";
+  try {
+    return new Date(dataIso).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+};
+

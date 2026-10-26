@@ -16,7 +16,6 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
   const [gruposCursos, setGruposCursos] = React.useState([]);
   const [resultadoFinal, setResultadoFinal] = React.useState(null);
   const [carregando, setCarregando] = React.useState(false);
-  const [erro, setErro] = React.useState(null);
 
   const {
     cursos: cursosExistentes,
@@ -29,13 +28,12 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
     setDadosArquivo(null);
     setGruposCursos([]);
     setResultadoFinal(null);
-    setErro(null);
     onFechar();
   };
 
   const handleArquivoAnalisado = (dados) => {
     setDadosArquivo(dados);
-    setGruposCursos(dados.resultado.gruposCursos);
+    setGruposCursos(dados.gruposCursos);
   };
 
   const handleAtualizarAssociacao = (chave, idCurso) => {
@@ -50,13 +48,12 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
 
   const handleConfirmarImportacao = async () => {
     setCarregando(true);
-    setErro(null);
     try {
       const mapaCursos = Object.fromEntries(
         gruposCursos.map((g) => [g.chave, Number(g.idCurso)]),
       );
 
-      const candidatos = dadosArquivo.resultado.candidatosValidos.map((c) => ({
+      const candidatos = dadosArquivo.candidatosValidos.map((c) => ({
         nome: c.nomeAluno,
         escolaridadePublica: c.escolaridadePublica,
         cidade: c.cidadeAluno,
@@ -73,8 +70,8 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
       });
       setResultadoFinal(resposta);
       setEtapa(3);
-    } catch (err) {
-      setErro(err.message || "Erro ao importar candidatos.");
+    } catch {
+      // Toast global do apiClient já notifica o usuário
     } finally {
       setCarregando(false);
     }
@@ -92,7 +89,7 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
       titulo="Importar Lista de Classificação"
       largura="max-w-3xl"
     >
-      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+      <div className="sticky top-0 z-10 mb-6 flex items-center justify-between border-b border-border bg-surface pb-4 pt-1">
         {[
           { num: 1, label: "Selecionar Arquivo" },
           { num: 2, label: "Mapear Cursos" },
@@ -153,24 +150,23 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
           onRecarregarCursos={recarregarCursos}
           carregandoCursos={carregandoCursos}
           carregando={carregando}
-          erro={erro}
         />
       )}
 
       {etapa === 3 && (
         <ResultadoImportacao
           resultado={resultadoFinal}
-          dadosArquivo={dadosArquivo}
+          metricas={dadosArquivo?.metricas}
+          nomeArquivo={dadosArquivo?.nomeArquivo}
+          totalCursosAssociados={gruposCursos.length}
           anoProcesso={anoProcesso}
           semestreProcesso={semestreProcesso}
-          gruposCursos={gruposCursos}
           onConcluir={handleConcluir}
           onReiniciar={() => {
             setEtapa(1);
             setDadosArquivo(null);
             setGruposCursos([]);
             setResultadoFinal(null);
-            setErro(null);
           }}
         />
       )}

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const idAtendimentoSchema = z.object({
-    params: z.object({
-        id: z
+    body: z.object({
+        senhaId: z
         .coerce.number()
         .int()
         .positive(),

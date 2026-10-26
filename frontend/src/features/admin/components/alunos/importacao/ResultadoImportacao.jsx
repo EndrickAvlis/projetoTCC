@@ -3,20 +3,19 @@ import Button from "../../../../../components/ui/Button";
 
 const ResultadoImportacao = ({
   resultado,
-  dadosArquivo,
+  metricas,
+  nomeArquivo,
+  totalCursosAssociados = 0,
   anoProcesso,
   semestreProcesso,
-  gruposCursos = [],
   onConcluir,
   onReiniciar,
 }) => {
   const totalImportados = resultado?.importados ?? 0;
-  const totalTreineiros =
-    resultado?.treineiros ?? dadosArquivo?.resultado?.metricas?.treineiros ?? 0;
   const totalDuplicados = resultado?.duplicados ?? 0;
-  const totalInvalidos =
-    resultado?.invalidos ?? dadosArquivo?.resultado?.metricas?.invalidos ?? 0;
-  const totalLinhas = dadosArquivo?.resultado?.totalLinhas ?? 0;
+  const totalTreineiros = metricas?.treineiros ?? 0;
+  const totalInvalidos = metricas?.invalidos ?? 0;
+  const totalLinhas = metricas?.totalLinhas ?? 0;
 
   return (
     <div className="space-y-6">
@@ -127,7 +126,7 @@ const ResultadoImportacao = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-text-secondary">
           <div>
             Arquivo:{" "}
-            <strong className="text-text-primary">{dadosArquivo?.nome}</strong>
+            <strong className="text-text-primary">{nomeArquivo}</strong>
           </div>
           <div>
             Total de linhas lidas:{" "}
@@ -136,7 +135,7 @@ const ResultadoImportacao = ({
           <div>
             Cursos associados:{" "}
             <strong className="text-text-primary">
-              {gruposCursos.length} cursos
+              {totalCursosAssociados} cursos
             </strong>
           </div>
         </div>

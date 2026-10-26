@@ -9,7 +9,7 @@ const atendimentoRoutes = Router();
 
 atendimentoRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor", "atendente"]));
 
-atendimentoRoutes.post("/iniciar/:id", 
+atendimentoRoutes.post("/iniciar", 
     validarRequisicao(ValidatorAtendimento.idAtendimentoSchema), 
     AtendimentoController.iniciarAtendimento
 );
@@ -19,12 +19,12 @@ atendimentoRoutes.get("/recuperar/:etapa",
     AtendimentoController.recuperarAtendimento
 );
 
-atendimentoRoutes.patch("/finalizar/:id",
+atendimentoRoutes.post("/finalizar/",
     validarRequisicao(ValidatorAtendimento.idAtendimentoSchema),
     AtendimentoController.finalizarAtendimento
 );
 
-atendimentoRoutes.post("/cancelar/:id",
+atendimentoRoutes.post("/cancelar/",
     validarRequisicao(ValidatorAtendimento.idAtendimentoSchema),
     AtendimentoController.cancelarAtendimento
  );

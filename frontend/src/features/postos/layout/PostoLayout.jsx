@@ -1,12 +1,10 @@
 import * as React from "react";
 import Header from "./Header";
 import SidePostos from "./SidePostos";
-import Alert from "../../../components/ui/Alert";
 import { useAtendimento } from "../context/atendimentoContext";
 
 const PostoLayout = ({ etapa, children }) => {
-  const { erro, setErro, carregando, recuperarAtendimentoAtivo } =
-    useAtendimento();
+  const { recuperarAtendimentoAtivo } = useAtendimento();
 
   React.useEffect(() => {
     if (etapa) {

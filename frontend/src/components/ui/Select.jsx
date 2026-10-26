@@ -1,5 +1,22 @@
-// Campo de seleção reutilizável com rótulo e mensagem de erro.
 import * as React from "react";
+ 
+const ArrowIcon = () => (
+  <svg
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+  >
+    <path
+      d="M5 7.5L10 12.5L15 7.5"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const Select = React.forwardRef(
   (
@@ -57,25 +74,6 @@ const Select = React.forwardRef(
         ${error ? "border-status-danger focus:ring-status-danger" : ""}
         ${selectClassName}
     `;
-
-    // SETA PERSONALIZADA
-    const ArrowIcon = () => (
-      <svg
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
-        width="20"
-        height="20"
-        viewBox="0 0 20 20"
-        fill="none"
-      >
-        <path
-          d="M5 7.5L10 12.5L15 7.5"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
 
     return (
       <div className={`w-full ${className}`}>

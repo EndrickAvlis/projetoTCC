@@ -2,13 +2,13 @@ import { requisitarApi } from "../../../services/apiClient";
 
 export const listarProdutos = async () => {
   const [resUniformes, resArmario] = await Promise.all([
-    requisitarApi("/produtos?tipo=uniforme&arquivado=false"),
-    requisitarApi("/produtos/armario").catch(() => ({ armario: null })),
+    requisitarApi("/produtos?tipo=uniforme&status=true"),
+    requisitarApi("/produtos?tipo=armario&status=true"),
   ]);
 
   return {
-    uniformes: resUniformes.uniformes,
-    armario: resArmario.armario,
+    uniformes: resUniformes.produtos ?? [],
+    armario: resArmario.produtos?.[0] ?? null,
   };
 };
 

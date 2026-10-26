@@ -2,32 +2,50 @@ import UsuarioService from "../services/usuarioService.js";
 
 const usuarioService = new UsuarioService();
 
-export const listarVoluntarios = async (req, res) => {
-  const voluntarios = await usuarioService.listar(req.validado.query);
+const mapearUsuario = (usuario) => {
+  if (!usuario) return null;
+  return {
+    id: usuario.idVoluntario,
+    nome: usuario.nomeVoluntario,
+    tipo: usuario.tipoVoluntario,
+    status: usuario.statusVoluntario,
+  };
+};
+
+export const listarUsuarios = async (req, res) => {
+  const usuarios = await usuarioService.listar(req.validado.query);
 
   return res.status(200).json({
-    usuarios: voluntarios,
-    total: voluntarios.length,
+    usuarios: usuarios.map(mapearUsuario),
+    total: usuarios.length,
   });
 };
 
-
-export const criarVoluntario = async (req, res) => {
-  const voluntario = await usuarioService.criar(req.validado.body);
+export const criarUsuario = async (req, res) => {
+  const usuario = await usuarioService.criar(req.validado.body);
 
   return res.status(201).json({
-    mensagem: voluntario,
+    usuario: mapearUsuario(usuario),
   });
 };
 
-export const atualizarVoluntario = async (req, res) => {
+export const atualizarUsuario = async (req, res) => {
   const { id } = req.validado.params;
-  const voluntario = await usuarioService.atualizar(
+  const usuario = await usuarioService.atualizar(
     id,
     req.validado.body,
   );
 
-  return res.status(202).json({
-    mensagem: voluntario,
+  return res.status(200).json({
+    usuario: mapearUsuario(usuario),
+  });
+};
+
+export const excluirUsuario = async (req, res) => {
+  const { id } = req.validado.params;
+  const usuario = await usuarioService.excluir(id);
+
+  return res.status(200).json({
+    usuario: mapearUsuario(usuario),
   });
 };

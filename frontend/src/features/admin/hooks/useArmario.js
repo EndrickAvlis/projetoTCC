@@ -1,25 +1,18 @@
 import * as React from "react";
-import { buscarArmario } from "../services/produtoService";
+import { listarProdutos } from "../services/produtoService";
 
 export const useArmario = () => {
   const [armario, setArmario] = React.useState(null);
   const [carregando, setCarregando] = React.useState(true);
-  const [erro, setErro] = React.useState(null);
 
   const carregarArmario = React.useCallback(async () => {
     setCarregando(true);
-    setErro(null);
 
     try {
-      const res = await buscarArmario();
-      setArmario(res.armario ?? null);
-    } catch (error) {
-      if (error.code === "ARMARIO_NAO_CONFIGURADO") {
-        setArmario(null);
-        return;
-      }
+      const res = await listarProdutos({ tipo: "armario" });
+      setArmario(res.produtos?.[0] ?? null);
+    } catch {
       setArmario(null);
-      setErro(error.message);
     } finally {
       setCarregando(false);
     }
@@ -32,7 +25,6 @@ export const useArmario = () => {
   return {
     armario,
     carregando,
-    erro,
     recarregar: carregarArmario,
   };
 };
