@@ -27,39 +27,5 @@ triagemRoutes.post("/atendimento/retomar",
   TriagemController.retomarAtendimento,
 );
 
-//remover
-triagemRoutes.post("/atendimentos/iniciar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.iniciarAtendimento,
-);
-
-//remover
-triagemRoutes.post("/atendimento/finalizar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.finalizarAtendimento,
-);
-
-//remover
-triagemRoutes.post("/atendimento/cancelar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.cancelarAtendimento,
-);
-
-triagemRoutes.get("/atendimentos/recuperar/:etapa",
-  validarRequisicao(ValidatorTriagem.recuperarAtendimentoSchema),
-  TriagemController.recuperarAtendimento,
-);
-
-//remover
-triagemRoutes.post("/atendimentos/finalizar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.finalizarAtendimento,
-);
-
-//remover
-triagemRoutes.post("/atendimentos/cancelar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.cancelarAtendimento,
-);
 
 export default triagemRoutes;

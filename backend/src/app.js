@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes.js";
 import alunoRoutes from "./routes/alunoRoutes.js";
 import atendimentoRoutes from "./routes/atendimentoRoutes.js";
 import relatorioRoutes from "./routes/relatorioRoutes.js";
+import triagemRoutes from "./routes/triagemRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import cookieParser from "cookie-parser";
 
@@ -34,6 +35,7 @@ app.use("/auth", authRoutes);
 app.use("/alunos", alunoRoutes);
 app.use("/atendimentos", atendimentoRoutes);
 app.use("/relatorios", relatorioRoutes);
+app.use("/triagem", triagemRoutes);
 
 app.get("/", (req, res) => {
   res.json({

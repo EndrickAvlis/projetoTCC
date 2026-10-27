@@ -14,7 +14,7 @@ export const salvarAluno = (senhaId, payload) =>
 export const listarCursos = () => requisitarApi("/cursos");
 
 export const listarPendencias = () =>
-  requisitarApi("/pendencias?etapa=triagem");
+  requisitarApi("triagem/filas/pendencias?etapa=triagem");
 
 export const registrarPendencia = (atendimentoId, documentos) =>
   requisitarApi("/pendencias", {
