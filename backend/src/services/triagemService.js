@@ -117,9 +117,7 @@ export default class TriagemService {
 
   async registrarPendencias(atendimentoId, idUsuario, documentos) {
     return prisma.$transaction(async (transacao) => {
-      const atendimento = await transacao.historicoSenha.findUnique({
-        where: { idHistorico: atendimentoId },
-      });
+      const atendimento = await transacao.historicoSenha.findUnique({});
       if (
         !atendimento ||
         atendimento.codVoluntario !== idUsuario ||
