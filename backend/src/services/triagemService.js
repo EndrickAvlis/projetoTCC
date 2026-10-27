@@ -95,7 +95,7 @@ export default class TriagemService {
           codAluno: aluno.idAluno,
           periodo: matricula.periodo,
           classificacao: matricula.classificacao ?? null,
-          anoEscolar: matricula.anoEscolar ?? null,
+          anoEscolar: matricula.ano ?? null,
         },
         update: {
           periodo: matricula.periodo,
