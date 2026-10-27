@@ -32,39 +32,18 @@ export default class FilaService extends BaseService {
   }
 
   async chamarSenhaSelecionada(senhaId, etapa) {
-    const senha = await prisma.$transaction(async (transacao) => {
-      const { count } = await transacao.senha.updateMany({
-        where: {
-          idSenha: senhaId,
-          etapaSenha: etapa,
-          statusSenha: "aguardando",
-        },
-        data: {
-          statusSenha: "em_atendimento",
-        },
-      });
-
-      if (count === 0) {
-        return null;
-      }
-
-      return transacao.senha.findUnique({
-        where: {
-          idSenha: senhaId,
-        },
-        include: {
-          aluno: {
-            include: {
-              cursosAluno: {
-                include: { curso: true },
-              },
-            },
-          },
-        },
-      });
+    const { count } = await this.model.updateMany({
+      where: {
+        idSenha: senhaId,
+        etapaSenha: etapa,
+        statusSenha: "aguardando",
+      },
+      data: {
+        statusSenha: "em_atendimento",
+      },
     });
 
-    if (!senha) {
+    if (count === 0) {
       throw new AppError(
         "Esta senha não está mais disponível para atendimento.",
         {
@@ -74,6 +53,19 @@ export default class FilaService extends BaseService {
       );
     }
 
-    return senha;
+    return this.model.findUnique({
+      where: {
+        idSenha: senhaId,
+      },
+      include: {
+        aluno: {
+          include: {
+            cursosAluno: {
+              include: { curso: true },
+            },
+          },
+        },
+      },
+    });
   }
 }

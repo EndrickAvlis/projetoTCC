@@ -6,7 +6,7 @@ const filaService = new FilaService();
 
 const senhaResposta = (senha) => ({
   id: senha.idSenha,
-  numero: senha.senhaCodigo,
+  codigo: senha.senhaCodigo,
   etapa: senha.etapaSenha,
   status: senha.statusSenha,
   prioritaria: Boolean(senha.tipoSenha),

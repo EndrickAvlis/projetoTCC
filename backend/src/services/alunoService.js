@@ -10,67 +10,65 @@ const formatarNome = (texto) =>
     .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1))
     .join(" ");
 
+const removerDuplicadosLocais = (candidatos) => {
+  const vistos = new Set();
+  return candidatos.filter((c) => {
+    const chave = formatarNome(c.nome).toUpperCase();
+    if (vistos.has(chave)) return false;
+    vistos.add(chave);
+    return true;
+  });
+};
+
 export default class AlunoService extends BaseService {
   constructor() {
     super(prisma.aluno, "idAluno");
   }
 
-  async cadastrarAluno({
-    nome,
-    anoProcesso,
-    semestreProcesso,
-    escolaridadePublica,
-    cidade,
-    sexo,
-  }) {
-    return super.criar({
-      nomeAluno: formatarNome(nome),
-      escolaridadePublica: Boolean(escolaridadePublica),
-      cidadeAluno: cidade?.trim(),
-      sexoAluno: sexo?.trim(),
-      anoProcesso: anoProcesso,
-      semestreProcesso: semestreProcesso,
-    });
-  }
+  async listarAlunos({
+  nome,
+  cidade,
+  cursoId,
+  status,
+  pagina = 1,
+  limite = 10,
+} = {}) {
+  const page = Math.max(1, Number(pagina) || 1);
+  const take = Math.max(1, Number(limite) || 10);
+  const skip = (page - 1) * take;
 
-  async buscarAlunos({
-    nome = "",
-    cidade = "",
-    cursoId,
-    status,
-    pagina = 1,
-    limite = 10,
-  } = {}) {
-    const where = {
-      nomeAluno: nome.trim()
-        ? { contains: nome.trim(), mode: "insensitive" }
-        : undefined,
-      cidadeAluno: cidade?.trim() || undefined,
-      statusAluno: status || undefined,
-      cursosAluno: cursoId ? { some: { codCurso: cursoId } } : undefined,
-    };
+  const where = {
+    nomeAluno: nome?.trim()
+      ? { contains: nome.trim(), mode: "insensitive" }
+      : undefined,
+    cidadeAluno: cidade?.trim() || undefined,
+    statusAluno: status || undefined,
+    cursosAluno: cursoId ? { some: { codCurso: cursoId } } : undefined,
+  };
 
-    const skip = (pagina - 1) * limite;
-    const take = limite;
-
-    const [total, totalAtivos, alunos] = await Promise.all([
-      prisma.aluno.count({ where }),
-      prisma.aluno.count({ where: { statusAluno: "ATIVO" } }),
-      prisma.aluno.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { nomeAluno: "asc" },
-        include: {
-          cursosAluno: {
-            include: { curso: true },
-          },
+  const [total, alunos] = await Promise.all([
+    prisma.aluno.count({ where }),
+    prisma.aluno.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { nomeAluno: "asc" },
+      include: {
+        cursosAluno: {
+          include: { curso: true },
         },
-      }),
-    ]);
+      },
+    }),
+  ]);
 
-    return { alunos, total, totalAtivos, pagina, limite };
-  }
+  return {
+    alunos,
+    total,
+    pagina: page,
+    limite: take,
+    totalPaginas: Math.ceil(total / take),
+  };
+}
 
   async listarCidades() {
     const registros = await prisma.aluno.findMany({
@@ -80,30 +78,6 @@ export default class AlunoService extends BaseService {
       orderBy: { cidadeAluno: "asc" },
     });
     return registros.map((r) => r.cidadeAluno).filter(Boolean);
-  }
-
-  async buscarAlunoPorId(id) {
-    const aluno = await prisma.aluno.findUnique({
-      where: {
-        idAluno: id,
-      },
-      include: {
-        cursosAluno: {
-          include: {
-            curso: true,
-          },
-        },
-      },
-    });
-
-    if (!aluno) {
-      throw new AppError("Aluno não encontrado.", {
-        status: 404,
-        code: "ALUNO_NAO_ENCONTRADO",
-      });
-    }
-
-    return aluno;
   }
 
   async atualizarAluno(id, { nome, status }) {
@@ -138,189 +112,67 @@ export default class AlunoService extends BaseService {
     );
   }
 
-  async vincularAlunoCurso(alunoId, cursoId) {
-    const aluno = await prisma.aluno.findUnique({
-      where: {
-        idAluno: alunoId,
-      },
-    });
-
-    if (!aluno) {
-      throw new AppError("Aluno não encontrado.", {
-        status: 404,
-        code: "ALUNO_NAO_ENCONTRADO",
-      });
-    }
-
-    const curso = await prisma.curso.findUnique({
-      where: {
-        idCurso: cursoId,
-      },
-    });
-
-    if (!curso) {
-      throw new AppError("Curso não encontrado.", {
-        status: 404,
-        code: "CURSO_NAO_ENCONTRADO",
-      });
-    }
-
-    if (curso.arquivado) {
-      throw new AppError("Não é possível vincular um curso arquivado.", {
-        status: 409,
-        code: "CURSO_ARQUIVADO",
-      });
-    }
-
-    const vinculoExistente = await prisma.cursoAluno.findUnique({
-      where: {
-        codCurso_codAluno: {
-          codCurso: cursoId,
-          codAluno: alunoId,
-        },
-      },
-    });
-
-    if (vinculoExistente) {
-      throw new AppError("Aluno já está vinculado a este curso.", {
-        status: 409,
-        code: "ALUNO_JA_VINCULADO",
-      });
-    }
-
-    return prisma.cursoAluno.create({
-      data: {
-        codCurso: cursoId,
-        codAluno: alunoId,
-      },
-      include: {
-        curso: true,
-      },
-    });
-  }
-
-  async desvincularAlunoCurso(cursoId, alunoId) {
-    const vinculo = await prisma.cursoAluno.findUnique({
-      where: {
-        codCurso_codAluno: {
-          codCurso: cursoId,
-          codAluno: alunoId,
-        },
-      },
-    });
-
-    if (!vinculo) {
-      throw new AppError("Vínculo não encontrado.", {
-        status: 404,
-        code: "VINCULO_NAO_ENCONTRADO",
-      });
-    }
-
-    return prisma.cursoAluno.delete({
-      where: {
-        codCurso_codAluno: {
-          codCurso: cursoId,
-          codAluno: alunoId,
-        },
-      },
-    });
-  }
-
   async importarAlunos({ anoProcesso, semestreProcesso, candidatos }) {
-    return prisma.$transaction(
-      async (tx) => {
-        const nomes = candidatos.map((c) => c.nome.trim());
+    return prisma.$transaction(async (tx) => {
+      const candidatosUnicos = removerDuplicadosLocais(candidatos);
+      const duplicadosInternos = candidatos.length - candidatosUnicos.length;
 
-        const alunosExistentes = await tx.aluno.findMany({
-          where: {
-            anoProcesso,
-            semestreProcesso,
-            nomeAluno: { in: nomes },
-          },
-          select: {
-            nomeAluno: true,
-          },
-        });
+      const nomes = candidatosUnicos.map((c) => formatarNome(c.nome));
+      const existentes = await tx.aluno.findMany({
+        where: { anoProcesso, semestreProcesso, nomeAluno: { in: nomes } },
+        select: { nomeAluno: true },
+      });
 
-        const nomesExistentes = new Set(
-          alunosExistentes.map((a) => a.nomeAluno.toUpperCase()),
-        );
+      const nomesExistentesSet = new Set(
+        existentes.map((a) => a.nomeAluno.toUpperCase()),
+      );
 
-        const nomesProcessados = new Set();
-        const candidatosValidos = [];
-        let duplicados = 0;
+      const paraInserir = candidatosUnicos.filter(
+        (c) => !nomesExistentesSet.has(formatarNome(c.nome).toUpperCase()),
+      );
 
-        for (const candidato of candidatos) {
-          const nomeFormatado = formatarNome(candidato.nome);
-          const nomeUpper = nomeFormatado.toUpperCase();
+      const totalDuplicados =
+        duplicadosInternos + (candidatosUnicos.length - paraInserir.length);
+      if (paraInserir.length === 0) {
+        return { importados: 0, duplicados: totalDuplicados };
+      }
 
-          if (
-            nomesExistentes.has(nomeUpper) ||
-            nomesProcessados.has(nomeUpper)
-          ) {
-            duplicados++;
-            continue;
-          }
+      const novosAlunos = await tx.aluno.createManyAndReturn({
+        data: paraInserir.map((c) => ({
+          nomeAluno: formatarNome(c.nome),
+          escolaridadePublica: Boolean(c.escolaridadePublica),
+          cidadeAluno: c.cidade,
+          sexoAluno: c.sexo,
+          statusAluno: "CANDIDATO",
+          anoProcesso,
+          semestreProcesso,
+        })),
+        select: { idAluno: true, nomeAluno: true },
+      });
 
-          nomesProcessados.add(nomeUpper);
-          candidatosValidos.push({
-            ...candidato,
-            nome: nomeFormatado,
-          });
-        }
+      const idPorNome = new Map(
+        novosAlunos.map((a) => [a.nomeAluno.toUpperCase(), a.idAluno]),
+      );
+      const matriculas = paraInserir
+        .filter(
+          (c) => c.cursoId && idPorNome.has(formatarNome(c.nome).toUpperCase()),
+        )
+        .map((c) => ({
+          codCurso: c.cursoId,
+          codAluno: idPorNome.get(formatarNome(c.nome).toUpperCase()),
+          statusMatricula: "PENDENTE",
+          periodo: c.periodo,
+          classificacao: Number(c.classificacao),
+        }));
 
-        if (candidatosValidos.length === 0) {
-          return { importados: 0, duplicados };
-        }
+      if (matriculas.length > 0) {
+        await tx.cursoAluno.createMany({ data: matriculas });
+      }
 
-        const novosAlunos = await tx.aluno.createManyAndReturn({
-          data: candidatosValidos.map((c) => ({
-            nomeAluno: c.nome,
-            escolaridadePublica: Boolean(c.escolaridadePublica),
-            cidadeAluno: c.cidade?.trim() || null,
-            sexoAluno: c.sexo?.trim() || null,
-            statusAluno: "CANDIDATO",
-            anoProcesso,
-            semestreProcesso,
-          })),
-          select: {
-            idAluno: true,
-            nomeAluno: true,
-          },
-        });
-
-        const ids = new Map(
-          novosAlunos.map((a) => [a.nomeAluno.toUpperCase(), a.idAluno]),
-        );
-
-        const matriculasParaInserir = [];
-        for (const c of candidatosValidos) {
-          const alunoId = ids.get(c.nome.toUpperCase());
-          if (alunoId && c.cursoId) {
-            matriculasParaInserir.push({
-              codCurso: c.cursoId,
-              codAluno: alunoId,
-              statusMatricula: "PENDENTE",
-              periodo: c.periodo || null,
-              classificacao: c.classificacao || null,
-            });
-          }
-        }
-        if (matriculasParaInserir.length > 0) {
-          await tx.cursoAluno.createMany({
-            data: matriculasParaInserir,
-          });
-        }
-
-        return {
-          importados: novosAlunos.length,
-          duplicados,
-        };
-      },
-      {
-        maxWait: 10000,
-        timeout: 30000,
-      },
-    );
+      return {
+        importados: novosAlunos.length,
+        duplicados: totalDuplicados,
+      };
+    });
   }
 }

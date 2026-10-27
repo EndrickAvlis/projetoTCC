@@ -40,7 +40,7 @@ const EmitirSenhaPage = () => {
               className="
                 min-h-44
                 w-full
-                max-w-163
+                max-w-xl
                 rounded-2xl
                 bg-primary
                 px-8
@@ -55,7 +55,7 @@ const EmitirSenhaPage = () => {
                 transition
                 hover:bg-primary-hover
                 active:bg-primary-active
-                sm:min-h-50
+                sm:min-h-48
                 sm:text-5xl
                 disabled:cursor-not-allowed 
                 disabled:opacity-70
@@ -75,19 +75,19 @@ const EmitirSenhaPage = () => {
               flex
               min-h-40
               w-full
-              max-w-96
+              max-w-sm
               flex-col
               items-center
               justify-start
               rounded-xl
-              border-7
+              border-8
               border-primary
               bg-surface
               px-6
               pt-4
               pb-6
               sm:min-h-48
-              sm:max-w-110
+              sm:max-w-md
             "
           >
             <p className="text-2xl font-extrabold uppercase tracking-wide text-primary sm:text-3xl">
@@ -95,7 +95,7 @@ const EmitirSenhaPage = () => {
             </p>
 
             <p className="mt-2 text-6xl font-extrabold leading-none text-text-primary sm:text-8xl">
-              {senha ? formatarSenha(senha.numero) : ""}
+              {senha ? formatarSenha(senha.codigo) : ""}
             </p>
           </section>
           {erro && (

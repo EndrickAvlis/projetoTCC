@@ -27,8 +27,8 @@ export const vincularAlunoSchema = z.object({
 });
 
 export const registrarPendenciasSchema = z.object({
-  params: z.object({ atendimentoId: id }),
   body: z.object({
+    atendimentoId: id,
     documentos: z.array(z.enum(documentosValidos)).min(1),
   }),
 });

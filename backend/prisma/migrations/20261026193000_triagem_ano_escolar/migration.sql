@@ -1,0 +1,1 @@
+ALTER TABLE "CursoAluno" ADD COLUMN IF NOT EXISTS "anoEscolar" INTEGER;

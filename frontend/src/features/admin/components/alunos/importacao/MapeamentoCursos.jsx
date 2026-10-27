@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import * as FiIcons from "react-icons/fi";
-import Alert from "../../../../../components/ui/Alert";
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import Select from "../../../../../components/ui/Select";
@@ -15,7 +14,6 @@ const MapeamentoCursos = ({
   onRecarregarCursos,
   carregandoCursos = false,
   carregando = false,
-  erro = null,
 }) => {
   const opcoesCursos = cursosExistentes.map((curso) => ({
     value: String(curso.id),
@@ -55,8 +53,6 @@ const MapeamentoCursos = ({
 
   return (
     <div className="space-y-6">
-      {erro && <Alert type="error" message={erro} />}
-
       <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-semibold text-text-primary">

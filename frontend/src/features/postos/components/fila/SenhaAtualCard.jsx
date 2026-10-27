@@ -11,7 +11,7 @@ const SenhaAtualCard = ({ senha, onAlternarPrioridade, desabilitada = false }) =
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[1.5rem] font-bold tracking-wider">
-          {formatarSenha(senha.numero)}
+          {formatarSenha(senha.codigo)}
         </span>
         {senha.prioritaria && <span className="text-xs font-semibold uppercase">Prioritária</span>}
       </div>

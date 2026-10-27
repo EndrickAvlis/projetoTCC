@@ -102,29 +102,31 @@ export const criarCursoSchema = z.object({
   }),
 });
 
-export const atualizarNomeCursoSchema = z.object({
-  params: z.object({ cursoId: id }),
-  body: z.object({ nome: nomeCurso }),
-});
-
-export const alterarArquivamentoCursoSchema = z.object({
+export const atualizarCursoSchema = z.object({
   params: z.object({ cursoId: id }),
   body: z.object({
-    arquivado: z.boolean({
-      error: "Informe verdadeiro ou falso para o arquivamento.",
-    }),
+    nome: nomeCurso.optional(),
+    arquivado: z
+      .boolean({
+        error: "Informe verdadeiro ou falso para o arquivamento.",
+      })
+      .optional(),
   }),
 });
 
-export const criarPeriodoCursoSchema = z.object({
+export const criarPeriodoSchema = z.object({
   params: z.object({ cursoId: id }),
   body: dadosPeriodo,
 });
 
-export const atualizarPeriodoCursoSchema = z.object({
+export const atualizarPeriodoSchema = z.object({
   params: z.object({
     cursoId: id,
     periodoId: id,
   }),
   body: dadosPeriodo,
+});
+
+export const excluirCursoSchema = z.object({
+  params: z.object({ cursoId: id }),
 });

@@ -1,58 +1,42 @@
-// Campo de entrada reutilizável com rótulo, ícone e mensagem de erro.
 import * as React from "react";
+import * as FiIcons from "react-icons/fi";
 
 const Input = React.forwardRef(
   (
     {
-      // TIPO
-      type = "text", // text | password | email | number | etc
-
-      // LABEL
+      type = "text",
       label = "",
       labelClassName = "",
-
-      // TAMANHOS
-      size = "md", // sm | md | lg
-
-      // PLACEHOLDER
+      size = "md",
       placeholder = "",
-
-      // VALOR
       value = "",
       onChange = null,
-
-      // ESTADOS
       error = "",
       disabled = false,
       required = false,
-
-      // ÍCONE
       icon = null,
-      iconPosition = "left", // left | right
-
-      // ID
+      iconPosition = "left",
       id = "",
       name = "",
-
-      // OUTROS
       className = "",
       inputClassName = "",
       ...props
     },
     ref,
   ) => {
-    // ID automático estável para ligar o rótulo ao campo.
     const idAutomatico = React.useId();
     const inputId = id || `input-${idAutomatico}`;
+    const [senhaVisivel, setSenhaVisivel] = React.useState(false);
+    const ehSenha = type === "password";
 
-    // ESTILOS POR TAMANHO
     const sizes = {
       sm: "px-3 py-1.5 text-sm",
       md: "px-4 py-2 text-base",
       lg: "px-6 py-3 text-lg",
     };
 
-    // ESTILOS BASE
+    const temIconeDireita = (icon && iconPosition === "right") || ehSenha;
+
     const baseInputStyles = `
   w-full ${sizes[size]}
   border border-border
@@ -65,11 +49,10 @@ const Input = React.forwardRef(
   disabled:opacity-60 disabled:cursor-not-allowed
   ${error ? "border-status-danger focus:ring-status-danger" : ""}
   ${icon && iconPosition === "left" ? "pl-10" : ""}
-  ${icon && iconPosition === "right" ? "pr-10" : ""}
+  ${temIconeDireita ? "pr-10" : ""}
   ${inputClassName}
 `;
 
-    // CONTAINER COM ÍCONE
     const inputWithIcon = (
       <div className="relative">
         {icon && iconPosition === "left" && (
@@ -81,7 +64,7 @@ const Input = React.forwardRef(
         <input
           ref={ref}
           id={inputId}
-          type={type}
+          type={ehSenha ? (senhaVisivel ? "text" : "password") : type}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
@@ -92,17 +75,33 @@ const Input = React.forwardRef(
           {...props}
         />
 
-        {icon && iconPosition === "right" && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
-            {icon}
-          </span>
+        {ehSenha ? (
+          <button
+            type="button"
+            onClick={() => setSenhaVisivel((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-text-secondary hover:text-text-primary focus:outline-none"
+            title={senhaVisivel ? "Ocultar senha" : "Ver senha"}
+            tabIndex={-1}
+          >
+            {senhaVisivel ? (
+              <FiIcons.FiEyeOff size={18} />
+            ) : (
+              <FiIcons.FiEye size={18} />
+            )}
+          </button>
+        ) : (
+          icon &&
+          iconPosition === "right" && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
+              {icon}
+            </span>
+          )
         )}
       </div>
     );
 
     return (
       <div className={`w-full ${className}`}>
-        {/* LABEL */}
         {label && (
           <label
             htmlFor={inputId}
@@ -113,10 +112,8 @@ const Input = React.forwardRef(
           </label>
         )}
 
-        {/* INPUT */}
         {inputWithIcon}
 
-        {/* MENSAGEM DE ERRO */}
         {error && <p className="mt-1 text-sm text-status-danger">{error}</p>}
       </div>
     );

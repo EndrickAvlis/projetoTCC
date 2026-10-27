@@ -28,21 +28,12 @@ export const mapearAluno = (aluno) => {
   };
 };
 
-export const criarAluno = async (req, res) => {
-  const aluno = await alunoService.cadastrarAluno(req.validado.body);
-
-  return res.status(201).json({
-    aluno: mapearAluno(aluno),
-  });
-};
-
 export const listarAlunos = async (req, res) => {
-  const resultado = await alunoService.buscarAlunos(req.validado.query);
+  const resultado = await alunoService.listarAlunos(req.validado.query);
 
   return res.json({
     alunos: resultado.alunos.map(mapearAluno),
     total: resultado.total,
-    totalAtivos: resultado.totalAtivos,
     pagina: resultado.pagina,
     limite: resultado.limite,
   });
@@ -53,15 +44,7 @@ export const listarCidades = async (req, res) => {
   return res.json({ cidades });
 };
 
-export const consultarAluno = async (req, res) => {
-  const aluno = await alunoService.buscarAlunoPorId(req.validado.params.id);
-
-  return res.json({
-    aluno: mapearAluno(aluno),
-  });
-};
-
-export const editarAluno = async (req, res) => {
+export const atualizarAluno = async (req, res) => {
   const aluno = await alunoService.atualizarAluno(
     req.validado.params.id,
     req.validado.body,
@@ -72,35 +55,9 @@ export const editarAluno = async (req, res) => {
   });
 };
 
-export const adicionarMatricula = async (req, res) => {
-  const vinculo = await alunoService.vincularAlunoCurso(
-    req.validado.params.id,
-    req.validado.body.cursoId,
-  );
-
-  return res.status(201).json({
-    matricula: {
-      cursoId: vinculo.codCurso,
-      alunoId: vinculo.codAluno,
-      curso: {
-        id: vinculo.curso.idCurso,
-        nome: vinculo.curso.nomeCurso,
-      },
-    },
-  });
-};
-
-export const removerMatricula = async (req, res) => {
-  const { id } = req.validado.params;
-  const { cursoId } = req.validado.body;
-
-  await alunoService.desvincularAlunoCurso(cursoId, id);
-
-  return res.status(204).send();
-};
-
 export const importarAlunos = async (req, res) => {
   const resultado = await alunoService.importarAlunos(req.validado.body);
 
   return res.status(201).json(resultado);
 };
+

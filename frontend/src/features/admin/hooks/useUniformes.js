@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarUniformesAdmin } from "../services/produtoService";
+import { listarProdutos } from "../services/produtoService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
@@ -7,24 +7,22 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
   const [uniformes, setUniformes] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
-  const [erro, setErro] = React.useState(null);
 
   const carregarUniformes = React.useCallback(async () => {
     setCarregando(true);
-    setErro(null);
 
     try {
-      const res = await listarUniformesAdmin({
-        busca: buscaDebounced,
-        arquivado,
+      const res = await listarProdutos({
+        tipo: "uniforme",
+        status: !arquivado,
+        busca: buscaDebounced || undefined,
       });
 
-      setUniformes(res.uniformes ?? []);
+      setUniformes(res.produtos ?? []);
       setTotal(res.total ?? 0);
-    } catch (error) {
+    } catch {
       setUniformes([]);
       setTotal(0);
-      setErro(error.message);
     } finally {
       setCarregando(false);
     }
@@ -38,7 +36,6 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
     uniformes,
     total,
     carregando,
-    erro,
     recarregar: carregarUniformes,
   };
 };

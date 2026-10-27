@@ -12,50 +12,19 @@ triagemRoutes.put("/senhas/:senhaId/aluno",
   TriagemController.vincularAluno,
 );
 
-triagemRoutes.get("/filas/pendencias",
+triagemRoutes.get("/pendencias",
   validarRequisicao(ValidatorTriagem.listarPendenciasSchema),
   TriagemController.listarPendencias,
 );
 
-triagemRoutes.post("/atendimentos/:atendimentoId/pendencias",
+triagemRoutes.post("/pendencias",
   validarRequisicao(ValidatorTriagem.registrarPendenciasSchema),
   TriagemController.registrarPendencias,
 );
 
-triagemRoutes.post("/atendimento/retomar",
+triagemRoutes.post("/pendencias/retomar",
   validarRequisicao(ValidatorTriagem.retomarAtendimentoSchema),
   TriagemController.retomarAtendimento,
-);
-
-triagemRoutes.post("/atendimentos/iniciar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.iniciarAtendimento,
-);
-
-triagemRoutes.post("/atendimento/finalizar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.finalizarAtendimento,
-);
-
-triagemRoutes.post("/atendimento/cancelar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.cancelarAtendimento,
-);
-
-
-triagemRoutes.get("/atendimentos/recuperar/:etapa",
-  validarRequisicao(ValidatorTriagem.recuperarAtendimentoSchema),
-  TriagemController.recuperarAtendimento,
-);
-
-triagemRoutes.post("/atendimentos/finalizar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.finalizarAtendimento,
-);
-
-triagemRoutes.post("/atendimentos/cancelar",
-  validarRequisicao(ValidatorTriagem.senhaAtendimentoSchema),
-  TriagemController.cancelarAtendimento,
 );
 
 export default triagemRoutes;

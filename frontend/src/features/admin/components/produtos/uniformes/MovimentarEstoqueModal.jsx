@@ -155,28 +155,16 @@ const MovimentarEstoqueModal = ({
       largura="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Card informativo do Uniforme */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-surface-muted p-4">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-lg font-bold text-primary">
-              {uniforme?.nome}
-            </div>
-
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-text-primary">
                   Tamanho {uniforme?.nome}
                 </span>
-                <Badge
-                  variant={uniforme?.status === "arquivado" ? "neutral" : "success"}
-                  dot
-                  size="sm"
-                >
-                  {uniforme?.status === "arquivado" ? "Arquivado" : "Ativo"}
-                </Badge>
               </div>
               <p className="mt-0.5 text-xs text-text-secondary">
-                Preço unitário: {formatarMoeda(Number(uniforme?.preco ?? 0))}
+               {formatarMoeda(Number(uniforme?.preco ?? 0))}
               </p>
             </div>
           </div>

@@ -27,23 +27,12 @@ const cursoNaoEncontrado = () =>
     code: "CURSO_NAO_ENCONTRADO",
   });
 
-const periodoNaoEncontrado = () =>
-  new AppError("Período não encontrado para este curso.", {
-    status: 404,
-    code: "PERIODO_NAO_ENCONTRADO",
-  });
-
-const cursoArquivado = () =>
-  new AppError("Não é possível gerenciar períodos de um curso arquivado.", {
-    status: 409,
-    code: "CURSO_ARQUIVADO",
-  });
-
 const periodoDuplicado = () =>
   new AppError("Este período já existe para este curso.", {
     status: 409,
     code: "PERIODO_DUPLICADO",
   });
+
 
 export default class CursoService extends BaseService {
   constructor() {
@@ -91,62 +80,45 @@ export default class CursoService extends BaseService {
     );
   }
 
-  async atualizarNomeCurso(cursoId, nome) {
-    const curso = await super.atualizar(
-      cursoId,
-      { nomeCurso: nome },
-      { select: cursoSelect },
-    );
-
-    if (!curso) {
-      throw cursoNaoEncontrado();
-    }
-
-    return curso;
-  }
-
-  async arquivarCurso(cursoId, arquivado) {
-    const curso = await prisma.$transaction(async (transacao) => {
-      const { count } = await transacao.curso.updateMany({
-        where: {
-          idCurso: cursoId,
-        },
-        data: {
-          arquivado,
-        },
-      });
-
-      if (count === 0) {
-        return null;
-      }
-
-      if (arquivado) {
-        await transacao.periodoCurso.updateMany({
-          where: {
-            codCurso: cursoId,
-          },
-          data: {
-            matriculaAtiva: false,
-          },
-        });
-      }
-
-      return transacao.curso.findUnique({
-        where: {
-          idCurso: cursoId,
-        },
-        select: cursoSelect,
-      });
+  async atualizarCurso(cursoId, dados) {
+    const cursoExistente = await super.buscarPorId(cursoId, {
+      select: { idCurso: true },
     });
 
-    if (!curso) {
+    if (!cursoExistente) {
       throw cursoNaoEncontrado();
     }
 
-    return curso;
+    const data = {
+      nomeCurso: dados.nome,
+      arquivado: dados.arquivado,
+    };
+
+    if (dados.arquivado) {
+      return prisma.$transaction(async (transacao) => {
+        await transacao.curso.update({
+          where: { idCurso: cursoId },
+          data,
+        });
+
+        await transacao.periodoCurso.updateMany({
+          where: { codCurso: cursoId },
+          data: { matriculaAtiva: false },
+        });
+
+        return transacao.curso.findUnique({
+          where: { idCurso: cursoId },
+          select: cursoSelect,
+        });
+      });
+    }
+
+    return super.atualizar(cursoId, data, {
+      select: cursoSelect,
+    });
   }
 
-  async adicionarPeriodoCurso(cursoId, periodoCurso) {
+  async criarPeriodo(cursoId, periodoCurso) {
     await this.obterCursoAtivo(cursoId);
 
     try {
@@ -168,7 +140,7 @@ export default class CursoService extends BaseService {
     }
   }
 
-  async atualizarPeriodoCurso(cursoId, periodoId, periodoCurso) {
+  async atualizarPeriodo(cursoId, periodoId, periodoCurso) {
     await this.obterCursoAtivo(cursoId);
 
     try {
@@ -185,7 +157,10 @@ export default class CursoService extends BaseService {
       });
 
       if (count === 0) {
-        throw periodoNaoEncontrado();
+        throw new AppError("Período não encontrado para este curso.", {
+          status: 404,
+          code: "PERIODO_NAO_ENCONTRADO",
+        });
       }
 
       return this.periodoCurso.findUnique({
@@ -203,6 +178,41 @@ export default class CursoService extends BaseService {
     }
   }
 
+  async excluir(cursoId) {
+    const curso = await super.buscarPorId(cursoId, {
+      select: {
+        idCurso: true,
+        arquivado: true,
+      },
+    });
+
+    if (!curso) {
+      throw cursoNaoEncontrado();
+    }
+
+    if (!curso.arquivado) {
+      throw new AppError("Apenas cursos arquivados podem ser excluídos.", {
+        status: 400,
+        code: "CURSO_ATIVO",
+      });
+    }
+
+    return prisma.$transaction(async (tx) => {
+      await tx.cursoAluno.deleteMany({
+        where: { codCurso: cursoId },
+      });
+
+      await tx.periodoCurso.deleteMany({
+        where: { codCurso: cursoId },
+      });
+
+      return tx.curso.delete({
+        where: { idCurso: cursoId },
+        select: cursoSelect,
+      });
+    });
+  }
+
   async obterCursoAtivo(cursoId) {
     const curso = await super.buscarPorId(cursoId, {
       select: {
@@ -215,7 +225,13 @@ export default class CursoService extends BaseService {
     }
 
     if (curso.arquivado) {
-      throw cursoArquivado();
+      throw new AppError(
+        "Não é possível gerenciar períodos de um curso arquivado.",
+        {
+          status: 409,
+          code: "CURSO_ARQUIVADO",
+        },
+      );
     }
 
     return curso;

@@ -7,11 +7,9 @@ export const useUsuarios = ({ busca = "", tipo = "", status = "" } = {}) => {
   const [usuarios, setUsuarios] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
-  const [erro, setErro] = React.useState(null);
 
   const carregarUsuarios = React.useCallback(async () => {
     setCarregando(true);
-    setErro(null);
 
     try {
       const res = await listarUsuarios({
@@ -22,10 +20,9 @@ export const useUsuarios = ({ busca = "", tipo = "", status = "" } = {}) => {
 
       setUsuarios(res?.usuarios ?? []);
       setTotal(res?.total ?? 0);
-    } catch (error) {
+    } catch {
       setUsuarios([]);
       setTotal(0);
-      setErro(error.message || "Erro ao carregar usuários.");
     } finally {
       setCarregando(false);
     }
@@ -39,7 +36,6 @@ export const useUsuarios = ({ busca = "", tipo = "", status = "" } = {}) => {
     usuarios,
     total,
     carregando,
-    erro,
     recarregar: carregarUsuarios,
   };
 };

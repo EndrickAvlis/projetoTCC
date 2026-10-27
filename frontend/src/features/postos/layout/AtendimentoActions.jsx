@@ -41,7 +41,7 @@ export const AtendimentoActions = ({
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold tracking-tight text-primary">
-                  Senha {formatarSenha(senhaAtual.numero)}
+                  Senha {formatarSenha(senhaAtual.codigo)}
                 </span>
                 {senhaAtual.prioritaria && (
                   <Badge variant="warning" size="sm">
