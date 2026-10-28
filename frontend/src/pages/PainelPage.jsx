@@ -9,6 +9,10 @@ import { tocarAlertaSonoro, falarChamada } from "../services/audioChamada.js";
 
 const TEMPO_DESTAQUE_MS = 5000;
 
+const API_URL = (
+  import.meta.env.VITE_API_URL ?? "http://localhost:3000"
+).replace(/\/+$/, "");
+
 const formatarGuiche = (guiche) =>
   guiche ? String(guiche).padStart(2, "0") : "—";
 
@@ -115,7 +119,7 @@ const PainelPrincipalPage = () => {
   );
 
   useEffect(() => {
-    const eventSource = new EventSource("http://localhost:3000/painel/stream");
+    const eventSource = new EventSource(`${API_URL}/painel/stream`);
 
     eventSource.onmessage = (event) => {
       try {
@@ -144,7 +148,7 @@ const PainelPrincipalPage = () => {
       ) {
         await document.documentElement.requestFullscreen();
       }
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -222,30 +226,27 @@ const PainelPrincipalPage = () => {
       <main className="flex flex-1 gap-6 overflow-hidden p-6">
         <section
           aria-live="polite"
-          className={`relative flex flex-1 flex-col items-center justify-center rounded-2xl border ${tema.container} ${tema.borda} p-8 shadow-sm backdrop-blur-sm transition-all duration-300 ${
-            emDestaque
-              ? "border-focus-ring ring-4 ring-focus-ring/20 shadow-xl"
-              : ""
-          }`}
+          className={`relative flex flex-1 flex-col items-center justify-center rounded-2xl border ${tema.container} ${tema.borda} p-8 shadow-sm backdrop-blur-sm transition-all duration-300 ${emDestaque
+            ? "border-focus-ring ring-4 ring-focus-ring/20 shadow-xl"
+            : ""
+            }`}
         >
           {senhaDestaque ? (
             <div className="flex flex-col items-center justify-center text-center">
               <span
-                className={`mb-3 inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold uppercase tracking-widest transition-colors ${
-                  emDestaque
-                    ? `${tema.barra} text-text-inverse`
-                    : `border ${tema.borda} ${tema.cardInterno} text-admin-sidebar-text-muted`
-                }`}
+                className={`mb-3 inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold uppercase tracking-widest transition-colors ${emDestaque
+                  ? `${tema.barra} text-text-inverse`
+                  : `border ${tema.borda} ${tema.cardInterno} text-admin-sidebar-text-muted`
+                  }`}
               >
                 {emDestaque ? "Chamando Agora" : "Última Senha Chamada"}
               </span>
 
               <div
-                className={`my-6 text-[10rem] font-black leading-none tracking-tighter transition-all duration-300 ${
-                  emDestaque
-                    ? "scale-105 text-text-inverse drop-shadow-md"
-                    : "text-admin-sidebar-text"
-                }`}
+                className={`my-6 text-[10rem] font-black leading-none tracking-tighter transition-all duration-300 ${emDestaque
+                  ? "scale-105 text-text-inverse drop-shadow-md"
+                  : "text-admin-sidebar-text"
+                  }`}
               >
                 {formatarSenha(senhaDestaque.codigo)}
               </div>
