@@ -3,6 +3,7 @@
 ## 1. Visão Geral do Fluxo
 
 A Triagem é o primeiro posto de atendimento presencial da matrícula:
+
 1. **Identificação do Aluno:** O atendente busca o aluno já existente no autocomplete (`GET /alunos`) utilizando os cursos disponíveis (`GET /cursos`). Caso seja um novo aluno não encontrado na busca, os dados são digitados diretamente no formulário sem necessidade de requisição prévia de cadastro.
 2. **Persistência dos Dados (`PUT /senhas/:senhaId/aluno`):** Opera como um **Upsert Atômico**. Os dados preenchidos no formulário (dados pessoais do aluno e matrícula em curso/período/ano) são persistidos (criados se `alunoId == null` ou atualizados se já existir) e vinculados à senha em atendimento antes do encerramento.
 3. **Desfecho sem Pendência:** Se a documentação estiver completa, o frontend executa `POST /atendimentos/finalizar` (ver [`ATENDIMENTO.md`](./ATENDIMENTO.md)), que encerra o histórico da senha e a encaminha para a fila da `apm`.
@@ -15,11 +16,12 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 
 ## 2. Leitura de Cursos (`GET /cursos`)
 
-* **Rota:** `GET /cursos`
-* **Autenticação:** Obrigatória (`atendente`, `supervisor`, `admin`)
-* **Finalidade:** Alimentar os seletores de curso e validar os períodos do formulário da triagem.
+- **Rota:** `GET /cursos`
+- **Autenticação:** Obrigatória (`atendente`, `supervisor`, `admin`)
+- **Finalidade:** Alimentar os seletores de curso e validar os períodos do formulário da triagem.
 
 ### Contrato de Resposta (HTTP 200):
+
 ```json
 {
   "cursos": [
@@ -27,8 +29,18 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
       "id": 1,
       "nome": "Desenvolvimento de Sistemas",
       "periodos": [
-        { "id": 1, "periodo": "manha", "vagasTotais": 40, "matriculaAtiva": true },
-        { "id": 2, "periodo": "tarde", "vagasTotais": 40, "matriculaAtiva": true }
+        {
+          "id": 1,
+          "periodo": "manha",
+          "vagasTotais": 40,
+          "matriculaAtiva": true
+        },
+        {
+          "id": 2,
+          "periodo": "tarde",
+          "vagasTotais": 40,
+          "matriculaAtiva": true
+        }
       ]
     }
   ],
@@ -40,16 +52,18 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 
 ## 3. Busca Operacional de Candidatos (`GET /alunos`)
 
-* **Rota:** `GET /alunos`
-* **Autenticação:** Obrigatória
-* **Finalidade:** Busca rápida por nome com autocomplete para carregar os dados cadastrais do candidato e suas matrículas pré-existentes.
-* **Otimização de Performance:** Projeção enxuta de campos no Prisma (`select` estrito dos dados visíveis no autocomplete, evitando join com tabelas de compras, histórico ou logs).
+- **Rota:** `GET /alunos`
+- **Autenticação:** Obrigatória
+- **Finalidade:** Busca rápida por nome com autocomplete para carregar os dados cadastrais do candidato e suas matrículas pré-existentes.
+- **Otimização de Performance:** Projeção enxuta de campos no Prisma (`select` estrito dos dados visíveis no autocomplete, evitando join com tabelas de compras, histórico ou logs).
 
 ### Parâmetros de Consulta (Query Params):
-* `nome` (string, obrigatório, mín: 2 caracteres): termo de busca parcial (insensível a maiúsculas/minúsculas).
-* `limite` (inteiro, opcional, padrão: 10): quantidade máxima de registros retornados.
+
+- `nome` (string, obrigatório, mín: 2 caracteres): termo de busca parcial (insensível a maiúsculas/minúsculas).
+- `limite` (inteiro, opcional, padrão: 10): quantidade máxima de registros retornados.
 
 ### Contrato de Resposta (HTTP 200):
+
 ```json
 {
   "alunos": [
@@ -78,11 +92,12 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 
 ## 4. Salvar e Vincular Aluno à Senha (`PUT /senhas/:senhaId/aluno`)
 
-* **Rota:** `PUT /senhas/:senhaId/aluno`
-* **Autenticação:** Obrigatória
-* **Finalidade:** Persistir os dados do formulário e vincular o aluno à senha atual. Funciona como **Upsert Atômico**: se o aluno for novo (`alunoId == null`), o registro é criado; se já existir, é atualizado, vinculando também o curso e a matrícula.
+- **Rota:** `PUT /senhas/:senhaId/aluno`
+- **Autenticação:** Obrigatória
+- **Finalidade:** Persistir os dados do formulário e vincular o aluno à senha atual. Funciona como **Upsert Atômico**: se o aluno for novo (`alunoId == null`), o registro é criado; se já existir, é atualizado, vinculando também o curso e a matrícula.
 
 ### Entrada (Payload):
+
 ```json
 {
   "alunoId": 9,
@@ -102,6 +117,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 ```
 
 ### Passo a Passo da Transação no Back-end (`prisma.$transaction`):
+
 1. **Validação da Senha:** Verificar se `senhaId` existe e pertence ao atendimento do voluntário logado.
 2. **Aluno (Criar ou Atualizar — Upsert):**
    - Se `alunoId` for fornecido: atualizar dados em `Aluno` (`nomeAluno`, `cidadeAluno`, `sexoAluno`, `escolaridadePublica`).
@@ -112,6 +128,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
    - Atualizar `Senha`: definir `codAluno = aluno.idAluno`.
 
 ### Contrato de Resposta (HTTP 200):
+
 ```json
 {
   "mensagem": "Dados do aluno e matrícula vinculados à senha com sucesso.",
@@ -123,11 +140,12 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 
 ## 5. Listagem de Senhas Pendentes (`GET /pendencias`)
 
-* **Rota:** `GET /pendencias?etapa=triagem`
-* **Autenticação:** Obrigatória
-* **Finalidade:** Listar todas as senhas que estão no estado `pendente` na etapa de triagem. Consumida pelo grid com polling de 5s no frontend.
+- **Rota:** `GET /pendencias?etapa=triagem`
+- **Autenticação:** Obrigatória
+- **Finalidade:** Listar todas as senhas que estão no estado `pendente` na etapa de triagem. Consumida pelo grid com polling de 5s no frontend.
 
 ### Resposta (HTTP 200):
+
 ```json
 {
   "pendencias": [
@@ -158,18 +176,20 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 
 ## 6. Registro de Pendência Documental (`POST /pendencias`)
 
-* **Rota:** `POST /pendencias`
-* **Autenticação:** Obrigatória
-* **Finalidade:** Registrar a pendência documental da triagem quando faltam documentos obrigatórios, liberando o guichê para novas chamadas.
+- **Rota:** `POST /pendencias`
+- **Autenticação:** Obrigatória
+- **Finalidade:** Registrar a pendência documental da triagem quando faltam documentos obrigatórios, liberando o guichê para novas chamadas.
 
 ### Chaves de Documentos Válidas (`DOCUMENTOS_TRIAGEM`):
-* `RG_CIN`: RG / Carteira de Identidade Nacional
-* `CPF_CIN`: CPF / Carteira de Identidade Nacional
-* `FOTO`: Foto 3x4
-* `ESCOLARIDADE_PUBLICA`: Comprovação de Escolaridade Pública
-* `HISTORICO_ENSINO_FUNDAMENTAL`: Histórico Escolar do Ensino Fundamental
+
+- `RG_CIN`: RG / Carteira de Identidade Nacional
+- `CPF_CIN`: CPF / Carteira de Identidade Nacional
+- `FOTO`: Foto 3x4
+- `ESCOLARIDADE_PUBLICA`: Comprovação de Escolaridade Pública
+- `HISTORICO_ENSINO_FUNDAMENTAL`: Histórico Escolar do Ensino Fundamental
 
 ### Entrada (Payload):
+
 ```json
 {
   "atendimentoId": 102,
@@ -178,6 +198,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 ```
 
 ### Passo a Passo da Transação no Back-end (`prisma.$transaction`):
+
 1. **Validações Prévias:**
    - Validar se `atendimentoId` e `documentos` estão preenchidos.
    - Validar se `documentos` é um array não-vazio contendo apenas chaves válidas permitidas.
@@ -191,6 +212,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
    - Atualizar `HistoricoSenha`: `dataHoraFimHistorico = new Date()`.
 
 ### Contrato de Resposta (HTTP 200):
+
 ```json
 {
   "mensagem": "Pendência documental registrada com sucesso."
@@ -201,11 +223,12 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 
 ## 7. Retomada de Atendimento Pendente (`POST /pendencias/retomar`)
 
-* **Rota:** `POST /pendencias/retomar`
-* **Autenticação:** Obrigatória (`atendente`, `supervisor`, `admin`)
-* **Finalidade:** Retomar uma senha pendente quando o aluno retorna ao posto com os documentos faltantes, alocando-a imediatamente no guichê do atendente.
+- **Rota:** `POST /pendencias/retomar`
+- **Autenticação:** Obrigatória (`atendente`, `supervisor`, `admin`)
+- **Finalidade:** Retomar uma senha pendente quando o aluno retorna ao posto com os documentos faltantes, alocando-a imediatamente no guichê do atendente.
 
 ### Contrato de Entrada (Payload):
+
 ```json
 {
   "senhaId": 15,
@@ -214,6 +237,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 ```
 
 ### Passo a Passo da Transação no Back-end (`prisma.$transaction`):
+
 1. **Validações Prévias:**
    - Validar se o voluntário solicitante já possui outro atendimento ativo nesta etapa (se sim, rejeitar com `409 Conflict`).
    - Validar se a senha existe, está com `statusSenha = 'pendente'` e `etapaSenha = 'triagem'`.
@@ -229,6 +253,7 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
      - `dataHoraInicioHistorico = new Date()`
 
 ### Contrato de Resposta (HTTP 200):
+
 ```json
 {
   "mensagem": "Atendimento retomado com sucesso.",
@@ -255,13 +280,13 @@ A Triagem é o primeiro posto de atendimento presencial da matrícula:
 
 ## 8. Matriz Consolidada de Erros e Validações da Triagem
 
-| Cenário | Status HTTP | Código / Mensagem |
-| :--- | :---: | :--- |
-| Nenhum documento informado na pendência | `400 Bad Request` | `Selecione ao menos um documento faltante.` |
-| Chave de documento inválida | `422 Unprocessable` | `Documento informado não é reconhecido pela Triagem.` |
-| Atendente já possui atendimento ativo ao tentar retomar | `409 Conflict` | `Você já possui outro atendimento em andamento nesta etapa.` |
-| Senha pendente já retomada por outro atendente | `409 Conflict` | `Esta senha pendente já foi retomada por outro guichê.` |
-| Senha não encontrada | `404 Not Found` | `Senha não encontrada.` |
-| Atendimento não encontrado ou não pertence ao usuário | `403 Forbidden` | `Atendimento não encontrado ou não autorizado.` |
-| Aluno inexistente ao vincular | `404 Not Found` | `Aluno não encontrado.` |
-| Curso inexistente ou inativo | `404 Not Found` | `Curso selecionado não encontrado.` |
+| Cenário                                                 |     Status HTTP     | Código / Mensagem                                            |
+| :------------------------------------------------------ | :-----------------: | :----------------------------------------------------------- |
+| Nenhum documento informado na pendência                 |  `400 Bad Request`  | `Selecione ao menos um documento faltante.`                  |
+| Chave de documento inválida                             | `422 Unprocessable` | `Documento informado não é reconhecido pela Triagem.`        |
+| Atendente já possui atendimento ativo ao tentar retomar |   `409 Conflict`    | `Você já possui outro atendimento em andamento nesta etapa.` |
+| Senha pendente já retomada por outro atendente          |   `409 Conflict`    | `Esta senha pendente já foi retomada por outro guichê.`      |
+| Senha não encontrada                                    |   `404 Not Found`   | `Senha não encontrada.`                                      |
+| Atendimento não encontrado ou não pertence ao usuário   |   `403 Forbidden`   | `Atendimento não encontrado ou não autorizado.`              |
+| Aluno inexistente ao vincular                           |   `404 Not Found`   | `Aluno não encontrado.`                                      |
+| Curso inexistente ou inativo                            |   `404 Not Found`   | `Curso selecionado não encontrado.`                          |
