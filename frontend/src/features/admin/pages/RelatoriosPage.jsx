@@ -28,19 +28,12 @@ const OPCOES_FORMA_PAGAMENTO = [
   { value: "credito", label: "Cartão de Crédito" },
 ];
 
-const OPCOES_TIPO_RECEITA = [
-  { value: "uniforme", label: "Uniformes" },
-  { value: "armario", label: "Armários" },
-  { value: "contribuicao", label: "Contribuição APM" },
-];
-
 const FILTROS_INICIAIS = {
   periodo: "HOJE",
   dataInicio: "",
   dataFim: "",
   cursoId: "",
   formaPagamento: "",
-  tipoReceita: "",
   atendenteId: "",
 };
 
@@ -238,17 +231,6 @@ const RelatoriosPage = () => {
               size="md"
             />
           </div>
-
-          <div className="flex-1">
-            <Select
-              placeholder="Todas as entradas"
-              value={filtros.tipoReceita}
-              onChange={(e) => alterarFiltro("tipoReceita", e.target.value)}
-              options={OPCOES_TIPO_RECEITA}
-              size="md"
-            />
-          </div>
-
           <div className="flex-1">
             <Select
               placeholder="Todos os atendentes"

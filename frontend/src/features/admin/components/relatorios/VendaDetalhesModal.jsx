@@ -4,6 +4,30 @@ import Badge from "../../../../components/ui/Badge";
 import Button from "../../../../components/ui/Button";
 import { formatarMoeda, formatarDataHora } from "../../../../utils/formatters";
 
+const formatarPeriodo = (periodo) => {
+  switch (periodo) {
+    case "manha":
+      return "Manhã";
+    case "tarde":
+      return "Tarde";
+    case "noite":
+      return "Noite";
+    case "integral":
+      return "Integral";
+    case "online":
+      return "EAD - Online";
+    default:
+      return "Não Informado";
+  }
+};
+const formatarItem = (item) => {
+  if (item === "Armário Individual") {
+    return "Armário";
+  } else {
+    return `Uniforme ${item}`;
+  }
+};
+
 const VendaDetalhesModal = ({
   venda,
   aberto,
@@ -23,15 +47,15 @@ const VendaDetalhesModal = ({
         venda ? (
           <div className="flex items-center justify-between w-full gap-3">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-xs text-text-secondary uppercase font-semibold">
+              <span className="text-md text-text-secondary font-semibold">
                 Total:
               </span>
               <span className="text-xl font-extrabold text-primary">
                 {formatarMoeda(venda.precoTotal)}
               </span>
-              <Badge variant="neutral" className="capitalize text-xs">
+              <Badge variant="neutral" className="text-xs">
                 {venda.formaPagamento
-                  ? `Pago via ${venda.formaPagamento}`
+                  ? `Pago via ${venda.formaPagamento.replace(",", " & ")}`
                   : "Não informado"}
               </Badge>
             </div>
@@ -77,20 +101,24 @@ const VendaDetalhesModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="flex justify-between p-3">
+            <div className="max-w-50">
               <p className="text-xs text-text-secondary font-medium">Aluno</p>
               <p className="font-semibold text-text-primary">
                 {venda.aluno || "Não informado"}
               </p>
-              <p className="text-xs text-text-secondary">
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary font-medium">
+                Curso / Período
+              </p>
+              <p className="font-semibold text-text-primary">
                 {venda.curso || "Não informado"}
               </p>
-              <p className="text-xs text-text-secondary">
-                {venda.periodo || "Não informado"}
+              <p className="font-semibold capitalize text-text-primary">
+                {formatarPeriodo(venda.periodo)}
               </p>
             </div>
-
             <div>
               <p className="text-xs text-text-secondary font-medium">
                 Atendente
@@ -101,7 +129,7 @@ const VendaDetalhesModal = ({
             </div>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
+            <p className="text-md font-semibold tracking-wider text-text-secondary mb-2">
               Itens da Compra
             </p>
             <div className="rounded-lg border border-border max-h-52 overflow-y-auto">
@@ -122,7 +150,7 @@ const VendaDetalhesModal = ({
                   {venda.itens?.map((item, idx) => (
                     <tr key={idx}>
                       <td className="py-2 px-3 font-medium text-text-primary">
-                        {item.nome}
+                        {formatarItem(item.nome)}
                       </td>
                       <td className="py-2 px-2 text-center text-text-secondary">
                         {item.quantidade}
