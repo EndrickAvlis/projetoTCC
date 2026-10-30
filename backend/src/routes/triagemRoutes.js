@@ -27,4 +27,5 @@ triagemRoutes.post("/pendencias/retomar",
   TriagemController.retomarAtendimento,
 );
 
+
 export default triagemRoutes;

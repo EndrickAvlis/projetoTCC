@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
       } finally {
         if (ativo) setValidandoSessao(false);
       }
-    }
+    };
 
     carregarSessao();
 
@@ -38,7 +38,8 @@ export const AuthProvider = ({ children }) => {
     const tratarNaoAutorizado = () => setUsuario(null);
 
     window.addEventListener("auth:unauthorized", tratarNaoAutorizado);
-    return () => window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
+    return () =>
+      window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
   }, []);
 
   const login = React.useCallback(async (credenciais) => {
@@ -58,7 +59,10 @@ export const AuthProvider = ({ children }) => {
   const temAcessoATela = React.useCallback(
     (tela) => {
       if (!usuario) return false;
-      return (TELAS_GERAIS[usuario.tipo] ?? []).includes(tela);
+      return (
+        usuario.tela === tela &&
+        (TELAS_GERAIS[usuario.tipo] ?? []).includes(tela)
+      );
     },
     [usuario],
   );

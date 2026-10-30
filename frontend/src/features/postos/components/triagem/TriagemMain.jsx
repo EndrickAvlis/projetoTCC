@@ -23,17 +23,15 @@ const DADOS_INICIAIS = {
 };
 
 const alunoParaForm = (aluno) => {
-  const matricula = aluno?.matriculas?.[0] || {};
-
   return {
     nome: aluno?.nome || "",
     cidade: aluno?.cidade || "",
     sexo: aluno?.sexo || "",
-    escolaridadePublica: aluno?.escolaridadePublica ?? "",
-    classificacao: matricula.classificacao ?? "",
-    curso: matricula.cursoId ? String(matricula.cursoId) : "",
-    periodo: matricula.periodo || "",
-    ano: String(matricula.anoEscolar || "1"),
+    escolaridadePublica: aluno?.escolaridadePublica || "",
+    classificacao: aluno?.classificacao || "",
+    curso: aluno?.cursoId || "",
+    periodo: aluno?.periodo || "",
+    ano: aluno?.anoEscolar || "1",
   };
 };
 
@@ -133,7 +131,6 @@ export const TriagemMain = () => {
       limparAtendimento();
       handleLimparFormulario();
     } catch {
-      // Erro tratado globalmente pelo apiClient
     } finally {
       setCarregando(false);
     }
@@ -151,7 +148,6 @@ export const TriagemMain = () => {
       await finalizar();
       handleLimparFormulario();
     } catch {
-      // Erro tratado globalmente pelo apiClient
     } finally {
       setCarregando(false);
     }
@@ -167,7 +163,7 @@ export const TriagemMain = () => {
 
   const podeFinalizar = Boolean(
     fase === "iniciada" &&
-    dadosAluno.nome.trim() &&
+    dadosAluno.nome &&
     dadosAluno.curso &&
     dadosAluno.periodo &&
     dadosAluno.ano &&

@@ -3,7 +3,7 @@ import * as ReactRouter from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 
 const RotaProtegida = ({ tela }) => {
-  const { estaAutenticado, validandoSessao, temAcessoATela } = useAuth();
+  const { usuario, estaAutenticado, validandoSessao, temAcessoATela } = useAuth();
   const location = ReactRouter.useLocation();
 
   if (validandoSessao) {
@@ -19,9 +19,9 @@ const RotaProtegida = ({ tela }) => {
     return <ReactRouter.Navigate to="/" replace state={{ origem: location.pathname }} />;
   }
 
-  // Se a rota exige uma tela específica e o usuário não tem permissão -> Acesso Negado
+  // Se tentar acessar outra tela que não a da sessão atual -> volta para a tela dele
   if (tela && !temAcessoATela(tela)) {
-    return <ReactRouter.Navigate to="/acesso-negado" replace />;
+    return <ReactRouter.Navigate to={usuario?.tela ? `/${usuario.tela}` : "/"} replace />;
   }
 
   // Autorizado -> renderiza a rota filha correspondente

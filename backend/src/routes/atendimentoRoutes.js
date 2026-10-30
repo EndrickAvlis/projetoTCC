@@ -29,7 +29,7 @@ atendimentoRoutes.post("/finalizar/",
 atendimentoRoutes.post("/cancelar/",
     validarRequisicao(ValidatorAtendimento.idAtendimentoSchema),
     AtendimentoController.cancelarAtendimento
- );
+);
 
 
 

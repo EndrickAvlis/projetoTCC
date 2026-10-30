@@ -1,15 +1,13 @@
 import { requisitarApi } from "../../../services/apiClient";
 
 export const listarFila = async (etapa) => {
-  const res = await requisitarApi(
-    `/filas?etapa=${encodeURIComponent(etapa)}`
-  );
+  const res = await requisitarApi(`/filas?etapa=${encodeURIComponent(etapa)}`);
   return res.senhas;
 };
 
 export const listarChamadasHoje = async (etapa) => {
   const res = await requisitarApi(
-    `/filas/historico?etapa=${encodeURIComponent(etapa)}`
+    `/filas/historico?etapa=${encodeURIComponent(etapa)}`,
   );
   return res.senhas;
 };
@@ -22,13 +20,20 @@ export const chamarSenha = async (senhaId, etapa) => {
   return res.senha;
 };
 
+export const rechamarSenha = async (senhaId, etapa) => {
+  return requisitarApi("/filas/rechamar", {
+    method: "POST",
+    body: { senhaId, etapa },
+  });
+};
+
 export const alterarPrioridade = async (senhaId, tipoSenha) => {
   const res = await requisitarApi(
     `/senhas/${encodeURIComponent(senhaId)}/prioridade`,
     {
       method: "PATCH",
       body: { tipoSenha },
-    }
+    },
   );
   return res.senha;
 };

@@ -36,12 +36,16 @@ const obterDia = (data) => {
   return `${valores.year}-${valores.month}-${valores.day}`;
 };
 
+let ultimoResetEm = null;
+
 const obterIntervaloDia = (agora) => {
   const dia = obterDia(agora);
   const inicioDia = new Date(`${dia}T00:00:00-03:00`);
   const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000);
+  const inicioSequencia =
+    ultimoResetEm && ultimoResetEm > inicioDia ? ultimoResetEm : inicioDia;
 
-  return { inicioDia, fimDia };
+  return { inicioDia, fimDia, inicioSequencia };
 };
 
 export default class SenhaService extends BaseService {
@@ -51,12 +55,12 @@ export default class SenhaService extends BaseService {
 
   async criarSenha() {
     const agora = new Date();
-    const { inicioDia, fimDia } = obterIntervaloDia(agora);
+    const { inicioSequencia, fimDia } = obterIntervaloDia(agora);
 
     const ultimaSenha = await this.model.findFirst({
       where: {
         dataHoraInicioSenha: {
-          gte: inicioDia,
+          gte: inicioSequencia,
           lt: fimDia,
         },
         statusSenha: {
@@ -91,6 +95,24 @@ export default class SenhaService extends BaseService {
     const agora = new Date();
     const { inicioDia, fimDia } = obterIntervaloDia(agora);
 
+    await prisma.historicoSenha.updateMany({
+      where: {
+        dataHoraFimHistorico: null,
+        senha: {
+          dataHoraInicioSenha: {
+            gte: inicioDia,
+            lt: fimDia,
+          },
+          statusSenha: {
+            notIn: ["cancelada", "finalizada"],
+          },
+        },
+      },
+      data: {
+        dataHoraFimHistorico: agora,
+      },
+    });
+
     const senhasAfetadas = await this.model.updateMany({
       where: {
         dataHoraInicioSenha: {
@@ -98,7 +120,7 @@ export default class SenhaService extends BaseService {
           lt: fimDia,
         },
         statusSenha: {
-          not: "cancelada",
+          notIn: ["cancelada", "finalizada"],
         },
       },
       data: {
@@ -106,6 +128,8 @@ export default class SenhaService extends BaseService {
         dataHoraFimSenha: agora,
       },
     });
+
+    ultimoResetEm = agora;
 
     return {
       senhasCanceladas: senhasAfetadas.count,
@@ -115,12 +139,12 @@ export default class SenhaService extends BaseService {
 
   async obterUltimaSenhaDoDia() {
     const agora = new Date();
-    const { inicioDia, fimDia } = obterIntervaloDia(agora);
+    const { inicioSequencia, fimDia } = obterIntervaloDia(agora);
 
     const ultimaSenha = await this.model.findFirst({
       where: {
         dataHoraInicioSenha: {
-          gte: inicioDia,
+          gte: inicioSequencia,
           lt: fimDia,
         },
         statusSenha: {
@@ -184,31 +208,28 @@ export default class SenhaService extends BaseService {
 
     let proximaEtapa = "finalizada";
     let statusSenha = "aguardando";
+    let dataHoraFimSenha = undefined;
 
-    switch(etapaAtual){
+    switch (etapaAtual) {
       case "triagem":
         proximaEtapa = "apm";
-        statusSenha = "aguardando";
-      break;
+        break;
       case "apm":
         proximaEtapa = "docs";
-        statusSenha = "aguardando";
-      break;
+        break;
       case "docs":
         proximaEtapa = "docs";
         statusSenha = "finalizada";
-      break;
-      default:
-        proximaEtapa = "docs";
-        statusSenha = "aguardando";
-      break;
+        dataHoraFimSenha = new Date();
+        break;
     }
 
-    return super.atualizar(id,
-      {
-        etapaSenha: proximaEtapa,
-        statusSenha: statusSenha
-      }
-    )
+    return super.atualizar(id, {
+      etapaSenha: proximaEtapa,
+      statusSenha,
+      ...(dataHoraFimSenha && {
+        dataHoraFimSenha,
+      }),
+    });
   }
 }

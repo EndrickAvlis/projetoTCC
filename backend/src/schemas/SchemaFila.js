@@ -22,3 +22,14 @@ export const chamarSenhaSchema = z.object({
     etapa: etapaSchema,
   }),
 });
+
+export const rechamarSenhaSchema = z.object({
+  body: z.object({
+    senhaId: z.coerce
+      .number()
+      .int("O ID da senha deve ser um número inteiro.")
+      .positive("O ID da senha deve ser maior que zero."),
+
+    etapa: etapaSchema,
+  }),
+});

@@ -37,23 +37,23 @@
   --color-status-danger-bg: #fee4e2;
 
   /* Postos operacionais e pendencias */
-  --color-triagem: #207a4d;
-  --color-triagem-dark: #165737;
-  --color-triagem-bg: #e9f7ef;
-  --color-triagem-border: #b7e0c9;
-  --color-triagem-text: #207a4d;
+  --color-triagem: #059669;
+  --color-triagem-dark: #064e3b;
+  --color-triagem-bg: #ecfdf5;
+  --color-triagem-border: #a7f3d0;
+  --color-triagem-text: #047857;
 
-  --color-apm: #b85c08;
-  --color-apm-dark: #8a4404;
-  --color-apm-bg: #fff1e5;
-  --color-apm-border: #f8d8ba;
-  --color-apm-text: #b85c08;
+  --color-apm: #ea580c;
+  --color-apm-dark: #7c2d12;
+  --color-apm-bg: #fff7ed;
+  --color-apm-border: #fed7aa;
+  --color-apm-text: #c2410c;
 
-  --color-docs: #7042a3;
-  --color-docs-dark: #542f7e;
-  --color-docs-bg: #f3ecfa;
-  --color-docs-border: #d8c5ee;
-  --color-docs-text: #7042a3;
+  --color-docs: #7c3aed;
+  --color-docs-dark: #4c1d95;
+  --color-docs-bg: #f5f3ff;
+  --color-docs-border: #ddd6fe;
+  --color-docs-text: #6d28d9;
 
   --color-pendencias: #9a6700;
   --color-pendencias-dark: #785101;

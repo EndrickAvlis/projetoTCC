@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
+import { mapearAluno } from "../controllers/alunoController.js";
 
 const erro = (mensagem, status = 409, code = "ERRO_TRIAGEM") =>
   new AppError(mensagem, { status, code });
@@ -95,7 +96,7 @@ export default class TriagemService {
           codAluno: aluno.idAluno,
           periodo: matricula.periodo,
           classificacao: matricula.classificacao ?? null,
-          anoEscolar: matricula.ano ?? null,
+          anoEscolar: matricula.anoEscolar ?? null,
         },
         update: {
           periodo: matricula.periodo,
@@ -117,9 +118,7 @@ export default class TriagemService {
 
   async registrarPendencias(atendimentoId, idUsuario, documentos) {
     return prisma.$transaction(async (transacao) => {
-      const atendimento = await transacao.historicoSenha.findUnique({
-        where: { idHistorico: atendimentoId },
-      });
+      const atendimento = await transacao.historicoSenha.findUnique({});
       if (
         !atendimento ||
         atendimento.codVoluntario !== idUsuario ||
@@ -169,28 +168,17 @@ export default class TriagemService {
       },
       orderBy: { dataHoraInicioSenha: "asc" },
     });
-    const pendencias = senhas.map((senha) => {
-      const matricula = senha.aluno?.cursosAluno?.[0];
-      return {
-        senha: {
-          id: senha.idSenha,
-          codigo: senha.senhaCodigo,
-          tipoSenha: senha.tipoSenha,
-        },
-        aluno: senha.aluno
-          ? { id: senha.aluno.idAluno, nome: senha.aluno.nomeAluno }
-          : null,
-        matricula: matricula
-          ? {
-              curso: matricula.curso.nomeCurso,
-              periodo: matricula.periodo,
-              anoEscolar: matricula.anoEscolar,
-            }
-          : null,
-        documentos: senha.documentosPendentes?.documentos ?? [],
-        registradaEm: senha.documentosPendentes?.registradaEm ?? null,
-      };
-    });
+
+    const pendencias = senhas.map((senha) => ({
+      senha: {
+        id: senha.idSenha,
+        codigo: senha.senhaCodigo,
+        tipoSenha: senha.tipoSenha,
+      },
+      aluno: mapearAluno(senha.aluno),
+      documentos: senha.documentosPendentes?.documentos ?? [],
+      registradaEm: senha.documentosPendentes?.registradaEm ?? null,
+    }));
     return { pendencias, total: pendencias.length };
   }
 
