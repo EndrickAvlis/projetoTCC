@@ -124,7 +124,7 @@ export const TriagemMain = () => {
       }
 
       await TriagemService.registrarPendencia(
-        atendimentoAtual.id,
+        atendimentoAtual.idHistorico,
         documentosSelecionados,
       );
 

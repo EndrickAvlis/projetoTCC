@@ -12,17 +12,17 @@ triagemRoutes.put("/senhas/:senhaId/aluno",
   TriagemController.vincularAluno,
 );
 
-triagemRoutes.get("/filas/pendencias",
+triagemRoutes.get("/pendencias",
   validarRequisicao(ValidatorTriagem.listarPendenciasSchema),
   TriagemController.listarPendencias,
 );
 
-triagemRoutes.post("/atendimentos/:atendimentoId/pendencias",
+triagemRoutes.post("/pendencias",
   validarRequisicao(ValidatorTriagem.registrarPendenciasSchema),
   TriagemController.registrarPendencias,
 );
 
-triagemRoutes.post("/atendimento/retomar",
+triagemRoutes.post("/pendencias/retomar",
   validarRequisicao(ValidatorTriagem.retomarAtendimentoSchema),
   TriagemController.retomarAtendimento,
 );

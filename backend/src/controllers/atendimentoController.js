@@ -1,6 +1,7 @@
 import SenhaService from "../services/senhaService.js";
 import HistoricoSenhaService from "../services/historicoSenhaService.js";
 import AlunoService from "../services/alunoService.js";
+import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
 import { exactOptional } from "zod";
 
@@ -59,7 +60,7 @@ export const iniciarAtendimento = async (req, res) => {
 
 export const recuperarAtendimento = async (req, res) => {
   const idUsuario = req.usuario.id;
-  const etapa = req.validado.params.etapa;
+  const etapa = req.validado?.params?.etapa ?? req.usuario.tela;
 
   const atendimentoAberto = await historicoSenhaService.listarAtendimentoAberto(
     idUsuario,
@@ -108,48 +109,50 @@ export const finalizarAtendimento = async (req, res) => {
   const idUsuario = req.usuario.id;
   const idSenha = req.validado.body.senhaId;
 
-  const senha = await senhaService.buscarPorId(idSenha);
+  const resultado = await prisma.$transaction(async (transacao) => {
+    const senha = await transacao.senha.findUnique({ where: { idSenha } });
+    if (!senha) throw senhaNaoEncontrada();
+    if (senha.statusSenha !== "em_atendimento") throw senhaNaoEmAtendimento();
+    if (senha.etapaSenha === "triagem" && !senha.codAluno) {
+      throw new AppError("Vincule um aluno à senha antes de finalizar a triagem.", {
+        status: 409, code: "ALUNO_NAO_VINCULADO",
+      });
+    }
 
-  if (!senha) {
-    throw senhaNaoEncontrada();
-  }
-
-  if (senha.statusSenha !== "em_atendimento") {
-    throw senhaNaoEmAtendimento();
-  }
-
-  const atendimentoAberto =
-    await historicoSenhaService.listarAtendimentoAbertoComSenha(
-      idUsuario,
-      senha.idSenha,
-      senha.etapaSenha,
-    );
-
-  const agora = new Date();
-
-  if (!atendimentoAberto) {
-    await historicoSenhaService.criar({
-      codSenha: senha.idSenha,
-      codVoluntario: idUsuario,
-      etapaHistorico: senha.etapaSenha,
-      dataHoraInicioHistorico: agora,
-      dataHoraFimHistorico: agora,
+    const atendimento = await transacao.historicoSenha.findFirst({
+      where: { codSenha: idSenha, codVoluntario: idUsuario,
+        etapaHistorico: senha.etapaSenha, dataHoraFimHistorico: null },
     });
-  } else {
-    await historicoSenhaService.atualizar(atendimentoAberto.idHistorico, {
-      dataHoraFimHistorico: agora,
+    if (!atendimento) throw atendimentoNaoEncontrado();
+
+    const agora = new Date();
+    const proximaEtapa = senha.etapaSenha === "triagem" ? "apm" : "docs";
+    const finalizada = senha.etapaSenha === "docs";
+
+    await transacao.historicoSenha.update({
+      where: { idHistorico: atendimento.idHistorico },
+      data: { dataHoraFimHistorico: agora },
     });
-  }
+    await transacao.senha.update({
+      where: { idSenha },
+      data: { etapaSenha: proximaEtapa,
+        statusSenha: finalizada ? "finalizada" : "aguardando",
+        dataHoraFimSenha: finalizada ? agora : null,
+        ...(senha.etapaSenha === "triagem" ? { documentosPendentes: { documentos: [] } } : {}),
+      },
+    });
 
-  const senhaAtualizada = await senhaService.avancarEtapa(
-    senha.idSenha,
-    senha.etapaSenha,
-  );
-
-  res.status(200).json({
-    mensagem: "Atendimento finalizado com sucesso.",
-    proximaEtapa: senhaAtualizada.etapaSenha,
+    if (finalizada && senha.codAluno) {
+      await transacao.aluno.update({
+        where: { idAluno: senha.codAluno }, data: { statusAluno: "ATIVO" },
+      });
+      await transacao.cursoAluno.updateMany({
+        where: { codAluno: senha.codAluno }, data: { statusMatricula: "ATIVA" },
+      });
+    }
+    return { mensagem: "Atendimento finalizado com sucesso.", proximaEtapa };
   });
+  return res.status(200).json(resultado);
 };
 
 export const cancelarAtendimento = async (req, res) => {
