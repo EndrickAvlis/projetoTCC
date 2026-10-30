@@ -24,9 +24,7 @@ export default class FilaService extends BaseService {
       },
       {
         select: senhaFilaSelect,
-        orderBy: {
-          dataHoraInicioSenha: "asc",
-        },
+        orderBy: [{ tipoSenha: "desc" }, { dataHoraInicioSenha: "asc" }],
       },
     );
   }

@@ -27,6 +27,11 @@ export const listarFila = async (req, res) => {
 
 export const chamarSenha = async (req, res) => {
   const { senhaId, etapa } = req.validado.body;
+
+  if (etapa !== req.usuario.tela) {
+    throw etapasDiferentes();
+  }
+
   const senha = await filaService.chamarSenhaSelecionada(senhaId, etapa);
 
   painelService.mostrarSenhaChamada({

@@ -6,7 +6,6 @@ import LoginPage from "./pages/LoginPage";
 import TriagemPage from "./features/postos/pages/TriagemPage";
 import ApmPage from "./features/postos/pages/ApmPage";
 import DocsPage from "./features/postos/pages/DocsPage";
-import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import EmitirSenhaPage from "./pages/EmitirSenhaPage";
 import AdminLayout from "./features/admin/layout/adminLayout";
 import DashboardPage from "./features/admin/pages/DashboardPage";
@@ -34,14 +33,7 @@ function App() {
             path="/emitir-senha"
             element={<EmitirSenhaPage />}
           />
-          <ReactRouter.Route
-            path="/painel/:posto?"
-            element={<PainelPage />}
-          />
-          <ReactRouter.Route
-            path="/acesso-negado"
-            element={<AcessoNegadoPage />}
-          />
+          <ReactRouter.Route path="/painel/:posto?" element={<PainelPage />} />
 
           <ReactRouter.Route element={<RotaProtegida />}>
             <ReactRouter.Route
@@ -93,11 +85,7 @@ function App() {
 
           <ReactRouter.Route
             path="*"
-            element={
-              <div className="p-5 text-xl text-status-danger">
-                Página não encontrada.
-              </div>
-            }
+            element={<ReactRouter.Navigate to="/" replace />}
           />
         </ReactRouter.Routes>
         <Toast />

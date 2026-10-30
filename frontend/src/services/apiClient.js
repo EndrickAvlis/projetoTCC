@@ -33,7 +33,10 @@ apiClient.interceptors.response.use(
     ) {
       dadosReq._retry = true;
 
-      if (erro.response?.data?.code === "USUARIO_DESATIVADO") {
+      if (
+        erro.response?.data?.code === "USUARIO_DESATIVADO" ||
+        erro.response?.data?.code === "PERMISSAO_ALTERADA"
+      ) {
         sessionStorage.setItem("alerta_sessao", erro.response.data.message);
         window.dispatchEvent(new Event("auth:unauthorized"));
         return Promise.reject(erro);
@@ -43,6 +46,15 @@ apiClient.interceptors.response.use(
         promisseRefresh = apiClient
           .post("/auth/refresh")
           .catch((falhouReq) => {
+            if (
+              falhouReq.response?.data?.code === "USUARIO_DESATIVADO" ||
+              falhouReq.response?.data?.code === "CREDENCIAIS_INSUFICIENTES"
+            ) {
+              sessionStorage.setItem(
+                "alerta_sessao",
+                falhouReq.response.data.message,
+              );
+            }
             window.dispatchEvent(new Event("auth:unauthorized"));
             return Promise.reject(falhouReq);
           })

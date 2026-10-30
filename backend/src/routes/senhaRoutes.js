@@ -4,20 +4,21 @@ import { validarRequisicao } from "../middlewares/validarRequisicao.js";
 import { alterarPrioridadeSenhaSchema } from "../schemas/SchemaSenha.js";
 import { accessValidator, validarRole } from "../middlewares/authMiddleware.js";
 
-const senhaRouter = Router();
+const senhaRoutes = Router();
 
-senhaRouter.post("/", senhaController.emitirSenha);
-senhaRouter.patch(
+senhaRoutes.post("/", senhaController.emitirSenha);
+senhaRoutes.patch(
   "/:id/prioridade",
+  accessValidator,
   validarRequisicao(alterarPrioridadeSenhaSchema),
   senhaController.alterarPrioridadeSenha,
 );
-senhaRouter.get("/ultima", accessValidator, senhaController.buscarUltimaSenha);
-senhaRouter.post(
+senhaRoutes.get("/ultima", accessValidator, senhaController.buscarUltimaSenha);
+senhaRoutes.post(
   "/reiniciar-sequencia",
   accessValidator,
   validarRole(["admin"]),
   senhaController.reiniciarSequencia,
 );
 
-export default senhaRouter;
+export default senhaRoutes;

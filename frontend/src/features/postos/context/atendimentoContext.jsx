@@ -61,7 +61,9 @@ export const AtendimentoProvider = ({ children }) => {
         senhaAtual.id,
         !senhaAtual.prioritaria,
       );
-      setSenhaAtual(senhaAtualizada);
+      setSenhaAtual((prevs) =>
+        prevs ? { ...prevs, ...senhaAtualizada } : senhaAtualizada,
+      );
       return senhaAtualizada;
     } catch (err) {
       setErro(err.message);
@@ -94,10 +96,7 @@ export const AtendimentoProvider = ({ children }) => {
     try {
       setCarregando(true);
       setErro(null);
-      return await filaService.rechamarSenha(
-        senhaAtual.id,
-        senhaAtual.etapa,
-      );
+      return await filaService.rechamarSenha(senhaAtual.id, senhaAtual.etapa);
     } catch (error) {
       setErro(error.message);
       throw error;
