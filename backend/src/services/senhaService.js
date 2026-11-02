@@ -206,7 +206,9 @@ export default class SenhaService extends BaseService {
       throw senhaNaoEncontrada();
     }
 
-    let proximaEtapa = "finalizada";
+    const agora = new Date();
+
+    let proximaEtapa = "docs";
     let statusSenha = "aguardando";
     let dataHoraFimSenha = undefined;
 
@@ -220,6 +222,15 @@ export default class SenhaService extends BaseService {
       case "docs":
         proximaEtapa = "docs";
         statusSenha = "finalizada";
+
+        await super.atualizar(id,{
+          dataHoraFimSenha: agora
+        });
+      break;
+      default:
+        proximaEtapa = "docs";
+        statusSenha = "aguardando";
+      break;
         dataHoraFimSenha = new Date();
         break;
     }

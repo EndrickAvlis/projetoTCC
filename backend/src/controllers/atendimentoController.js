@@ -1,13 +1,18 @@
 import SenhaService from "../services/senhaService.js";
 import HistoricoSenhaService from "../services/historicoSenhaService.js";
 import AlunoService from "../services/alunoService.js";
+import CursoAlunoService from "../services/cursoAlunoService.js";
+import CursoService from "../services/cursoService.js";
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
-import { exactOptional } from "zod";
+import { exactOptional, includes } from "zod";
+import { Periodo } from "@prisma/client";
 
 const senhaService = new SenhaService();
 const historicoSenhaService = new HistoricoSenhaService();
 const alunoService = new AlunoService();
+const cursoAlunoService = new CursoAlunoService();
+const cursoService = new CursoService();
 
 export const iniciarAtendimento = async (req, res) => {
   const idUsuario = req.usuario.id;
@@ -20,9 +25,9 @@ export const iniciarAtendimento = async (req, res) => {
     throw senhaNaoEncontrada();
   }
 
-  if (senha.statusSenha !== "em_atendimento") {
-    throw senhaNaoEmAtendimento();
-  }
+  // if (senha.statusSenha !== "em_atendimento") {
+  //   throw senhaNaoEmAtendimento();
+  // }
 
   if (senha.etapaSenha !== etapaUsuario) {
     throw etapasDiferentes();
@@ -46,6 +51,40 @@ export const iniciarAtendimento = async (req, res) => {
     dataHoraInicioHistorico: agora,
   });
 
+  let alunoResposta = null;
+
+  if (senha.etapaSenha !== "triagem") {
+
+    if(!senha.codAluno) {
+      throw alunoNaoCadastrado();
+    }
+
+    const aluno = await alunoService.buscarPorId(senha.codAluno,
+      {
+        include: {
+          cursosAluno: {
+            include: {
+              curso: true
+            }
+          }
+        }
+      }
+    );
+
+    alunoResposta = {
+      id: aluno.idAluno,
+      nome: aluno.nomeAluno,
+      cidade: aluno.cidadeAluno,
+      sexo: aluno.sexoAluno,
+      escolaridadePublica: aluno.escolaridadePublica,
+      status: aluno.statusAluno,
+      curso: aluno.cursosAluno[0].curso.nomeCurso,
+      periodo: aluno.cursosAluno[0].periodo,
+      classificacao: aluno.cursosAluno[0].classificacao,
+      statusMatricula: aluno.cursosAluno[0].statusMatricula,
+    }
+  }
+
   res
     .status(201)
     .json({
@@ -54,6 +93,7 @@ export const iniciarAtendimento = async (req, res) => {
         idHistorico: novoHistoricoDeSenha.idHistorico,
         iniciadoEm: novoHistoricoDeSenha.dataHoraInicioHistorico,
       },
+      aluno: alunoResposta
     })
     .send();
 };
@@ -76,18 +116,33 @@ export const recuperarAtendimento = async (req, res) => {
 
   const senha = await senhaService.buscarPorId(atendimentoAberto.codSenha);
 
-  let alunoResposta = {
-    idAluno: null,
-    nome: null,
-  };
+  let alunoResposta = null;
 
   if (senha.codAluno) {
-    const alunoSenha = await alunoService.buscarAlunoPorId(senha.codAluno);
+    const aluno = await alunoService.buscarPorId(senha.codAluno,
+      {
+        include: {
+          cursosAluno: {
+            include: {
+              curso: true
+            }
+          }
+        }
+      }
+    );
 
     alunoResposta = {
-      idAluno: alunoSenha.idAluno,
-      nome: alunoSenha.nomeAluno,
-    };
+      id: aluno.idAluno,
+      nome: aluno.nomeAluno,
+      cidade: aluno.cidadeAluno,
+      sexo: aluno.sexoAluno,
+      escolaridadePublica: aluno.escolaridadePublica,
+      status: aluno.statusAluno,
+      curso: aluno.cursosAluno[0].curso.nomeCurso,
+      periodo: aluno.cursosAluno[0].periodo,
+      classificacao: aluno.cursosAluno[0].classificacao,
+      statusMatricula: aluno.cursosAluno[0].statusMatricula,
+    }
   }
 
   res.status(200).json({
@@ -109,6 +164,26 @@ export const finalizarAtendimento = async (req, res) => {
   const idUsuario = req.usuario.id;
   const idSenha = req.validado.body.senhaId;
 
+  const senha = await senhaService.buscarPorId(idSenha);
+
+  if (!senha) {
+    throw senhaNaoEncontrada();
+  }
+
+  if (senha.statusSenha !== "em_atendimento") {
+    throw senhaNaoEmAtendimento();
+  }
+
+  if (!senha.codAluno) {
+    throw alunoNaoCadastrado();
+  }
+
+  const atendimentoAberto =
+    await historicoSenhaService.listarAtendimentoAbertoComSenha(
+      idUsuario,
+      senha.idSenha,
+      senha.etapaSenha,
+    );
   const resultado = await prisma.$transaction(async (transacao) => {
     const senha = await transacao.senha.findUnique({ where: { idSenha } });
     if (!senha) throw senhaNaoEncontrada();
@@ -142,6 +217,45 @@ export const finalizarAtendimento = async (req, res) => {
       },
     });
 
+  if (senha.etapaSenha === "docs") {
+    const aluno = await alunoService.buscarPorId(senha.codAluno,
+      {
+        include: {
+          cursosAluno: {
+            include: {
+              curso: true
+            }
+          }
+        }
+      }
+    );
+
+    await alunoService.atualizar(aluno.idAluno,
+      {
+        statusAluno: "ATIVO"
+      }
+    );
+    
+    await cursoAlunoService.atualizar(
+      {
+        codCurso: aluno.cursosAluno[0].codCurso,
+        codAluno: aluno.idAluno
+      },
+      {
+        statusMatricula: "ATIVA"
+      }
+    );
+  }
+
+  const senhaAtualizada = await senhaService.avancarEtapa(
+    senha.idSenha,
+    senha.etapaSenha,
+  );
+
+  
+  res.status(200).json({
+    mensagem: "Atendimento finalizado com sucesso.",
+    proximaEtapa: senhaAtualizada.etapaSenha,
     if (finalizada && senha.codAluno) {
       await transacao.aluno.update({
         where: { idAluno: senha.codAluno }, data: { statusAluno: "ATIVO" },
@@ -232,3 +346,9 @@ const atendimentoAbertoError = () =>
     status: 409,
     code: "ATENDIMENTO_ABERTO",
   });
+
+  const alunoNaoCadastrado = () =>
+  new AppError("Aluno não cadastrado na senha atual", {
+    status: 404,
+    code: "ALUNO_NAO_CADASTRADO",
+  })
