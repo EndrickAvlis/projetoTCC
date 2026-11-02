@@ -13,35 +13,30 @@ cursoRoutes.get(
   validarRequisicao(cursos.listarCursosSchema),
   cursoController.listarCursos,
 );
-
 cursoRoutes.post(
   "/",
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(cursos.criarCursoSchema),
   cursoController.criarCurso,
 );
-
 cursoRoutes.patch(
   "/:cursoId",
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(cursos.atualizarCursoSchema),
   cursoController.atualizarCurso,
 );
-
 cursoRoutes.post(
   "/:cursoId/periodos",
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(cursos.criarPeriodoSchema),
   cursoController.criarPeriodo,
 );
-
 cursoRoutes.patch(
   "/:cursoId/periodos/:periodoId",
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(cursos.atualizarPeriodoSchema),
   cursoController.atualizarPeriodo,
 );
-
 cursoRoutes.delete(
   "/:cursoId",
   auth.validarRole(["admin"]),

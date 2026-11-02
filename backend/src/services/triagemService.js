@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
+import { mapearAluno } from "../controllers/alunoController.js";
 
 const erro = (mensagem, status = 409, code = "ERRO_TRIAGEM") =>
   new AppError(mensagem, { status, code });
@@ -95,7 +96,7 @@ export default class TriagemService {
           codAluno: aluno.idAluno,
           periodo: matricula.periodo,
           classificacao: matricula.classificacao ?? null,
-          anoEscolar: matricula.ano ?? null,
+          anoEscolar: matricula.anoEscolar ?? null,
         },
         update: {
           periodo: matricula.periodo,
@@ -117,9 +118,7 @@ export default class TriagemService {
 
   async registrarPendencias(atendimentoId, idUsuario, documentos) {
     return prisma.$transaction(async (transacao) => {
-      const atendimento = await transacao.historicoSenha.findUnique({
-        where: { idHistorico: atendimentoId },
-      });
+      const atendimento = await transacao.historicoSenha.findUnique({});
       if (
         !atendimento ||
         atendimento.codVoluntario !== idUsuario ||
@@ -169,28 +168,17 @@ export default class TriagemService {
       },
       orderBy: { dataHoraInicioSenha: "asc" },
     });
-    const pendencias = senhas.map((senha) => {
-      const matricula = senha.aluno?.cursosAluno?.[0];
-      return {
-        senha: {
-          id: senha.idSenha,
-          codigo: senha.senhaCodigo,
-          tipoSenha: senha.tipoSenha,
-        },
-        aluno: senha.aluno
-          ? { id: senha.aluno.idAluno, nome: senha.aluno.nomeAluno }
-          : null,
-        matricula: matricula
-          ? {
-              curso: matricula.curso.nomeCurso,
-              periodo: matricula.periodo,
-              anoEscolar: matricula.anoEscolar,
-            }
-          : null,
-        documentos: senha.documentosPendentes?.documentos ?? [],
-        registradaEm: senha.documentosPendentes?.registradaEm ?? null,
-      };
-    });
+
+    const pendencias = senhas.map((senha) => ({
+      senha: {
+        id: senha.idSenha,
+        codigo: senha.senhaCodigo,
+        tipoSenha: senha.tipoSenha,
+      },
+      aluno: mapearAluno(senha.aluno),
+      documentos: senha.documentosPendentes?.documentos ?? [],
+      registradaEm: senha.documentosPendentes?.registradaEm ?? null,
+    }));
     return { pendencias, total: pendencias.length };
   }
 
@@ -242,176 +230,5 @@ export default class TriagemService {
         },
       };
     });
-  }
-
-  async iniciarAtendimento(senhaId, idUsuario) {
-    return prisma.$transaction(async (transacao) => {
-      const senha = await transacao.senha.findUnique({
-        where: { idSenha: senhaId },
-      });
-      if (!senha)
-        throw erro("Senha não encontrada.", 404, "SENHA_NAO_ENCONTRADA");
-      if (!["aguardando", "em_atendimento"].includes(senha.statusSenha)) {
-        throw erro("A senha não está disponível para atendimento.");
-      }
-      const outro = await transacao.historicoSenha.findFirst({
-        where: {
-          codVoluntario: idUsuario,
-          etapaHistorico: senha.etapaSenha,
-          dataHoraFimHistorico: null,
-        },
-      });
-      if (outro && outro.codSenha !== senhaId) {
-        throw erro(
-          "Você já possui outro atendimento em andamento nesta etapa.",
-        );
-      }
-      const atendimentoExistente = await buscarAtendimento(
-        transacao,
-        senhaId,
-        idUsuario,
-      );
-      const atendimentoOutroUsuario = await transacao.historicoSenha.findFirst({
-        where: { codSenha: senhaId, dataHoraFimHistorico: null },
-      });
-      if (
-        atendimentoOutroUsuario &&
-        atendimentoOutroUsuario.codVoluntario !== idUsuario
-      ) {
-        throw erro("Esta senha não está em atendimento pelo seu usuário.", 403);
-      }
-      let atendimento = atendimentoExistente;
-      if (!atendimento) {
-        if (senha.statusSenha === "aguardando") {
-          const atualizado = await transacao.senha.updateMany({
-            where: { idSenha: senhaId, statusSenha: "aguardando" },
-            data: { statusSenha: "em_atendimento" },
-          });
-          if (!atualizado.count)
-            throw erro("Senha indisponível para atendimento.");
-        }
-        atendimento = await transacao.historicoSenha.create({
-          data: {
-            codSenha: senhaId,
-            codVoluntario: idUsuario,
-            etapaHistorico: senha.etapaSenha,
-            dataHoraInicioHistorico: new Date(),
-          },
-        });
-      }
-      return {
-        mensagem: "Atendimento iniciado com sucesso.",
-        atendimento: {
-          idHistorico: atendimento.idHistorico,
-          iniciadoEm: atendimento.dataHoraInicioHistorico,
-        },
-      };
-    });
-  }
-
-  async finalizarAtendimento(senhaId, idUsuario) {
-    return prisma.$transaction(async (transacao) => {
-      const senha = await transacao.senha.findUnique({
-        where: { idSenha: senhaId },
-      });
-      if (!senha)
-        throw erro("Senha não encontrada.", 404, "SENHA_NAO_ENCONTRADA");
-      if (senha.statusSenha !== "em_atendimento")
-        throw erro("Senha não está em atendimento.");
-      const atendimento = await buscarAtendimento(
-        transacao,
-        senhaId,
-        idUsuario,
-      );
-      if (!atendimento || atendimento.etapaHistorico !== senha.etapaSenha) {
-        throw erro("Esta senha não está em atendimento pelo seu usuário.", 403);
-      }
-      if (senha.etapaSenha === "triagem" && !senha.codAluno) {
-        throw erro("Vincule um aluno à senha antes de finalizar a triagem.");
-      }
-      const proximaEtapa =
-        senha.etapaSenha === "triagem"
-          ? "apm"
-          : senha.etapaSenha === "apm"
-            ? "docs"
-            : "docs";
-      const agora = new Date();
-      await transacao.historicoSenha.update({
-        where: { idHistorico: atendimento.idHistorico },
-        data: { dataHoraFimHistorico: agora },
-      });
-      await transacao.senha.update({
-        where: { idSenha: senhaId },
-        data: {
-          etapaSenha: proximaEtapa,
-          statusSenha:
-            senha.etapaSenha === "docs" ? "finalizada" : "aguardando",
-          dataHoraFimSenha: senha.etapaSenha === "docs" ? agora : null,
-          ...(senha.etapaSenha === "triagem"
-            ? { documentosPendentes: { documentos: [] } }
-            : {}),
-        },
-      });
-      return { mensagem: "Atendimento finalizado com sucesso.", proximaEtapa };
-    });
-  }
-
-  async cancelarAtendimento(senhaId, idUsuario) {
-    return prisma.$transaction(async (transacao) => {
-      const senha = await transacao.senha.findUnique({
-        where: { idSenha: senhaId },
-      });
-      if (!senha)
-        throw erro("Senha não encontrada.", 404, "SENHA_NAO_ENCONTRADA");
-      const atendimento = await buscarAtendimento(
-        transacao,
-        senhaId,
-        idUsuario,
-      );
-      if (senha.statusSenha !== "em_atendimento" || !atendimento) {
-        throw erro("Esta senha não está em atendimento pelo seu usuário.", 403);
-      }
-      const agora = new Date();
-      await transacao.historicoSenha.update({
-        where: { idHistorico: atendimento.idHistorico },
-        data: { dataHoraFimHistorico: agora },
-      });
-      await transacao.senha.update({
-        where: { idSenha: senhaId },
-        data: { statusSenha: "cancelada", dataHoraFimSenha: agora },
-      });
-      return { mensagem: "Atendimento cancelado com sucesso." };
-    });
-  }
-
-  async recuperarAtendimento(etapa, idUsuario) {
-    const atendimento = await prisma.historicoSenha.findFirst({
-      where: {
-        codVoluntario: idUsuario,
-        etapaHistorico: etapa,
-        dataHoraFimHistorico: null,
-        senha: { etapaSenha: etapa, statusSenha: "em_atendimento" },
-      },
-      include: { senha: { include: { aluno: true } } },
-    });
-    if (!atendimento) return { senha: null, atendimento: null };
-    return {
-      senha: {
-        id: atendimento.senha.idSenha,
-        codigo: atendimento.senha.senhaCodigo,
-        prioritaria: atendimento.senha.tipoSenha,
-        etapa,
-        aluno: atendimento.senha.aluno
-          ? {
-              idAluno: atendimento.senha.aluno.idAluno,
-              nome: atendimento.senha.aluno.nomeAluno,
-            }
-          : null,
-      },
-      atendimento: {
-        idHistorico: atendimento.idHistorico,
-        iniciadoEm: atendimento.dataHoraInicioHistorico,
-      },
-    };
   }
 }

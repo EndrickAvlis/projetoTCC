@@ -7,11 +7,28 @@ import * as auth from "../middlewares/authMiddleware.js";
 
 const filaRoutes = Router();
 
-//filaRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor", "atendente"]));
+filaRoutes.use(
+  auth.accessValidator,
+  auth.validarRole(["admin", "supervisor", "atendente"]),
+);
 
-filaRoutes.get("/", validarRequisicao(ValidatorFila.listarFilaSchema), FilaController.listarFila);
+filaRoutes.get(
+  "/",
+  validarRequisicao(ValidatorFila.listarFilaSchema),
+  FilaController.listarFila,
+);
 
-filaRoutes.post("/chamadas", validarRequisicao(ValidatorFila.chamarSenhaSchema), FilaController.chamarSenha);
+filaRoutes.post(
+  "/chamadas",
+  validarRequisicao(ValidatorFila.chamarSenhaSchema),
+  FilaController.chamarSenha,
+);
+
+filaRoutes.post(
+  "/rechamar",
+  validarRequisicao(ValidatorFila.rechamarSenhaSchema),
+  FilaController.rechamarSenha,
+);
 
 // GET /historico
 

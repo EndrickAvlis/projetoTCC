@@ -78,49 +78,55 @@ export default class AuthClass extends BaseService {
   }
 
   async renovarAccessToken(refreshToken) {
+    let payload;
     try {
-      const payload = jwt.verify(refreshToken, REFRESH_SECRET);
-
-      if (!payload) {
-        throw new AppError("Token de acesso inválido.", {
-          status: 401,
-          code: "TOKEN_INVALIDO",
-        });
-      }
-
-      const usuario = await prisma.voluntario.findFirst({
-        where: {
-          idVoluntario: payload.id,
-        },
+      payload = jwt.verify(refreshToken, REFRESH_SECRET);
+    } catch {
+      throw new AppError("Token de acesso inválido.", {
+        status: 401,
+        code: "TOKEN_INVALIDO",
       });
+    }
 
-      if (!usuario) {
-        throw new AppError("Credenciais inválidas.", {
-          status: 401,
-          code: "CREDENCIAIS_INVALIDAS",
-        });
-      }
+    const usuario = await prisma.voluntario.findFirst({
+      where: {
+        idVoluntario: payload.id,
+      },
+    });
 
-      if (!usuario.statusVoluntario) {
-        throw new AppError("Usuario desativado.", {
-          status: 401,
-          code: "USUARIO_DESATIVADO",
-        });
-      }
-
-      const accessPayload = {
-        id: usuario.idVoluntario,
-        nome: usuario.nomeVoluntario,
-        tipo: usuario.tipoVoluntario,
-        tela: payload.tela,
-        guiche: payload.guiche,
-      };
-
-      const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, {
-        expiresIn: ACCESS_EXPIRES_IN,
+    if (!usuario) {
+      throw new AppError("Credenciais inválidas.", {
+        status: 401,
+        code: "CREDENCIAIS_INVALIDAS",
       });
-      return accessToken;
-    } catch (error) {}
+    }
+
+    if (!usuario.statusVoluntario) {
+      throw new AppError("Sua conta foi inativada pelo administrador.", {
+        status: 401,
+        code: "USUARIO_DESATIVADO",
+      });
+    }
+
+    if (!verificarPermissaoTela(usuario.tipoVoluntario, payload.tela)) {
+      throw new AppError("Acesso negado.", {
+        status: 401,
+        code: "CREDENCIAIS_INSUFICIENTES",
+      });
+    }
+
+    const accessPayload = {
+      id: usuario.idVoluntario,
+      nome: usuario.nomeVoluntario,
+      tipo: usuario.tipoVoluntario,
+      tela: payload.tela,
+      guiche: payload.guiche,
+    };
+
+    const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, {
+      expiresIn: ACCESS_EXPIRES_IN,
+    });
+    return accessToken;
   }
 }
 

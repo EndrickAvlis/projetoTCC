@@ -35,7 +35,7 @@ export const DetalhePendencia = ({
     );
   }
 
-  const { senha, aluno, matricula, documentos = [], registradaEm } = pendencia;
+  const { senha, aluno, documentos = [], registradaEm } = pendencia;
   const prioritaria = Boolean(senha?.tipoSenha);
 
   return (
@@ -69,15 +69,15 @@ export const DetalhePendencia = ({
           </div>
         </div>
 
-        {matricula && (
+        {aluno?.curso && (
           <div className="pt-1.5 border-t border-border/50">
             <span className="text-xs font-medium text-text-secondary uppercase tracking-wider">
               Curso / Matrícula
             </span>
             <div className="text-sm text-text-primary mt-0.5">
-              {matricula.curso}
-              {matricula.periodo && ` — ${matricula.periodo}`}
-              {matricula.anoEscolar && ` (${matricula.anoEscolar}º ano)`}
+              {aluno.curso}
+              {aluno.periodo && ` — ${aluno.periodo}`}
+              {aluno.anoEscolar && ` (${aluno.anoEscolar}º ano)`}
             </div>
           </div>
         )}

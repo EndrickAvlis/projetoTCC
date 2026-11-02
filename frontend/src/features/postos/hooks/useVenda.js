@@ -45,7 +45,7 @@ export const useVenda = () => {
 
   const armarioDisponivel = Boolean(
     configArmario &&
-    configArmario.status === "disponivel" &&
+    configArmario.status === true &&
     configArmario.quantidade > 0,
   );
 

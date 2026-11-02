@@ -14,6 +14,8 @@ atendimentoRoutes.post("/iniciar",
     AtendimentoController.iniciarAtendimento
 );
 
+atendimentoRoutes.get("/ativo", AtendimentoController.recuperarAtendimento);
+
 atendimentoRoutes.get("/recuperar/:etapa",
     validarRequisicao(ValidatorAtendimento.recuperarAtendimentoSchema),
     AtendimentoController.recuperarAtendimento
@@ -27,7 +29,7 @@ atendimentoRoutes.post("/finalizar/",
 atendimentoRoutes.post("/cancelar/",
     validarRequisicao(ValidatorAtendimento.idAtendimentoSchema),
     AtendimentoController.cancelarAtendimento
- );
+);
 
 
 

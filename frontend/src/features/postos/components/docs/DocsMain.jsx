@@ -11,12 +11,12 @@ export const DocsMain = () => {
     { label: "Nome do Aluno", valor: dadosAluno?.nome, span: "md:col-span-2" },
     { label: "Cidade", valor: dadosAluno?.cidade },
     { label: "Sexo", valor: dadosAluno?.sexo },
-    { label: "Escola Pública (Cota)", valor: dadosAluno?.escolaridadePublica ? "Sim" : "Não" },
+    { label: "Escolaridade Pública", valor: dadosAluno?.escolaridadePublica ? "Sim" : "Não" },
     { label: "Situação Cadastral", valor: dadosAluno?.status },
-    { label: "Curso", valor: matricula?.curso, span: "md:col-span-2" },
-    { label: "Período", valor: matricula?.periodo },
-    { label: "Classificação", valor: matricula?.classificacao },
-    { label: "Situação da Matrícula", valor: matricula?.statusMatricula },
+    { label: "Curso", valor: dadosAluno?.curso, span: "md:col-span-2" },
+    { label: "Período", valor: dadosAluno?.periodo },
+    { label: "Classificação", valor: dadosAluno?.classificacao },
+    { label: "Situação da Matrícula", valor: dadosAluno?.statusMatricula },
   ];
 
   return (

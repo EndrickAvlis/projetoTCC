@@ -34,7 +34,7 @@ export const useDashboard = ({
       setProdutos(res.produtos);
       setCursos(res.cursos);
     } catch {
-      // Erro tratado pelo interceptor global
+
     } finally {
       setCarregando(false);
     }

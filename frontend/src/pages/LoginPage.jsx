@@ -1,6 +1,6 @@
 import * as React from "react";
 import { FaUser, FaLock } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import Alert from "../components/ui/Alert";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -24,11 +24,11 @@ const LoginPage = () => {
   const [erro, setErro] = React.useState("");
   const [carregando, setCarregando] = React.useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, usuario, estaAutenticado, validandoSessao } = useAuth();
 
   const exigeGuiche = TELAS_COM_GUICHE.includes(tela);
   const formularioInvalido =
-    !nome || !senha || !tela || (exigeGuiche && !guiche);
+    !nome.trim() || !senha || !tela || (exigeGuiche && !guiche.trim());
 
   React.useEffect(() => {
     const mensagemSessao = sessionStorage.getItem("alerta_sessao");
@@ -38,17 +38,25 @@ const LoginPage = () => {
     }
   }, []);
 
+  if (validandoSessao) {
+    return null;
+  }
+
+  if (estaAutenticado && usuario?.tela) {
+    return <Navigate to={`/${usuario.tela}`} replace />;
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     try {
       setCarregando(true);
       setErro("");
-      const resposta = await login({
-        nome,
+      await login({
+        nome: nome.trim(),
         senha,
         tela,
-        guiche: exigeGuiche ? guiche : undefined,
+        guiche: exigeGuiche ? guiche.trim() : undefined,
       });
       navigate(`/${tela}`, { replace: true });
     } catch (falha) {
@@ -105,7 +113,14 @@ const LoginPage = () => {
               placeholder="Selecione a tela..."
               options={TELAS}
               value={tela}
-              onChange={(event) => setTela(event.target.value)}
+              onChange={(event) => {
+                const novaTela = event.target.value;
+                setTela(novaTela);
+                if (!TELAS_COM_GUICHE.includes(novaTela)) {
+                  setGuiche("");
+                }
+                if (erro) setErro("");
+              }}
               id="tela"
             />
             {exigeGuiche && (
@@ -116,7 +131,10 @@ const LoginPage = () => {
                   type="text"
                   placeholder="Digite"
                   value={guiche}
-                  onChange={(event) => setGuiche(event.target.value)}
+                  onChange={(event) => {
+                    setGuiche(event.target.value);
+                    if (erro) setErro("");
+                  }}
                 />
               </div>
             )}

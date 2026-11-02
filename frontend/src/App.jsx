@@ -6,7 +6,6 @@ import LoginPage from "./pages/LoginPage";
 import TriagemPage from "./features/postos/pages/TriagemPage";
 import ApmPage from "./features/postos/pages/ApmPage";
 import DocsPage from "./features/postos/pages/DocsPage";
-import AcessoNegadoPage from "./pages/AcessoNegadoPage";
 import EmitirSenhaPage from "./pages/EmitirSenhaPage";
 import AdminLayout from "./features/admin/layout/adminLayout";
 import DashboardPage from "./features/admin/pages/DashboardPage";
@@ -17,6 +16,8 @@ import ProdutosPage from "./features/admin/pages/ProdutosPage";
 import RelatoriosPage from "./features/admin/pages/RelatoriosPage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
 import ConfiguracoesPage from "./features/admin/pages/ConfiguracoesPage";
+import PainelPage from "./pages/PainelPage";
+
 import Testes from "./testes";
 import Toast from "./components/ui/Toast";
 
@@ -32,10 +33,7 @@ function App() {
             path="/emitir-senha"
             element={<EmitirSenhaPage />}
           />
-          <ReactRouter.Route
-            path="/acesso-negado"
-            element={<AcessoNegadoPage />}
-          />
+          <ReactRouter.Route path="/painel/:posto?" element={<PainelPage />} />
 
           <ReactRouter.Route element={<RotaProtegida />}>
             <ReactRouter.Route
@@ -52,7 +50,7 @@ function App() {
               <ReactRouter.Route element={<RotaProtegida tela="apm" />}>
                 <ReactRouter.Route path="/apm" element={<ApmPage />} />
               </ReactRouter.Route>
-              
+
               <ReactRouter.Route element={<RotaProtegida tela="docs" />}>
                 <ReactRouter.Route path="/docs" element={<DocsPage />} />
               </ReactRouter.Route>
@@ -60,26 +58,34 @@ function App() {
 
             <ReactRouter.Route element={<RotaProtegida tela="admin" />}>
               <ReactRouter.Route path="admin" element={<AdminLayout />}>
-                <ReactRouter.Route index element={<ReactRouter.Navigate to="dashboard" replace />} />
-                <ReactRouter.Route path="dashboard" element={<DashboardPage />} />
+                <ReactRouter.Route
+                  index
+                  element={<ReactRouter.Navigate to="dashboard" replace />}
+                />
+                <ReactRouter.Route
+                  path="dashboard"
+                  element={<DashboardPage />}
+                />
                 <ReactRouter.Route path="postos" element={<PostosPage />} />
                 <ReactRouter.Route path="alunos" element={<AlunosPage />} />
                 <ReactRouter.Route path="cursos" element={<CursosPage />} />
                 <ReactRouter.Route path="produtos" element={<ProdutosPage />} />
-                <ReactRouter.Route path="relatorios" element={<RelatoriosPage />} />
+                <ReactRouter.Route
+                  path="relatorios"
+                  element={<RelatoriosPage />}
+                />
                 <ReactRouter.Route path="usuarios" element={<UsuariosPage />} />
-                <ReactRouter.Route path="configuracoes" element={<ConfiguracoesPage />} />
+                <ReactRouter.Route
+                  path="configuracoes"
+                  element={<ConfiguracoesPage />}
+                />
               </ReactRouter.Route>
             </ReactRouter.Route>
           </ReactRouter.Route>
 
           <ReactRouter.Route
             path="*"
-            element={
-              <div className="p-5 text-xl text-status-danger">
-                Página não encontrada.
-              </div>
-            }
+            element={<ReactRouter.Navigate to="/" replace />}
           />
         </ReactRouter.Routes>
         <Toast />

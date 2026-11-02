@@ -11,7 +11,7 @@ export const accessValidator = async (req, res, next) => {
 
     const voluntario = await prisma.voluntario.findUnique({
       where: { idVoluntario: verificado.id },
-      select: { statusVoluntario: true },
+      select: { statusVoluntario: true, tipoVoluntario: true },
     });
 
     if (!voluntario || !voluntario.statusVoluntario) {
@@ -20,6 +20,18 @@ export const accessValidator = async (req, res, next) => {
           status: 401,
           code: "USUARIO_DESATIVADO",
         }),
+      );
+    }
+
+    if (voluntario.tipoVoluntario !== verificado.tipo) {
+      return next(
+        new AppError(
+          "Seu nível de acesso foi alterado. Faça login novamente.",
+          {
+            status: 401,
+            code: "PERMISSAO_ALTERADA",
+          },
+        ),
       );
     }
 
@@ -34,33 +46,6 @@ export const accessValidator = async (req, res, next) => {
     );
   }
 };
-
-// export const validarAdmin = (req, res, next) => {
-//     try {
-//         const payload = jwt.verify(req.cookies.accessToken, ACCESS_SECRET);
-
-//         if(!payload){
-//             throw new AppError("Token de acesso inválido.", {
-//                 status: 401,
-//                 code: "TOKEN_INVALIDO",
-//             });
-//         }
-
-//         if (payload.tipo !== "admin") {
-//             throw new AppError("Acesso negado.", {
-//                 status: 403,
-//                 code: "ACESSO_NEGADO",
-//             });
-//         }
-
-//         next();
-//     } catch (error) {
-//         throw new AppError("Token de acesso inválido.", {
-//             status: 401,
-//             code: "TOKEN_INVALIDO",
-//         });
-//     }
-// }
 
 export const validarRole = (rolesPermitidos = []) => {
   return (req, res, next) => {

@@ -17,14 +17,8 @@ export const mapearAluno = (aluno) => {
     curso: matricula?.curso?.nomeCurso,
     periodo: matricula?.periodo,
     classificacao: matricula?.classificacao,
+    anoEscolar: matricula?.anoEscolar,
     statusMatricula: matricula?.statusMatricula,
-    matriculas: (aluno.cursosAluno ?? []).map((vinculo) => ({
-      cursoId: vinculo.codCurso,
-      curso: vinculo.curso?.nomeCurso,
-      classificacao: vinculo.classificacao,
-      periodo: vinculo.periodo,
-      anoEscolar: vinculo.anoEscolar,
-    })),
   };
 };
 
