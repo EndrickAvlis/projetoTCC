@@ -30,7 +30,14 @@ const UsuariosModal = ({
   const [senha, setSenha] = React.useState("");
   const [erros, setErros] = React.useState({});
 
-  const opcoesTipo = ehSupervisor ? OPCOES_TIPO_SUPERVISOR : OPCOES_TIPO_ADMIN;
+  const opcoesTipo = ehSupervisor
+    ? usuario?.tipo === "supervisor"
+      ? [
+          { value: "supervisor", label: "Supervisor" },
+          { value: "atendente", label: "Atendente" },
+        ]
+      : OPCOES_TIPO_SUPERVISOR
+    : OPCOES_TIPO_ADMIN;
 
   React.useEffect(() => {
     if (aberto) {

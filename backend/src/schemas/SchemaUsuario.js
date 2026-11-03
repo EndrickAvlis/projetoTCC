@@ -25,7 +25,7 @@ const status = z.union([
 
 const dadosCriarUsuario = z.object({
   nome,
-  senha: senha.optional(),
+  senha,
   tipo: tipo.default("atendente"),
   status: status.default(true),
 });
@@ -65,10 +65,4 @@ export const atualizarUsuarioSchema = z.object({
     id,
   }),
   body: dadosAtualizarUsuario,
-});
-
-export const excluirUsuarioSchema = z.object({
-  params: z.object({
-    id,
-  }),
 });

@@ -10,8 +10,11 @@ import { useArmario } from "../hooks/useArmario";
 import * as produtoService from "../services/produtoService";
 import * as configuracoesService from "../services/configuracoesService";
 import { formatarSenha } from "../../../utils/formatters";
+import { useAuth } from "../../../context/authContext";
 
 const ConfiguracoesPage = () => {
+  const { usuario } = useAuth();
+  const ehAdmin = usuario?.tipo === "admin";
   const {
     armario,
     carregando: carregandoArmario,
@@ -38,8 +41,8 @@ const ConfiguracoesPage = () => {
   }, []);
 
   React.useEffect(() => {
-    carregarUltimaSenha();
-  }, [carregarUltimaSenha]);
+    if (ehAdmin) carregarUltimaSenha();
+  }, [carregarUltimaSenha, ehAdmin]);
 
   const armarioDisponivel = Boolean(armario?.status);
 
@@ -107,6 +110,7 @@ const ConfiguracoesPage = () => {
           </div>
         </div>
 
+        {ehAdmin && (
         <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-6 shadow-xs">
           <div>
             <div className="flex items-center gap-3">
@@ -149,6 +153,7 @@ const ConfiguracoesPage = () => {
             </Button>
           </div>
         </div>
+        )}
 
         <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-6 shadow-xs">
           <div>
