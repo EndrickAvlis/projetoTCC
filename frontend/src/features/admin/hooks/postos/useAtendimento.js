@@ -19,9 +19,13 @@ export const useAtendimento = ({
   const [finalizadasPorHora, setFinalizadasPorHora] = React.useState([]);
   const [cursosAtivos, setCursosAtivos] = React.useState([]);
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
   const carregar = React.useCallback(async (silencioso = false) => {
-    if (!silencioso) setCarregando(true);
+    if (!silencioso) {
+      setCarregando(true);
+      setErro(null);
+    }
 
     try {
       const res = await dadosAtendimento({
@@ -35,8 +39,9 @@ export const useAtendimento = ({
       setCards(res.cards);
       setFinalizadasPorHora(res.finalizadasPorHora);
       setCursosAtivos(res.cursosAtivos);
-    } catch {}
-    finally {
+    } catch (err) {
+      setErro(err.message);
+    } finally {
       if (!silencioso) setCarregando(false);
     }
   }, [tipoPeriodo, dataInicio, dataFim, cursoId, periodoCurso]);
@@ -56,6 +61,7 @@ export const useAtendimento = ({
     finalizadasPorHora,
     cursosAtivos,
     carregando,
+    erro,
     recarregar: carregar,
   };
 };

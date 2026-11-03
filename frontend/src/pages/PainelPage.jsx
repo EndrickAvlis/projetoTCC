@@ -1,4 +1,3 @@
-// src/pages/PainelPrincipalPage.jsx
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { FiVolume2, FiClock, FiTv } from "react-icons/fi";
@@ -55,7 +54,7 @@ const TEMAS_PAINEL = {
   },
 };
 
-const PainelPrincipalPage = () => {
+const PainelPage = () => {
   const { posto: postoParam } = useParams();
   const postoAtivo = postoParam?.toLowerCase();
   const tema = TEMAS_PAINEL[postoAtivo] ?? TEMAS_PAINEL.padrao;
@@ -335,4 +334,4 @@ const PainelPrincipalPage = () => {
   );
 };
 
-export default PainelPrincipalPage;
+export default PainelPage;

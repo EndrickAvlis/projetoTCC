@@ -81,7 +81,6 @@ const PeriodoModal = ({
       onFechar={() => !salvando && onFechar()}
       titulo={emEdicao ? "Editar período" : "Adicionar período"}
       largura="max-w-lg"
-      // conteudoRolavel={false}
     >
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <Select

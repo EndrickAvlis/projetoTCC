@@ -107,8 +107,3 @@ export const requisitarApi = async (
   }
 };
 
-export const notificarErro = (erro) => {
-  const message = erro?.message || "Ocorreu um erro inesperado.";
-  window.dispatchEvent(new CustomEvent("api:erro", { detail: message }));
-};
-

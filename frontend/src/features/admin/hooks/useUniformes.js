@@ -7,9 +7,11 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
   const [uniformes, setUniformes] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
   const carregarUniformes = React.useCallback(async () => {
     setCarregando(true);
+    setErro(null);
 
     try {
       const res = await listarProdutos({
@@ -20,9 +22,10 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
 
       setUniformes(res.produtos ?? []);
       setTotal(res.total ?? 0);
-    } catch {
+    } catch (err) {
       setUniformes([]);
       setTotal(0);
+      setErro(err.message);
     } finally {
       setCarregando(false);
     }
@@ -36,6 +39,9 @@ export const useUniformes = ({ busca = "", arquivado = false } = {}) => {
     uniformes,
     total,
     carregando,
+    erro,
     recarregar: carregarUniformes,
   };
 };
+
+export default useUniformes;

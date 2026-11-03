@@ -3,13 +3,18 @@ import Input from "./Input";
 import * as Formatters from "../../utils/formatters";
 
 const InputMoeda = ({ valor = 0, onChange, ...props }) => {
+  const [focado, setFocado] = useState(false);
   const [texto, setTexto] = useState(() =>
     valor ? Formatters.formatarDecimalParaCampo(valor) : "",
   );
 
   useEffect(() => {
-    setTexto(valor ? Formatters.formatarDecimalParaCampo(valor) : "");
-  }, [valor]);
+    const valorNumerico = Number(valor || 0);
+    const valorTexto = Formatters.valorTextoParaDecimal(texto);
+    if (!focado || valorTexto !== valorNumerico) {
+      setTexto(valor ? Formatters.formatarDecimalParaCampo(valor) : "");
+    }
+  }, [valor, focado]);
 
   return (
     <Input
@@ -17,9 +22,15 @@ const InputMoeda = ({ valor = 0, onChange, ...props }) => {
       type="text"
       inputMode="decimal"
       value={texto}
-      onBlur={() =>
-        setTexto(valor ? Formatters.formatarDecimalParaCampo(valor) : "")
-      }
+      onFocus={(e) => {
+        setFocado(true);
+        props.onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        setFocado(false);
+        setTexto(valor ? Formatters.formatarDecimalParaCampo(valor) : "");
+        props.onBlur?.(e);
+      }}
       onChange={(event) => {
         const proximoTexto = event.target.value;
         if (!Formatters.ehValorMonetarioEmDigitacao(proximoTexto)) return;

@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
@@ -37,16 +37,17 @@ const CursoModal = ({
     }
   }, [aberto, curso]);
 
-  //Somente ao criar curso
   const adicionarPeriodo = () => {
     if (periodos.length >= 5) return;
     setPeriodos((dadosAtuais) => [...dadosAtuais, dadosIniciais()]);
   };
+
   const removerPeriodo = (index) => {
     setPeriodos((dadosAtuais) =>
       dadosAtuais.filter((_, indice) => indice !== index),
     );
   };
+
   const atualizarPeriodo = (index, campo, value) => {
     setPeriodos((prevs) =>
       prevs.map((item, i) =>
@@ -142,7 +143,7 @@ const CursoModal = ({
                 variant="secondary"
                 size="sm"
                 onClick={adicionarPeriodo}
-                leftIcon={<FiIcons.FiPlus />}
+                leftIcon={<FiPlus />}
                 disabled={periodos.length >= 5}
               >
                 Adicionar período
@@ -169,7 +170,7 @@ const CursoModal = ({
                         variant="danger"
                         size="sm"
                         onClick={() => removerPeriodo(index)}
-                        leftIcon={<FiIcons.FiTrash2 />}
+                        leftIcon={<FiTrash2 />}
                       >
                         Remover
                       </Button>

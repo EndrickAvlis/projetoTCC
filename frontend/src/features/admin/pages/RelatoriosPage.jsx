@@ -1,6 +1,7 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import { FiEye, FiDownload, FiRotateCcw } from "react-icons/fi";
 
+import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
@@ -13,6 +14,7 @@ import { useUsuarios } from "../hooks/useUsuarios";
 import { useRelatorios } from "../hooks/useRelatorios";
 import { exportarRelatorio, detalheVenda } from "../services/relatorioService";
 import { formatarMoeda, formatarDataHora } from "../../../utils/formatters";
+import { useToast } from "../../../context/toastContext";
 
 const OPCOES_PERIODO = [
   { valor: "TODO", label: "Todo o período" },
@@ -38,7 +40,10 @@ const FILTROS_INICIAIS = {
   atendenteId: "",
 };
 
+const ITENS_POR_PAGINA = 8;
+
 const RelatoriosPage = () => {
+  const toast = useToast();
   const [filtros, setFiltros] = React.useState(FILTROS_INICIAIS);
   const [pagina, setPagina] = React.useState(1);
   const [exportando, setExportando] = React.useState(false);
@@ -50,7 +55,8 @@ const RelatoriosPage = () => {
     vendas,
     totalVendas,
     carregando: carregandoVendas,
-  } = useRelatorios({ ...filtros, pagina, limite: 10 });
+    erro,
+  } = useRelatorios({ ...filtros, pagina, limite: ITENS_POR_PAGINA });
 
   const handleAbrirDetalhes = async (idVenda) => {
     setModalAberto(true);
@@ -58,8 +64,9 @@ const RelatoriosPage = () => {
     try {
       const res = await detalheVenda(idVenda);
       setVendaSelecionada(res?.venda ?? null);
-    } catch {
+    } catch (err) {
       setVendaSelecionada(null);
+      toast.erro(err.message);
     } finally {
       setCarregandoDetalhes(false);
     }
@@ -127,7 +134,7 @@ const RelatoriosPage = () => {
         <Button
           variant="secondary"
           size="sm"
-          leftIcon={<FiIcons.FiEye size={14} />}
+          leftIcon={<FiEye size={14} />}
           onClick={() => handleAbrirDetalhes(venda.id)}
         >
           Detalhes
@@ -153,7 +160,8 @@ const RelatoriosPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch {
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setExportando(false);
     }
@@ -168,49 +176,58 @@ const RelatoriosPage = () => {
         </p>
 
         <Button
-          variant="primary"
-          leftIcon={<FiIcons.FiDownload size={18} />}
           onClick={handleExportar}
-          loading={exportando}
-          disabled={exportando}
+          disabled={exportando || totalVendas === 0}
+          leftIcon={<FiDownload size={18} />}
+          variant="primary"
         >
-          {exportando ? "Exportando..." : "Exportar Relatório"}
+          {exportando ? "Exportando..." : "Exportar Extrato"}
         </Button>
       </header>
 
-      <section className="rounded-2xl border border-border bg-surface p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <TableFiltro
-              options={OPCOES_PERIODO}
-              value={filtros.periodo}
-              onChange={(valor) => alterarFiltro("periodo", valor)}
-              ariaLabel="Filtro de período"
-            />
-            {filtros.periodo === "PERSONALIZADO" && (
-              <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  size="sm"
-                  value={filtros.dataInicio}
-                  onChange={(e) => alterarFiltro("dataInicio", e.target.value)}
-                  ariaLabel="Data de início"
-                />
-                <span className="text-sm text-text-secondary">até</span>
-                <Input
-                  type="date"
-                  size="sm"
-                  value={filtros.dataFim}
-                  onChange={(e) => alterarFiltro("dataFim", e.target.value)}
-                  ariaLabel="Data de fim"
-                />
-              </div>
-            )}
-          </div>
+      <section className="space-y-4 rounded-xl border border-border bg-surface p-5">
+        <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
+          <TableFiltro
+            options={OPCOES_PERIODO}
+            value={filtros.periodo}
+            onChange={(valor) => alterarFiltro("periodo", valor)}
+            ariaLabel="Período do relatório"
+          />
+
+          {filtros.periodo === "PERSONALIZADO" && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                size="sm"
+                value={filtros.dataInicio}
+                onChange={(e) => alterarFiltro("dataInicio", e.target.value)}
+                ariaLabel="Data de início"
+              />
+              <span className="text-sm text-text-secondary">até</span>
+              <Input
+                type="date"
+                size="sm"
+                value={filtros.dataFim}
+                onChange={(e) => alterarFiltro("dataFim", e.target.value)}
+                ariaLabel="Data de fim"
+              />
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex-2">
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          <div className="w-full sm:w-56">
+            <Select
+              placeholder="Todas as formas"
+              value={filtros.formaPagamento}
+              onChange={(e) => alterarFiltro("formaPagamento", e.target.value)}
+              options={OPCOES_FORMA_PAGAMENTO}
+              size="md"
+              aria-label="Forma de pagamento"
+            />
+          </div>
+
+          <div className="w-full sm:w-60">
             <Select
               placeholder="Todos os cursos"
               value={filtros.cursoId}
@@ -220,19 +237,11 @@ const RelatoriosPage = () => {
                 label: c.nome,
               }))}
               size="md"
+              aria-label="Curso do aluno"
             />
           </div>
 
-          <div className="flex-1">
-            <Select
-              placeholder="Todas as formas"
-              value={filtros.formaPagamento}
-              onChange={(e) => alterarFiltro("formaPagamento", e.target.value)}
-              options={OPCOES_FORMA_PAGAMENTO}
-              size="md"
-            />
-          </div>
-          <div className="flex-1">
+          <div className="w-full sm:w-56">
             <Select
               placeholder="Todos os atendentes"
               value={filtros.atendenteId}
@@ -242,13 +251,14 @@ const RelatoriosPage = () => {
                 label: u.nome,
               }))}
               size="md"
+              aria-label="Atendente da APM"
             />
           </div>
 
           <Button
             variant="secondary"
             size="md"
-            leftIcon={<FiIcons.FiRotateCcw size={15} />}
+            leftIcon={<FiRotateCcw size={15} />}
             onClick={limparFiltros}
             className="shrink-0 px-3.5"
             title="Limpar filtros"
@@ -257,6 +267,9 @@ const RelatoriosPage = () => {
           </Button>
         </div>
       </section>
+
+      {erro && <Alert type="error" message={erro} />}
+
       <PainelReceita
         resumoReceita={resumoReceita}
         carregando={carregandoVendas}
@@ -268,7 +281,7 @@ const RelatoriosPage = () => {
           carregando={carregandoVendas}
           getRowKey={(v) => v.id}
           pagina={pagina}
-          limite={10}
+          limite={ITENS_POR_PAGINA}
           total={totalVendas}
           onPaginaChange={setPagina}
           emptyMessage="Nenhuma venda registrada para os filtros selecionados."

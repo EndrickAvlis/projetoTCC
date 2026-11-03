@@ -19,12 +19,15 @@ export const useDashboard = ({
   const [produtos, setProdutos] = React.useState([]);
   const [cursos, setCursos] = React.useState([]);
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
   const carregarDashboard = React.useCallback(async () => {
     if (periodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
       return;
     }
     setCarregando(true);
+    setErro(null);
+
     try {
       const res = await obterDashboard({
         periodo,
@@ -36,7 +39,8 @@ export const useDashboard = ({
       setCategorias(res.categorias);
       setProdutos(res.produtos);
       setCursos(res.cursos);
-    } catch {
+    } catch (err) {
+      setErro(err.message);
     } finally {
       setCarregando(false);
     }
@@ -52,6 +56,9 @@ export const useDashboard = ({
     produtos,
     cursos,
     carregando,
+    erro,
     recarregar: carregarDashboard,
   };
 };
+
+export default useDashboard;

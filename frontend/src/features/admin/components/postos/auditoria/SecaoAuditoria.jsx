@@ -1,5 +1,6 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
+import Alert from "../../../../../components/ui/Alert";
 import DataTable from "../../../../../components/ui/DataTable";
 import Input from "../../../../../components/ui/Input";
 import Select from "../../../../../components/ui/Select";
@@ -22,7 +23,7 @@ const SecaoAuditoria = () => {
 
   const [senhaSelecionada, setSenhaSelecionada] = React.useState(null);
 
-  const { senhas, total, carregando, recarregar } = useAuditoria({
+  const { senhas, total, carregando, erro, recarregar } = useAuditoria({
     busca,
     status: status || undefined,
     tipoPeriodo,
@@ -128,7 +129,7 @@ const SecaoAuditoria = () => {
               value={busca}
               onChange={handleBuscaChange}
               placeholder="Pesquisar por senha ou aluno..."
-              icon={<FiIcons.FiSearch />}
+              icon={<FiSearch />}
               size="md"
             />
           </div>
@@ -177,6 +178,8 @@ const SecaoAuditoria = () => {
           ariaLabel="Situação da senha"
         />
       </div>
+
+      {erro && <Alert type="error" message={erro} />}
 
       <DataTable
         columns={colunas}

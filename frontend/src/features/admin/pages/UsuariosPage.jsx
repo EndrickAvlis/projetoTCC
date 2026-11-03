@@ -1,6 +1,13 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import {
+  FiEdit2,
+  FiUserX,
+  FiUserCheck,
+  FiPlus,
+  FiSearch,
+} from "react-icons/fi";
 
+import Alert from "../../../components/ui/Alert";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
@@ -14,6 +21,7 @@ import UsuariosModal from "../components/usuarios/UsuariosModal";
 import { useUsuarios } from "../hooks/useUsuarios";
 import * as usuarioService from "../services/usuarioService";
 import { useAuth } from "../../../context/authContext";
+import { useToast } from "../../../context/toastContext";
 
 const OPCOES_FILTRO_TIPO = [
   { value: "", label: "Todos os perfis" },
@@ -28,6 +36,7 @@ const OPCOES_STATUS_USUARIO = [
 ];
 
 const UsuariosPage = () => {
+  const toast = useToast();
   const { usuario: usuarioLogado } = useAuth();
   const ehSupervisor = usuarioLogado?.tipo === "supervisor";
   const ehAdmin = usuarioLogado?.tipo === "admin";
@@ -39,7 +48,7 @@ const UsuariosPage = () => {
   const [salvando, setSalvando] = React.useState(false);
   const [modalAtivo, setModalAtivo] = React.useState(null);
 
-  const { usuarios, carregando, recarregar } = useUsuarios({
+  const { usuarios, carregando, erro, recarregar } = useUsuarios({
     busca,
     tipo: ehSupervisor ? "" : tipoFiltro,
     status: statusAtivo,
@@ -57,8 +66,8 @@ const UsuariosPage = () => {
 
       setModalAtivo(null);
       await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -146,12 +155,12 @@ const UsuariosPage = () => {
             itens={[
               podeEditar && {
                 label: "Editar",
-                icone: FiIcons.FiEdit2,
+                icone: FiEdit2,
                 onClick: () => setModalAtivo({ tipo: "edicao", usuario: u }),
               },
               podeInativar && {
                 label: u.status ? "Inativar" : "Ativar",
-                icone: u.status ? FiIcons.FiUserX : FiIcons.FiUserCheck,
+                icone: u.status ? FiUserX : FiUserCheck,
                 onClick: () => setModalAtivo({ tipo: "status", usuario: u }),
                 variante: u.status ? "danger" : "success",
               },
@@ -172,7 +181,7 @@ const UsuariosPage = () => {
         </div>
 
         <Button
-          leftIcon={<FiIcons.FiPlus />}
+          leftIcon={<FiPlus />}
           className="w-full sm:w-auto"
           onClick={() => setModalAtivo({ tipo: "cadastro" })}
         >
@@ -186,7 +195,7 @@ const UsuariosPage = () => {
             value={busca}
             onChange={(event) => setBusca(event.target.value)}
             placeholder="Pesquisar por nome de usuário..."
-            icon={<FiIcons.FiSearch />}
+            icon={<FiSearch />}
             size="md"
             className="w-full sm:max-w-md"
           />
@@ -210,6 +219,8 @@ const UsuariosPage = () => {
           ariaLabel="Situação dos usuários"
         />
       </div>
+
+      {erro && <Alert type="error" message={erro} />}
 
       <DataTable
         columns={columnsUsuario}

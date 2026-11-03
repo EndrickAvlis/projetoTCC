@@ -7,9 +7,11 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
   const [cursos, setCursos] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
   const carregarCursos = React.useCallback(async () => {
     setCarregando(true);
+    setErro(null);
 
     try {
       const res = await listarCursos({
@@ -19,9 +21,10 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
 
       setCursos(res.cursos ?? []);
       setTotal(res.total ?? 0);
-    } catch {
+    } catch (err) {
       setCursos([]);
       setTotal(0);
+      setErro(err.message);
     } finally {
       setCarregando(false);
     }
@@ -35,6 +38,9 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
     cursos,
     total,
     carregando,
+    erro,
     recarregar: carregarCursos,
   };
 };
+
+export default useCursos;

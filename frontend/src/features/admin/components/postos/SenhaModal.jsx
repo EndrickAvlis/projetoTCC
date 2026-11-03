@@ -6,11 +6,14 @@ import { formatarSenha, formatarDataHora, formatarHora } from "../../../../utils
 import { transferirSenha, cancelarSenha } from "../../services/postosService";
 import { alterarPrioridade } from "../../../postos/services/filaService";
 import { POSTOS, CORES_STATUS, NOMES_DOCUMENTOS } from "../../constants/postos";
+import { useToast } from "../../../../context/toastContext";
 
 const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
+  const toast = useToast();
   const [carregando, setCarregando] = React.useState(false);
   const [confirmandoCancelamento, setConfirmandoCancelamento] =
     React.useState(false);
+
   React.useEffect(() => {
     setConfirmandoCancelamento(false);
   }, [aberto, senha?.id]);
@@ -21,12 +24,40 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
   const podeGerenciar = !["finalizada", "cancelada"].includes(senha.status);
   const postosDestino = POSTOS.filter((p) => p !== senha.posto);
 
-  const executar = async (acao) => {
-    setCarregando(true);
+  const handleTransferirPosto = async (novoPosto) => {
     try {
-      await acao();
-      onAtualizar?.();
+      setCarregando(true);
+      await transferirSenha(senha.id, novoPosto);
+      onAtualizar();
       onFechar();
+    } catch (err) {
+      toast.erro(err.message);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const handleCancelarSenha = async () => {
+    try {
+      setCarregando(true);
+      await cancelarSenha(senha.id);
+      onAtualizar();
+      onFechar();
+    } catch (err) {
+      toast.erro(err.message);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const handleAlternarPrioridade = async () => {
+    try {
+      setCarregando(true);
+      await alterarPrioridade(senha.id, !senha.prioritaria);
+      onAtualizar();
+      onFechar();
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setCarregando(false);
     }
@@ -177,9 +208,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
                   size="sm"
                   variant="outline"
                   className="capitalize"
-                  onClick={() =>
-                    executar(() => transferirSenha(senha.id, posto))
-                  }
+                  onClick={() => handleTransferirPosto(posto)}
                   disabled={carregando}
                 >
                   {posto}
@@ -199,7 +228,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={() => executar(() => cancelarSenha(senha.id))}
+                  onClick={handleCancelarSenha}
                   loading={carregando}
                 >
                   Sim
@@ -227,9 +256,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
             <Button
               variant={senha.prioritaria ? "secondary" : "primary"}
               size="sm"
-              onClick={() =>
-                executar(() => alterarPrioridade(senha.id, !senha.prioritaria))
-              }
+              onClick={handleAlternarPrioridade}
               loading={carregando}
             >
               {senha.prioritaria ? "Remover prioridade" : "Tornar prioritária"}

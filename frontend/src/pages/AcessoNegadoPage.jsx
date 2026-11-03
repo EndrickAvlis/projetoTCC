@@ -5,7 +5,7 @@ const AcessoNegadoPage = () => (
     <section className="bg-surface border border-border rounded-lg p-8 max-w-md w-full text-center">
       <h1 className="text-title font-bold text-primary">Acesso não autorizado</h1>
       <p className="text-body text-text-secondary mt-3">
-        Faça login novamente pára acessar está tela.
+        Faça login novamente para acessar esta tela.
       </p>
       <Link className="inline-block mt-6 text-primary underline" to="/">
         Voltar ao login

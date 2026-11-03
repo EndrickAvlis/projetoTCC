@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import { FiEdit3, FiPlus, FiMinus, FiArrowRight, FiAlertCircle } from "react-icons/fi";
 
 import Alert from "../../../../../components/ui/Alert";
 import Badge from "../../../../../components/ui/Badge";
@@ -13,21 +13,21 @@ const OPCOES_MOVIMENTACAO = [
     value: "corrigir",
     label: "Corrigir",
     descricao: "Ajustar saldo total",
-    icon: FiIcons.FiEdit3,
+    icon: FiEdit3,
     activeColor: "bg-primary text-text-inverse shadow-sm",
   },
   {
     value: "adicionar",
     label: "Adicionar",
     descricao: "Entrada de estoque",
-    icon: FiIcons.FiPlus,
+    icon: FiPlus,
     activeColor: "bg-status-success text-text-inverse shadow-sm",
   },
   {
     value: "diminuir",
     label: "Diminuir",
     descricao: "Retirada ou baixa",
-    icon: FiIcons.FiMinus,
+    icon: FiMinus,
     activeColor: "bg-status-danger text-text-inverse shadow-sm",
   },
 ];
@@ -273,7 +273,7 @@ const MovimentarEstoqueModal = ({
               </span>
             </div>
 
-            <FiIcons.FiArrowRight className="text-text-secondary" />
+            <FiArrowRight className="text-text-secondary" />
 
             <div className="flex flex-col items-center">
               <span className="text-xs text-text-secondary">Ajuste</span>
@@ -298,7 +298,7 @@ const MovimentarEstoqueModal = ({
               </span>
             </div>
 
-            <FiIcons.FiArrowRight className="text-text-secondary" />
+            <FiArrowRight className="text-text-secondary" />
 
             <div className="flex flex-col items-end">
               <span className="text-xs text-text-secondary">Novo saldo</span>
@@ -324,7 +324,7 @@ const MovimentarEstoqueModal = ({
 
           {estoqueZeradoAoDiminuir && (
             <div className="flex items-center gap-1.5 border-t border-border/60 pt-2 text-xs text-status-warning">
-              <FiIcons.FiAlertCircle size={14} className="shrink-0" />
+              <FiAlertCircle size={14} className="shrink-0" />
               <span>
                 Atenção: esta baixa deixará o estoque deste uniforme totalmente zerado.
               </span>
@@ -354,9 +354,9 @@ const MovimentarEstoqueModal = ({
             disabled={operacao === "diminuir" && estoqueAtual === 0}
             leftIcon={
               operacao === "adicionar" ? (
-                <FiIcons.FiPlus />
+                <FiPlus />
               ) : operacao === "diminuir" ? (
-                <FiIcons.FiMinus />
+                <FiMinus />
               ) : (
                 ""
               )

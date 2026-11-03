@@ -1,5 +1,11 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import {
+  FiBox,
+  FiRefreshCw,
+  FiRotateCcw,
+  FiPrinter,
+  FiExternalLink,
+} from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import Button from "../../../components/ui/Button";
@@ -11,8 +17,10 @@ import * as produtoService from "../services/produtoService";
 import * as configuracoesService from "../services/configuracoesService";
 import { formatarSenha } from "../../../utils/formatters";
 import { useAuth } from "../../../context/authContext";
+import { useToast } from "../../../context/toastContext";
 
 const ConfiguracoesPage = () => {
+  const toast = useToast();
   const { usuario } = useAuth();
   const ehAdmin = usuario?.tipo === "admin";
   const {
@@ -34,11 +42,12 @@ const ConfiguracoesPage = () => {
     try {
       const res = await configuracoesService.buscarUltimaSenha();
       setUltimoNumero(res.ultimoNumero ?? 0);
-    } catch {
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setCarregandoUltimaSenha(false);
     }
-  }, []);
+  }, [toast]);
 
   React.useEffect(() => {
     if (ehAdmin) carregarUltimaSenha();
@@ -55,7 +64,8 @@ const ConfiguracoesPage = () => {
         status: !armarioDisponivel,
       });
       await recarregarArmario();
-    } catch {
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvandoArmario(false);
     }
@@ -67,7 +77,8 @@ const ConfiguracoesPage = () => {
       await configuracoesService.reiniciarSequenciaSenhas();
       setModalResetAberto(false);
       setUltimoNumero(0);
-    } catch {
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setReiniciando(false);
     }
@@ -80,7 +91,7 @@ const ConfiguracoesPage = () => {
           <div>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-primary">
-                <FiIcons.FiBox size={20} />
+                <FiBox size={20} />
               </div>
               <div>
                 <h2 className="text-base font-semibold text-text-primary">
@@ -111,55 +122,55 @@ const ConfiguracoesPage = () => {
         </div>
 
         {ehAdmin && (
-        <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-6 shadow-xs">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-status-danger">
-                <FiIcons.FiRefreshCw size={20} />
+          <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-6 shadow-xs">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-status-danger">
+                  <FiRefreshCw size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-text-primary">
+                    Sequência de Senhas
+                  </h2>
+                  <p className="text-xs text-text-secondary">Controle diário</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-text-primary">
-                  Sequência de Senhas
-                </h2>
-                <p className="text-xs text-text-secondary">Controle diário</p>
+
+              <p className="mt-4 text-sm text-text-secondary">
+                Cancela as senhas de hoje que não foram finalizadas e zera o
+                contador diário de volta para 1.
+              </p>
+
+              <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-surface-muted px-4 py-3">
+                <span className="text-xs font-medium text-text-secondary">
+                  Última senha emitida hoje
+                </span>
+                <span className="text-base font-bold text-text-primary">
+                  {carregandoUltimaSenha
+                    ? "Carregando..."
+                    : formatarSenha(ultimoNumero) || "Nenhuma"}
+                </span>
               </div>
             </div>
 
-            <p className="mt-4 text-sm text-text-secondary">
-              Cancela as senhas de hoje que não foram finalizadas e zera o
-              contador diário de volta para 1.
-            </p>
-
-            <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-surface-muted px-4 py-3">
-              <span className="text-xs font-medium text-text-secondary">
-                Última senha emitida hoje
-              </span>
-              <span className="text-base font-bold text-text-primary">
-                {carregandoUltimaSenha
-                  ? "Carregando..."
-                  : formatarSenha(ultimoNumero) || "Nenhuma"}
-              </span>
+            <div className="mt-6 flex items-center justify-end border-t border-border pt-4">
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setModalResetAberto(true)}
+                leftIcon={<FiRotateCcw size={16} />}
+              >
+                Reiniciar Senhas
+              </Button>
             </div>
           </div>
-
-          <div className="mt-6 flex items-center justify-end border-t border-border pt-4">
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => setModalResetAberto(true)}
-              leftIcon={<FiIcons.FiRotateCcw size={16} />}
-            >
-              Reiniciar Senhas
-            </Button>
-          </div>
-        </div>
         )}
 
         <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-6 shadow-xs">
           <div>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-primary">
-                <FiIcons.FiPrinter size={20} />
+                <FiPrinter size={20} />
               </div>
               <div>
                 <h2 className="text-base font-semibold text-text-primary">
@@ -185,7 +196,7 @@ const ConfiguracoesPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                rightIcon={<FiIcons.FiExternalLink size={16} />}
+                rightIcon={<FiExternalLink size={16} />}
               >
                 Abrir Totem
               </Button>

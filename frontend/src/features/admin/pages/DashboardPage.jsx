@@ -1,4 +1,5 @@
 import * as React from "react";
+import Alert from "../../../components/ui/Alert";
 import Input from "../../../components/ui/Input";
 import Card from "../../../components/ui/Card";
 import Badge from "../../../components/ui/Badge";
@@ -19,7 +20,7 @@ const DashboardPage = () => {
   const [dataInicio, setDataInicio] = React.useState("");
   const [dataFim, setDataFim] = React.useState("");
 
-  const { totais, categorias, produtos, cursos } = useDashboard({
+  const { totais, categorias, produtos, cursos, erro } = useDashboard({
     periodo,
     dataInicio,
     dataFim,
@@ -98,6 +99,8 @@ const DashboardPage = () => {
           </div>
         )}
       </div>
+
+      {erro && <Alert type="error" message={erro} />}
 
       <div className="relative overflow-hidden rounded-2xl bg-primary p-6 lg:p-8 text-text-inverse shadow-sm flex flex-col justify-between">
         <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/4" />
