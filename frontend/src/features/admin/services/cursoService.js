@@ -27,9 +27,5 @@ export const atualizarPeriodo = (cursoId, periodoId, dados) =>
     body: dados,
   });
 
-export const excluirCurso = (cursoId) =>
-  requisitarApi(`/cursos/${cursoId}`, {
-    method: "DELETE",
-  });
 
 

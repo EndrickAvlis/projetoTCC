@@ -21,19 +21,6 @@ const cursoSelect = {
   },
 };
 
-const cursoNaoEncontrado = () =>
-  new AppError("Curso não encontrado.", {
-    status: 404,
-    code: "CURSO_NAO_ENCONTRADO",
-  });
-
-const periodoDuplicado = () =>
-  new AppError("Este período já existe para este curso.", {
-    status: 409,
-    code: "PERIODO_DUPLICADO",
-  });
-
-
 export default class CursoService extends BaseService {
   constructor() {
     super(prisma.curso, "idCurso");
@@ -178,41 +165,6 @@ export default class CursoService extends BaseService {
     }
   }
 
-  async excluir(cursoId) {
-    const curso = await super.buscarPorId(cursoId, {
-      select: {
-        idCurso: true,
-        arquivado: true,
-      },
-    });
-
-    if (!curso) {
-      throw cursoNaoEncontrado();
-    }
-
-    if (!curso.arquivado) {
-      throw new AppError("Apenas cursos arquivados podem ser excluídos.", {
-        status: 400,
-        code: "CURSO_ATIVO",
-      });
-    }
-
-    return prisma.$transaction(async (tx) => {
-      await tx.cursoAluno.deleteMany({
-        where: { codCurso: cursoId },
-      });
-
-      await tx.periodoCurso.deleteMany({
-        where: { codCurso: cursoId },
-      });
-
-      return tx.curso.delete({
-        where: { idCurso: cursoId },
-        select: cursoSelect,
-      });
-    });
-  }
-
   async obterCursoAtivo(cursoId) {
     const curso = await super.buscarPorId(cursoId, {
       select: {
@@ -237,3 +189,15 @@ export default class CursoService extends BaseService {
     return curso;
   }
 }
+
+const cursoNaoEncontrado = () =>
+  new AppError("Curso não encontrado.", {
+    status: 404,
+    code: "CURSO_NAO_ENCONTRADO",
+  });
+
+const periodoDuplicado = () =>
+  new AppError("Este período já existe para este curso.", {
+    status: 409,
+    code: "PERIODO_DUPLICADO",
+  });

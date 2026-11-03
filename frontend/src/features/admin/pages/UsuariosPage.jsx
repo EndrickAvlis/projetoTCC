@@ -64,21 +64,6 @@ const UsuariosPage = () => {
     }
   };
 
-  const handleExcluirUsuario = async () => {
-    if (!modalAtivo?.usuario) return;
-    setSalvando(true);
-
-    try {
-      await usuarioService.excluirUsuario(modalAtivo.usuario.id);
-      setModalAtivo(null);
-      await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const listaFiltrada = ehSupervisor
     ? usuarios.filter(
         (u) => u.tipo === "atendente" || u.id === usuarioLogado?.id,
@@ -154,7 +139,6 @@ const UsuariosPage = () => {
           ehAdmin || ehProprioUsuario || u.tipo === "atendente";
         const podeInativar =
           !ehProprioUsuario && (ehAdmin || u.tipo === "atendente");
-        const podeExcluir = !ehProprioUsuario && ehAdmin && !u.status;
 
         return (
           <TableMenuActions
@@ -170,12 +154,6 @@ const UsuariosPage = () => {
                 icone: u.status ? FiIcons.FiUserX : FiIcons.FiUserCheck,
                 onClick: () => setModalAtivo({ tipo: "status", usuario: u }),
                 variante: u.status ? "danger" : "success",
-              },
-              podeExcluir && {
-                label: "Excluir",
-                icone: FiIcons.FiTrash2,
-                onClick: () => setModalAtivo({ tipo: "excluir", usuario: u }),
-                variante: "danger",
               },
             ]}
           />
@@ -277,17 +255,6 @@ const UsuariosPage = () => {
           modalAtivo?.usuario?.status ? "Inativar" : "Ativar"
         }
         variante={modalAtivo?.usuario?.status ? "danger" : "success"}
-        salvando={salvando}
-      />
-
-      <ConfirmarModal
-        aberto={modalAtivo?.tipo === "excluir"}
-        onFechar={() => setModalAtivo(null)}
-        onConfirmar={handleExcluirUsuario}
-        titulo="Excluir usuário"
-        mensagem={`Tem certeza de que deseja excluir permanentemente o usuário ${modalAtivo?.usuario?.nome}? Esta ação causará a exclusão de todos os dados associados a este usuário e não poderá ser desfeita.`}
-        textoConfirmar="Excluir definitivamente"
-        variante="danger"
         salvando={salvando}
       />
     </section>

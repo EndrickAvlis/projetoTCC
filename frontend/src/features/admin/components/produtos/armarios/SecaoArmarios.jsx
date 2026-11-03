@@ -63,22 +63,6 @@ const SecaoArmarios = () => {
     }
   };
 
-  const handleExcluirArmario = async () => {
-    if (!armario) return;
-
-    setSalvando(true);
-
-    try {
-      await produtoService.excluirProduto(armario.id);
-      setModalAtivo(null);
-      await recarregarArmario();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const estaDisponivel = Boolean(armario?.status);
 
   return (
@@ -139,17 +123,6 @@ const SecaoArmarios = () => {
           </div>
 
           <footer className="mt-6 flex flex-col justify-end gap-3 border-t border-border pt-5 sm:flex-row">
-            {ehAdmin && !estaDisponivel && (
-              <Button
-                type="button"
-                variant="danger"
-                leftIcon={<FiIcons.FiTrash2 />}
-                onClick={() => setModalAtivo("excluir")}
-                disabled={salvando}
-              >
-                Excluir armário
-              </Button>
-            )}
 
             <Button
               type="button"
@@ -193,17 +166,6 @@ const SecaoArmarios = () => {
         armario={armario}
         onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarArmario}
-        salvando={salvando}
-      />
-
-      <ConfirmarModal
-        aberto={modalAtivo === "excluir"}
-        onFechar={() => setModalAtivo(null)}
-        onConfirmar={handleExcluirArmario}
-        titulo="Excluir armário"
-        mensagem="Tem certeza de que deseja excluir permanentemente a configuração do armário? Esta ação é irreversível e removerá todos os registros associados a este produto."
-        textoConfirmar="Excluir definitivamente"
-        variante="danger"
         salvando={salvando}
       />
     </section>

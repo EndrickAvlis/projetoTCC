@@ -37,12 +37,6 @@ cursoRoutes.patch(
   validarRequisicao(cursos.atualizarPeriodoSchema),
   cursoController.atualizarPeriodo,
 );
-cursoRoutes.delete(
-  "/:cursoId",
-  auth.validarRole(["admin"]),
-  validarRequisicao(cursos.excluirCursoSchema),
-  cursoController.excluirCurso,
-);
 
 export default cursoRoutes;
 

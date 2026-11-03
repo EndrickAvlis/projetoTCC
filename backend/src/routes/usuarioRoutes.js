@@ -29,11 +29,5 @@ usuarioRoutes.patch(
   usuarioController.atualizarUsuario,
 );
 
-usuarioRoutes.delete(
-  "/:id",
-  auth.validarRole(["admin"]),
-  validarRequisicao(usuarioSchema.excluirUsuarioSchema),
-  usuarioController.excluirUsuario,
-);
 
 export default usuarioRoutes;

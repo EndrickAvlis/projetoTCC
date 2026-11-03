@@ -11,18 +11,6 @@ const produtoSelect = {
   statusProduto: true,
 };
 
-const produtoNaoEncontrado = () =>
-  new AppError("Produto não encontrado.", {
-    status: 404,
-    code: "PRODUTO_NAO_ENCONTRADO",
-  });
-
-const uniformeJaCadastrado = () =>
-  new AppError("Este uniforme já está cadastrado.", {
-    status: 409,
-    code: "UNIFORME_JA_CADASTRADO",
-  });
-
 export default class ProdutoService extends BaseService {
   constructor() {
     super(prisma.produto, "idProduto");
@@ -213,35 +201,16 @@ export default class ProdutoService extends BaseService {
       select: produtoSelect,
     });
   }
-
-  async excluir(produtoId) {
-    const produto = await super.buscarPorId(produtoId, {
-      select: produtoSelect,
-    });
-
-    if (!produto) {
-      throw produtoNaoEncontrado();
-    }
-
-    if (produto.statusProduto) {
-      throw new AppError(
-        "Apenas produtos desativados ou arquivados podem ser excluídos.",
-        {
-          status: 400,
-          code: "PRODUTO_ATIVO",
-        },
-      );
-    }
-
-    return prisma.$transaction(async (tx) => {
-      await tx.itemCompra.deleteMany({
-        where: { codProduto: produtoId },
-      });
-
-      return tx.produto.delete({
-        where: { idProduto: produtoId },
-        select: produtoSelect,
-      });
-    });
-  }
 }
+
+const produtoNaoEncontrado = () =>
+  new AppError("Produto não encontrado.", {
+    status: 404,
+    code: "PRODUTO_NAO_ENCONTRADO",
+  });
+
+const uniformeJaCadastrado = () =>
+  new AppError("Este uniforme já está cadastrado.", {
+    status: 409,
+    code: "UNIFORME_JA_CADASTRADO",
+  });

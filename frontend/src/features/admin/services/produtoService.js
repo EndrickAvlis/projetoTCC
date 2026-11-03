@@ -21,7 +21,3 @@ export const atualizarEstoque = (produtoId, dados) =>
     body: dados,
   });
 
-export const excluirProduto = (produtoId) =>
-  requisitarApi(`/produtos/${produtoId}`, {
-    method: "DELETE",
-  });

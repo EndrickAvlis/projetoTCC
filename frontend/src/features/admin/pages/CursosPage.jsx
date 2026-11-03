@@ -99,22 +99,6 @@ const CursosPage = () => {
     }
   };
 
-  const handleExcluirCurso = async () => {
-    if (!modalAtivo?.curso) return;
-
-    setSalvando(true);
-
-    try {
-      await cursoService.excluirCurso(modalAtivo.curso.id);
-      setModalAtivo(null);
-      await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const alternarPeriodos = (cursoId) => {
     setCursoExpandido((cursoAtual) =>
       cursoAtual === cursoId ? null : cursoId,
@@ -210,7 +194,6 @@ const CursosPage = () => {
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (curso) => {
-        const podeExcluir = ehAdmin && curso.arquivado;
 
         return (
           <TableMenuActions
@@ -231,12 +214,6 @@ const CursosPage = () => {
                 icone: curso.arquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
                 onClick: () => setModalAtivo({ tipo: "arquivar", curso }),
                 variante: curso.arquivado ? "success" : "danger",
-              },
-              podeExcluir && {
-                label: "Excluir",
-                icone: FiIcons.FiTrash2,
-                onClick: () => setModalAtivo({ tipo: "excluir", curso }),
-                variante: "danger",
               },
             ]}
           />
@@ -327,17 +304,6 @@ const CursosPage = () => {
           modalAtivo?.curso?.arquivado ? "Desarquivar" : "Arquivar"
         }
         variante={modalAtivo?.curso?.arquivado ? "success" : "danger"}
-        salvando={salvando}
-      />
-
-      <ConfirmarModal
-        aberto={modalAtivo?.tipo === "excluir"}
-        onFechar={() => setModalAtivo(null)}
-        onConfirmar={handleExcluirCurso}
-        titulo="Excluir curso"
-        mensagem={`Tem certeza de que deseja excluir permanentemente o curso ${modalAtivo?.curso?.nome}? Esta ação é irreversível e removerá todos os registros associados a este curso.`}
-        textoConfirmar="Excluir definitivamente"
-        variante="danger"
         salvando={salvando}
       />
     </section>

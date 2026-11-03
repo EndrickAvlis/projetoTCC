@@ -14,8 +14,3 @@ export const atualizarUsuario = (usuarioId, dados) =>
     method: "PATCH",
     body: dados,
   });
-
-export const excluirUsuario = (usuarioId) =>
-  requisitarApi(`/usuarios/${usuarioId}`, {
-    method: "DELETE",
-  });

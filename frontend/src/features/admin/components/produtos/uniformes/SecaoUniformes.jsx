@@ -91,22 +91,6 @@ const SecaoUniformes = () => {
     }
   };
 
-  const handleExcluirUniforme = async () => {
-    if (!modalAtivo?.uniforme) return;
-
-    setSalvando(true);
-
-    try {
-      await produtoService.excluirProduto(modalAtivo.uniforme.id);
-      setModalAtivo(null);
-      await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const columnsUniforme = [
     {
       key: "nome",
@@ -157,7 +141,6 @@ const SecaoUniformes = () => {
       cellClassName: "text-right",
       render: (uniforme) => {
         const isArquivado = !uniforme.status;
-        const podeExcluir = ehAdmin && isArquivado;
 
         return (
           <TableMenuActions
@@ -178,12 +161,6 @@ const SecaoUniformes = () => {
                 icone: isArquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
                 onClick: () => setModalAtivo({ tipo: "arquivar", uniforme }),
                 variante: isArquivado ? "success" : "danger",
-              },
-              podeExcluir && {
-                label: "Excluir",
-                icone: FiIcons.FiTrash2,
-                onClick: () => setModalAtivo({ tipo: "excluir", uniforme }),
-                variante: "danger",
               },
             ]}
           />
@@ -276,17 +253,6 @@ const SecaoUniformes = () => {
             ? "success"
             : "danger"
         }
-        salvando={salvando}
-      />
-
-      <ConfirmarModal
-        aberto={modalAtivo?.tipo === "excluir"}
-        onFechar={() => setModalAtivo(null)}
-        onConfirmar={handleExcluirUniforme}
-        titulo="Excluir uniforme"
-        mensagem={`Tem certeza de que deseja excluir permanentemente o uniforme ${modalAtivo?.uniforme?.nome}? Esta ação é irreversível e removerá todos os registros associados a este produto.`}
-        textoConfirmar="Excluir definitivamente"
-        variante="danger"
         salvando={salvando}
       />
     </section>

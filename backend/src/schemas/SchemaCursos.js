@@ -127,6 +127,3 @@ export const atualizarPeriodoSchema = z.object({
   body: dadosPeriodo,
 });
 
-export const excluirCursoSchema = z.object({
-  params: z.object({ cursoId: id }),
-});

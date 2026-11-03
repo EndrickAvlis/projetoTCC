@@ -54,12 +54,3 @@ export const atualizarEstoque = async (req, res) => {
     produto: mapearProdutosResposta(produto),
   });
 };
-
-export const excluirProduto = async (req, res) => {
-  const { produtoId } = req.validado.params;
-  const produto = await produtoService.excluir(produtoId);
-
-  return res.json({
-    produto: mapearProdutosResposta(produto),
-  });
-};

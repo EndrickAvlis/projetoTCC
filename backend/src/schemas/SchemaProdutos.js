@@ -15,7 +15,8 @@ const nomeProduto = z
 
 const preco = z.coerce
   .number({ error: "Informe um preço válido." })
-  .positive("O preço deve ser maior que zero.");
+  .positive("O preço deve ser maior que zero.")
+  .max(999.99, "O preço máximo permitido é R$ 999,99.");
 
 const quantidade = z.coerce
   .number({ error: "Informe uma quantidade válida." })
@@ -32,11 +33,6 @@ const tipoProduto = z
     }),
   );
 
-export const produtoIdSchema = z.object({
-  params: z.object({
-    produtoId: id,
-  }),
-});
 
 export const criarProdutoSchema = z.object({
   body: z.object({
