@@ -1,33 +1,24 @@
 import * as React from "react";
 import Alert from "./Alert";
-
-const DURACAO_MS = 5000;
+import ToastContext from "../../context/toastContext";
 
 const Toast = () => {
-  const [mensagem, setMensagem] = React.useState(null);
+  const contexto = React.useContext(ToastContext);
+  if (!contexto?.toastAtivo) return null;
 
-  React.useEffect(() => {
-    let temporizador;
-
-    const exibir = (evento) => {
-      setMensagem(evento.detail);
-      clearTimeout(temporizador);
-      temporizador = setTimeout(() => setMensagem(null), DURACAO_MS);
-    };
-
-    window.addEventListener("api:erro", exibir);
-    return () => {
-      window.removeEventListener("api:erro", exibir);
-      clearTimeout(temporizador);
-    };
-  }, []);
-
-  if (!mensagem) return null;
+  const { tipo, mensagem } = contexto.toastAtivo;
 
   return (
-    <div role="alert" className="fixed right-4 bottom-4 z-60 w-80 shadow-lg">
-      <Alert type="error" message={mensagem} onClose={() => setMensagem(null)} />
-    </div>
+    <aside
+      aria-live="polite"
+      className="fixed right-4 bottom-4 z-60 w-80 max-w-[calc(100vw-2rem)] shadow-lg transition-all duration-300"
+    >
+      <Alert
+        type={tipo}
+        message={mensagem}
+        onClose={contexto.fecharToast}
+      />
+    </aside>
   );
 };
 
