@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "CursoAluno" ADD COLUMN     "anoEscolar" INTEGER;
+ALTER TABLE "CursoAluno" ADD COLUMN IF NOT EXISTS "anoEscolar" INTEGER;

@@ -39,6 +39,7 @@ enum EtapaSenha {
 
 enum StatusSenha {
   aguardando
+  chamada
   em_atendimento
   pendente
   finalizada
@@ -197,7 +198,7 @@ model HistoricoSenha {
   codSenha                Int
   codVoluntario           Int
   etapaHistorico          EtapaSenha?
-  dataHoraInicioHistorico DateTime
+  dataHoraInicioHistorico DateTime?
   dataHoraFimHistorico    DateTime?
 
   senha      Senha      @relation(fields: [codSenha], references: [idSenha])
