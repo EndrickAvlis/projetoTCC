@@ -37,7 +37,7 @@ export default class FilaService extends BaseService {
         statusSenha: "aguardando",
       },
       data: {
-        statusSenha: "em_atendimento",
+        statusSenha: "chamada",
       },
     });
 
