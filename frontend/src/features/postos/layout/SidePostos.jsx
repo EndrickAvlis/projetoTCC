@@ -25,8 +25,16 @@ const SidePostos = ({ etapa }) => {
   } = useFila(etapa);
 
   const handleSelecionarSenha = async (senhaSelecionada) => {
-    await chamarSenha(senhaSelecionada.id, etapa);
-    await carregarFila({ silencioso: true });
+    try {
+      await chamarSenha(senhaSelecionada.id, etapa);
+      await carregarFila({ silencioso: true });
+    } catch {}
+  };
+
+  const handleAlternarPrioridade = async () => {
+    try {
+      await alterarPrioridade();
+    } catch {}
   };
 
   const ocupado = carregando || carregandoFila;
@@ -63,7 +71,7 @@ const SidePostos = ({ etapa }) => {
         {!exibindoHistorico && (
           <SenhaAtualCard
             senha={senhaAtual}
-            onAlternarPrioridade={alterarPrioridade}
+            onAlternarPrioridade={handleAlternarPrioridade}
             desabilitada={ocupado}
           />
         )}

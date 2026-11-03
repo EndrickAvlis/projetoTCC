@@ -1,3 +1,4 @@
+import { notificarErro } from "../../../../services/apiClient";
 import InfoAluno from "./InfoAluno";
 import ArmarioVenda from "./ArmarioVenda";
 import ContribuicaoVoluntaria from "./ContribuicaoVoluntaria";
@@ -10,31 +11,50 @@ import Alert from "../../../../components/ui/Alert";
 import { useAtendimento } from "../../context/atendimentoContext";
 import { useVenda } from "../../hooks/useVenda";
 import * as ApmService from "../../services/apmService";
+import * as React from "react";
 
 const ApmMain = () => {
-  const { senhaAtual, dadosAluno, finalizar } = useAtendimento();
+  const { senhaAtual, dadosAluno, fase, finalizar } = useAtendimento();
   const venda = useVenda();
+  const [salvando, setSalvando] = React.useState(false);
 
-  const desabilitado = !senhaAtual || venda.carregando;
+  React.useEffect(() => {
+    if (!senhaAtual || fase !== "iniciada") {
+      venda.limparVenda();
+    }
+  }, [senhaAtual?.id, fase]);
+
+  const desabilitado =
+    !senhaAtual || fase !== "iniciada" || venda.carregando || salvando;
 
   const handleFinalizar = async () => {
-    if (venda.totalCompra > 0) {
-      await ApmService.registrarVenda({
-        codAluno: dadosAluno.id,
-        ...venda.payload(),
-      });
+    if (!dadosAluno?.id) return;
+
+    try {
+      setSalvando(true);
+      if (venda.totalCompra > 0) {
+        await ApmService.registrarVenda({
+          codAluno: dadosAluno.id,
+          ...venda.payload(),
+        });
+      }
+      await finalizar();
+      venda.limparVenda();
+    } catch (erro) {
+      notificarErro(erro);
+    } finally {
+      setSalvando(false);
     }
-    await finalizar();
-    venda.limparVenda();
   };
 
   return (
     <div className="w-full flex flex-col gap-6">
       <AtendimentoActions
-        podeFinalizar={venda.podeFinalizar}
-        textoFinalizar="Finalizar Compra"
+        podeFinalizar={fase === "iniciada" && venda.podeFinalizar && !salvando}
+        textoFinalizar={salvando ? "Finalizando..." : "Finalizar Compra"}
         onFinalizar={handleFinalizar}
       />
+      
       {venda.erro && <Alert type="error" message={venda.erro} />}
       <div className="w-full min-w-0 flex flex-col lg:flex-row gap-5 items-stretch">
         <div className="flex-1 min-w-0 w-full bg-surface rounded-lg border border-border p-5 shadow-xs flex flex-col gap-5">

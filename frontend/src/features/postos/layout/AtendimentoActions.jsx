@@ -1,6 +1,8 @@
-import { FiPlay, FiRotateCw, FiCheck, FiClock } from "react-icons/fi";
+import { FiPlay, FiRotateCw, FiCheck, FiClock, FiX } from "react-icons/fi";
+import{ useState } from "react"; 
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
+import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 import { formatarSenha } from "../../../utils/formatters";
 import { useAtendimento } from "../context/atendimentoContext";
 
@@ -11,8 +13,28 @@ export const AtendimentoActions = ({
   onFinalizar,
   className = "",
 }) => {
-  const { senhaAtual, fase, carregando, iniciar, rechamar } =
+  const { senhaAtual, fase, carregando, iniciar, rechamar, cancelar } =
     useAtendimento();
+  const [modalCancelarAberto, setModalCancelarAberto] = useState(false);
+
+  const handleConfirmarCancelamento = async () => {
+    try {
+      await cancelar();
+      setModalCancelarAberto(false);
+    } catch {}
+  };
+
+  const handleRechamar = async () => {
+    try {
+      await rechamar();
+    } catch {}
+  };
+
+  const handleIniciar = async () => {
+    try {
+      await iniciar();
+    } catch {}
+  };
 
   return (
     <div
@@ -58,10 +80,20 @@ export const AtendimentoActions = ({
         {fase === "chamada" && (
           <>
             <Button
+              variant="danger"
+              size="md"
+              leftIcon={<FiX />}
+              onClick={() => setModalCancelarAberto(true)}
+              disabled={carregando}
+            >
+              Cancelar
+            </Button>
+
+            <Button
               variant="secondary"
               size="md"
               leftIcon={<FiRotateCw />}
-              onClick={rechamar}
+              onClick={handleRechamar}
               disabled={carregando}
             >
               Rechamar
@@ -71,7 +103,7 @@ export const AtendimentoActions = ({
               variant="primary"
               size="md"
               leftIcon={<FiPlay />}
-              onClick={iniciar}
+              onClick={handleIniciar}
               disabled={carregando}
             >
               {textoIniciar}
@@ -91,6 +123,17 @@ export const AtendimentoActions = ({
           </Button>
         )}
       </div>
+      <ConfirmarModal
+        aberto={modalCancelarAberto}
+        onFechar={() => setModalCancelarAberto(false)}
+        onConfirmar={handleConfirmarCancelamento}
+        titulo="Cancelar Senha"
+        mensagem={`Tem certeza de que deseja cancelar a Senha ${formatarSenha(senhaAtual?.codigo)} por não comparecimento? Esta ação é definitiva.`}
+        textoConfirmar="Sim, cancelar"
+        textoCancelar="Voltar"
+        variante="danger"
+        salvando={carregando}
+      />
     </div>
   );
 };

@@ -11,10 +11,9 @@ export const AtendimentoProvider = ({ children }) => {
   const [carregando, setCarregando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
 
-  // Fase calculada diretamente sem necessidade de useMemo complexo
   const fase = !senhaAtual
     ? "sem_senha"
-    : atendimentoAtual?.iniciadoEm
+    : senhaAtual.status === "em_atendimento"
       ? "iniciada"
       : "chamada";
 
@@ -43,7 +42,7 @@ export const AtendimentoProvider = ({ children }) => {
         return senha;
       } catch (err) {
         setErro(err.message);
-        return null;
+        throw err;
       } finally {
         setCarregando(false);
       }
@@ -67,7 +66,7 @@ export const AtendimentoProvider = ({ children }) => {
       return senhaAtualizada;
     } catch (err) {
       setErro(err.message);
-      return null;
+      throw err;
     } finally {
       setCarregando(false);
     }
@@ -81,6 +80,12 @@ export const AtendimentoProvider = ({ children }) => {
       setErro(null);
       const res = await atendimentoService.iniciarAtendimento(senhaAtual.id);
       setAtendimentoAtual(res.atendimento);
+      setSenhaAtual((prev) =>
+        prev ? { ...prev, status: "em_atendimento" } : prev,
+      );
+      if (res.aluno) {
+        setDadosAluno(res.aluno);
+      }
       return res.atendimento;
     } catch (error) {
       setErro(error.message);
@@ -122,7 +127,7 @@ export const AtendimentoProvider = ({ children }) => {
     }
   }, [senhaAtual, limparAtendimento]);
 
-  const pular = React.useCallback(async () => {
+  const cancelar = React.useCallback(async () => {
     if (!senhaAtual) return null;
 
     try {
@@ -156,7 +161,7 @@ export const AtendimentoProvider = ({ children }) => {
       } catch (error) {
         limparAtendimento();
         setErro(error.message);
-        return null;
+        throw error;
       } finally {
         setCarregando(false);
       }
@@ -189,7 +194,7 @@ export const AtendimentoProvider = ({ children }) => {
     iniciar,
     rechamar,
     finalizar,
-    pular,
+    cancelar,
     recuperarAtendimentoAtivo,
   };
 

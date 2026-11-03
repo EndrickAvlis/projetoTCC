@@ -1,17 +1,33 @@
+import { notificarErro } from "../../../../services/apiClient";
 import { useAtendimento } from "../../context/atendimentoContext";
+import { useState } from "react";
 import AtendimentoActions from "../../layout/AtendimentoActions";
 
 export const DocsMain = () => {
   const { senhaAtual, dadosAluno, fase, finalizar } = useAtendimento();
+  const [salvando, setSalvando] = useState(false);
 
-  const podeFinalizar = fase === "iniciada" && Boolean(dadosAluno);
-  const matricula = dadosAluno?.matriculas?.[0];
+  const podeFinalizar = fase === "iniciada" && Boolean(dadosAluno) && !salvando;
+
+  const handleFinalizar = async () => {
+    try {
+      setSalvando(true);
+      await finalizar();
+    } catch (erro) {
+      notificarErro(erro);
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   const campos = [
     { label: "Nome do Aluno", valor: dadosAluno?.nome, span: "md:col-span-2" },
     { label: "Cidade", valor: dadosAluno?.cidade },
     { label: "Sexo", valor: dadosAluno?.sexo },
-    { label: "Escolaridade Pública", valor: dadosAluno?.escolaridadePublica ? "Sim" : "Não" },
+    {
+      label: "Escolaridade Pública",
+      valor: dadosAluno?.escolaridadePublica ? "Sim" : "Não",
+    },
     { label: "Situação Cadastral", valor: dadosAluno?.status },
     { label: "Curso", valor: dadosAluno?.curso, span: "md:col-span-2" },
     { label: "Período", valor: dadosAluno?.periodo },
@@ -23,10 +39,10 @@ export const DocsMain = () => {
     <div className="w-full flex flex-col gap-6">
       <AtendimentoActions
         podeFinalizar={podeFinalizar}
-        textoFinalizar="Concluir Matrícula"
-        onFinalizar={finalizar}
+        textoFinalizar={salvando ? "Concluindo..." : "Concluir Matrícula"}
+        onFinalizar={handleFinalizar}
       />
-
+      
       <div className="bg-surface rounded-lg border border-border p-6 shadow-xs">
         {!senhaAtual || !dadosAluno ? (
           <p className="py-12 text-center text-text-secondary">

@@ -8,7 +8,7 @@ const PostoLayout = ({ etapa, children }) => {
 
   React.useEffect(() => {
     if (etapa) {
-      void recuperarAtendimentoAtivo(etapa);
+      recuperarAtendimentoAtivo(etapa).catch(() => {});
     }
   }, [etapa, recuperarAtendimentoAtivo]);
 
