@@ -171,7 +171,7 @@ export const TriagemMain = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto p-4 md:p-6">
+    <div className="w-full flex flex-col gap-6">
       <Tabs
         itens={abasTriagem}
         ativo={abaAtiva}
