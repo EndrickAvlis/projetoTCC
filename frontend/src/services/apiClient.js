@@ -88,6 +88,7 @@ export const requisitarApi = async (
     const res = error.response;
     const corpo = res?.data;
     const mensagem =
+      corpo?.details?.[0]?.message ||
       corpo?.message ||
       corpo?.mensagem ||
       "Não foi possível concluir a solicitação.";
@@ -96,9 +97,7 @@ export const requisitarApi = async (
       !rota.startsWith("/auth") &&
       (!res ||
         res.status >= 500 ||
-        (method !== "GET" &&
-          res.status !== 401 &&
-          corpo?.code !== "DADOS_INVALIDOS"));
+        (method !== "GET" && res.status !== 401));
 
     if (deveNotificar) {
       window.dispatchEvent(new CustomEvent("api:erro", { detail: mensagem }));
@@ -110,4 +109,9 @@ export const requisitarApi = async (
       details: corpo?.details,
     });
   }
+};
+export const notificarErro = (erro) => {
+  if (erro instanceof ApiError) return;
+  const mensagem = erro?.message || "Ocorreu um erro inesperado.";
+  window.dispatchEvent(new CustomEvent("api:erro", { detail: mensagem }));
 };

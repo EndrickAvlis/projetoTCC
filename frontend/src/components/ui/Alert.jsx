@@ -21,6 +21,7 @@ const Alert = ({
 
       {onClose && (
         <button
+        type="button"
           onClick={onClose}
           className="ml-4 text-lg opacity-70 hover:opacity-100"
         >

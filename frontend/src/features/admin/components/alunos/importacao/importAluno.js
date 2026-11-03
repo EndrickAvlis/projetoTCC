@@ -162,7 +162,7 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
       escolaridadeTxt === "NÃO";
 
     const classificacaoValida =
-      classificacao === null || Number.isInteger(classificacao);
+      classificacao === null || (Number.isInteger(classificacao) && classificacao > 0);
 
     const camposObrigatoriosPreenchidos =
       nomeAluno &&

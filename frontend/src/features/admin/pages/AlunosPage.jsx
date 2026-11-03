@@ -1,3 +1,4 @@
+import { notificarErro } from "../../../services/apiClient";
 import * as React from "react";
 import * as FiIcons from "react-icons/fi";
 
@@ -69,7 +70,8 @@ const AlunosPage = () => {
     try {
       await alunoService.atualizarAluno(alunoId, { status: novoStatus });
       recarregarAlunos();
-    } catch {
+    } catch (erro) {
+      notificarErro(erro);
     }
   };
 
