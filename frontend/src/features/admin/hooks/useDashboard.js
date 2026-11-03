@@ -10,7 +10,7 @@ const CATEGORIAS_INICIAIS = {
 };
 
 export const useDashboard = ({
-  periodo = "todo",
+  periodo = "TODO",
   dataInicio = "",
   dataFim = "",
 } = {}) => {
@@ -21,12 +21,15 @@ export const useDashboard = ({
   const [carregando, setCarregando] = React.useState(true);
 
   const carregarDashboard = React.useCallback(async () => {
+    if (periodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
+      return;
+    }
     setCarregando(true);
     try {
       const res = await obterDashboard({
         periodo,
-        dataInicio: periodo === "personalizado" ? dataInicio : undefined,
-        dataFim: periodo === "personalizado" ? dataFim : undefined,
+        dataInicio: periodo === "PERSONALIZADO" ? dataInicio : undefined,
+        dataFim: periodo === "PERSONALIZADO" ? dataFim : undefined,
       });
 
       setTotais(res.totais);
@@ -34,7 +37,6 @@ export const useDashboard = ({
       setProdutos(res.produtos);
       setCursos(res.cursos);
     } catch {
-
     } finally {
       setCarregando(false);
     }

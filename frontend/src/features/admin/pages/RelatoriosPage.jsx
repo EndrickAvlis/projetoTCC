@@ -15,6 +15,7 @@ import { exportarRelatorio, detalheVenda } from "../services/relatorioService";
 import { formatarMoeda, formatarDataHora } from "../../../utils/formatters";
 
 const OPCOES_PERIODO = [
+  { valor: "TODO", label: "Todo o período" },
   { valor: "HOJE", label: "Hoje" },
   { valor: "SEMANA", label: "Esta semana" },
   { valor: "MES", label: "Este mês" },
@@ -29,7 +30,7 @@ const OPCOES_FORMA_PAGAMENTO = [
 ];
 
 const FILTROS_INICIAIS = {
-  periodo: "HOJE",
+  periodo: "TODO",
   dataInicio: "",
   dataFim: "",
   cursoId: "",

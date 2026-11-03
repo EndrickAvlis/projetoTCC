@@ -10,7 +10,7 @@ const id = z.coerce.number().int().positive();
 const opcional = (schema) => z.union([schema, z.literal("")]).optional().transform((valor) => valor === "" ? undefined : valor);
 
 const filtros = z.object({
-  periodo: z.enum(["HOJE", "SEMANA", "MES", "PERSONALIZADO"]).default("HOJE"),
+  periodo: z.enum(["TODO", "HOJE", "SEMANA", "MES", "PERSONALIZADO"]).default("TODO"),
   dataInicio: opcional(data),
   dataFim: opcional(data),
   cursoId: opcional(id),
@@ -28,7 +28,7 @@ const filtros = z.object({
 
 export const obterDadosRelatorioSchema = z.object({
   query: z.object({
-    periodo: z.enum(["HOJE", "SEMANA", "MES", "PERSONALIZADO"]).default("HOJE"),
+    periodo: z.enum(["TODO", "HOJE", "SEMANA", "MES", "PERSONALIZADO"]).default("TODO"),
     dataInicio: opcional(data),
     dataFim: opcional(data),
     cursoId: opcional(id),

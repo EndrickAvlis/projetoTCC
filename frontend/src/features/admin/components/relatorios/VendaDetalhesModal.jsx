@@ -21,8 +21,8 @@ const formatarPeriodo = (periodo) => {
   }
 };
 const formatarItem = (item) => {
-  if (item === "Armário Individual") {
-    return "Armário";
+  if (item === "Armário") {
+    return item;
   } else {
     return `Uniforme ${item}`;
   }

@@ -7,18 +7,18 @@ const dataLocal = (data) => new Intl.DateTimeFormat("en-CA", {
 const inicioDia = (dia) => new Date(`${dia}T03:00:00.000Z`);
 const fimDia = (dia) => new Date(new Date(inicioDia(dia)).getTime() + 86400000 - 1);
 
-const intervaloPeriodo = ({ periodo, dataInicio, dataFim }) => {
-  if (periodo === "todo") return undefined;
-  if (periodo === "personalizado") return { gte: inicioDia(dataInicio), lte: fimDia(dataFim) };
+export const intervaloPeriodo = ({ periodo, dataInicio, dataFim }) => {
+  if (periodo === "TODO") return undefined;
+  if (periodo === "PERSONALIZADO") return { gte: inicioDia(dataInicio), lte: fimDia(dataFim) };
 
   const hoje = dataLocal(new Date());
   let primeiroDia = hoje;
-  if (periodo === "semana") {
+  if (periodo === "SEMANA") {
     const data = inicioDia(hoje);
     const diaSemana = data.getUTCDay();
     data.setUTCDate(data.getUTCDate() - ((diaSemana + 6) % 7));
     primeiroDia = data.toISOString().slice(0, 10);
-  } else if (periodo === "mes") {
+  } else if (periodo === "MES") {
     primeiroDia = `${hoje.slice(0, 7)}-01`;
   }
   return { gte: inicioDia(primeiroDia), lte: fimDia(hoje) };

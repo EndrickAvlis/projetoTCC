@@ -2,40 +2,7 @@
 import BaseService from "./baseService.js";
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
-
-const obterFimDoDia = (data) => {
-  const d = new Date(data);
-  d.setHours(23, 59, 59, 999);
-  return d;
-};
-
-const obterInicioDoDia = (data) => {
-  const d = new Date(data);
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-
-const calcularIntervaloDatas = (periodo, inicioParam, fimParam) => {
-  if (periodo === "PERSONALIZADO" && inicioParam && fimParam) {
-    return {
-      inicio: new Date(`${inicioParam}T00:00:00.000Z`),
-      fim: new Date(`${fimParam}T23:59:59.999Z`),
-    };
-  }
-
-  const agora = new Date();
-  let inicio = obterInicioDoDia(agora);
-  const fim = obterFimDoDia(agora);
-
-  if (periodo === "SEMANA") {
-    const distanciaSegunda = (inicio.getUTCDay() + 6) % 7;
-    inicio.setUTCDate(inicio.getUTCDate() - distanciaSegunda);
-  } else if (periodo === "MES") {
-    inicio.setUTCDate(1);
-  }
-
-  return { inicio, fim };
-};
+import { intervaloPeriodo } from "./dashboardService.js";
 
 const montarFiltrosWhere = ({
   periodo,
@@ -46,18 +13,11 @@ const montarFiltrosWhere = ({
   tipoReceita,
   atendenteId,
 }) => {
-  const { inicio, fim } = calcularIntervaloDatas(
-    periodo,
-    dataInicio,
-    dataFim,
-  );
+  const intervalo = intervaloPeriodo({ periodo, dataInicio, dataFim });
 
-  const where = {
-    dataHoraCompra: {
-      gte: inicio,
-      lte: fim,
-    },
-  };
+  const where = intervalo
+    ? { dataHoraCompra: intervalo }
+    : {};
 
   if (cursoId) {
     where.aluno = {

@@ -8,11 +8,11 @@ const data = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe uma data no format
 
 export const obterDashboardSchema = z.object({
   query: z.object({
-    periodo: z.enum(["todo", "hoje", "semana", "mes", "personalizado"]).default("todo"),
+    periodo: z.enum(["TODO", "HOJE", "SEMANA", "MES", "PERSONALIZADO"]).default("TODO"),
     dataInicio: data.optional(),
     dataFim: data.optional(),
   }).superRefine((query, contexto) => {
-    if (query.periodo !== "personalizado") return;
+    if (query.periodo !== "PERSONALIZADO") return;
     if (!query.dataInicio || !query.dataFim) {
       contexto.addIssue({ code: "custom", message: "Informe as datas inicial e final.", path: ["dataInicio"] });
     } else if (query.dataInicio > query.dataFim) {

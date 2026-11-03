@@ -1,4 +1,3 @@
-import * as React from "react";
 import { formatarMoeda } from "../../../../utils/formatters";
 
 const CATALOGO = [
@@ -53,7 +52,9 @@ const PainelReceita = ({ resumoReceita, carregando = false }) => {
           <div className="mt-3 flex flex-col items-start gap-1 text-xs text-text-secondary">
             <span className="inline-flex items-center gap-1 text-sm font-medium text-text-primary">
               {totais.totalVendas}{" "}
-              {totais.totalVendas === 1 ? "venda realizada" : "vendas realizadas"}
+              {totais.totalVendas === 1
+                ? "venda realizada"
+                : "vendas realizadas"}
             </span>
             <span>
               Ticket médio:{" "}
@@ -67,7 +68,7 @@ const PainelReceita = ({ resumoReceita, carregando = false }) => {
         <div className="col-span-5 px-6">
           <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
             {CATALOGO.map(({ chave, label, cor, unidade, unidadePlural }) => {
-              const dados = categorias[chave];
+              const dados = categorias[chave] || { valor: 0, quantidade: 0 };
               return (
                 <div key={chave} className="space-y-1">
                   <div className="flex items-center gap-1.5 text-text-secondary">

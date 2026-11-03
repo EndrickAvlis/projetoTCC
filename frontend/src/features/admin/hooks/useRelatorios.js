@@ -12,7 +12,7 @@ const RESUMO_INICIAL = {
 };
 
 export const useRelatorios = ({
-  periodo = "HOJE",
+  periodo = "TODO",
   dataInicio = "",
   dataFim = "",
   cursoId = "",
@@ -27,6 +27,10 @@ export const useRelatorios = ({
   const [carregando, setCarregando] = React.useState(true);
 
   const carregarRelatorios = React.useCallback(async () => {
+    if (periodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
+      return;
+    }
+
     setCarregando(true);
 
     try {

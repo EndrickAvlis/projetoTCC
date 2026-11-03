@@ -7,15 +7,15 @@ import { formatarMoeda } from "../../../utils/formatters";
 import { useDashboard } from "../hooks/useDashboard";
 
 const OPCOES_PERIODO = [
-  { valor: "todo", label: "Todo o período" },
-  { valor: "hoje", label: "Hoje" },
-  { valor: "semana", label: "Esta semana" },
-  { valor: "mes", label: "Este mês" },
-  { valor: "personalizado", label: "Personalizado" },
+  { valor: "TODO", label: "Todo o período" },
+  { valor: "HOJE", label: "Hoje" },
+  { valor: "SEMANA", label: "Esta semana" },
+  { valor: "MES", label: "Este mês" },
+  { valor: "PERSONALIZADO", label: "Personalizado" },
 ];
 
 const DashboardPage = () => {
-  const [periodo, setPeriodo] = React.useState("todo");
+  const [periodo, setPeriodo] = React.useState("TODO");
   const [dataInicio, setDataInicio] = React.useState("");
   const [dataFim, setDataFim] = React.useState("");
 
@@ -24,6 +24,13 @@ const DashboardPage = () => {
     dataInicio,
     dataFim,
   });
+
+  const menorQtd =
+    produtos.length > 0 && cursos.length > 0
+      ? Math.min(produtos.length, cursos.length)
+      : 3;
+  const itensVisiveis = Math.min(5, Math.max(3, menorQtd));
+  const alturaLista = `${itensVisiveis * 45}px`;
 
   const cardsKpis = [
     {
@@ -71,7 +78,7 @@ const DashboardPage = () => {
           ariaLabel="Filtro de período"
         />
 
-        {periodo === "personalizado" && (
+        {periodo === "PERSONALIZADO" && (
           <div className="flex items-center gap-2">
             <Input
               type="date"
@@ -146,16 +153,18 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card
           titulo="Produtos Mais Vendidos"
-          subtitulo="Itens com maior saída"
           acoes={
             <Badge variant="neutral" size="sm">
-              Top {produtos.length}
+              {produtos.length} {produtos.length === 1 ? "produto" : "produtos"}
             </Badge>
           }
           divisor
           semPadding
         >
-          <div className="divide-y divide-border">
+          <div
+            className="divide-y divide-border overflow-y-auto"
+            style={{ height: alturaLista }}
+          >
             {produtos.length === 0 ? (
               <p className="py-8 text-center text-xs italic text-text-secondary">
                 Nenhum produto registrado no período.
@@ -190,16 +199,18 @@ const DashboardPage = () => {
 
         <Card
           titulo="Vendas por Curso"
-          subtitulo="Volume por curso"
           acoes={
             <Badge variant="neutral" size="sm">
-              {cursos.length} cursos
+              {cursos.length} {cursos.length === 1 ? "curso" : "cursos"}
             </Badge>
           }
           divisor
           semPadding
         >
-          <div className="divide-y divide-border">
+          <div
+            className="divide-y divide-border overflow-y-auto"
+            style={{ height: alturaLista }}
+          >
             {cursos.length === 0 ? (
               <p className="py-8 text-center text-xs italic text-text-secondary">
                 Nenhuma venda por curso registrada no período.
