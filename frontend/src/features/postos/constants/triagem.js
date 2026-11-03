@@ -17,7 +17,6 @@ export const DOCUMENTOS_TRIAGEM = [
 export const OPCOES_ESCOLARIDADE_PUBLICA = [
   { value: "true", label: "Sim" },
   { value: "false", label: "Não" },
-  { value: "", label: "Não informado" },
 ];
 
 export const OPCOES_ANO_ESCOLAR = [
@@ -27,8 +26,7 @@ export const OPCOES_ANO_ESCOLAR = [
 ];
 
 export const OPCOES_SEXO = [
-  { value: "M", label: "Masculino" },
-  { value: "F", label: "Feminino" },
+  { value: "MASCULINO", label: "Masculino" },
+  { value: "FEMININO", label: "Feminino" },
   { value: "OUTRO", label: "Outro" },
 ];
-

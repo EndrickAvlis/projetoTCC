@@ -56,7 +56,7 @@ export const usePendencias = () => {
       setErro(null);
 
       try {
-        const res = await TriagemService.retomarPendencia(senhaId);
+        const res = await TriagemService.retomarAtendimento(senhaId);
         if (res.senha) {
           definirAtendimento(res.senha, res.atendimento);
         }

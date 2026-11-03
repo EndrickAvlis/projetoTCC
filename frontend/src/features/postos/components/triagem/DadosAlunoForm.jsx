@@ -16,12 +16,24 @@ export const DadosAlunoForm = ({
   cursos = [],
   className = "",
 }) => {
-  const opcoesCursos = React.useMemo(() => {
-    return cursos.map((curso) => ({
-      value: String(curso.id),
-      label: curso.nome,
-    }));
-  }, [cursos]);
+  const opcoesCursos = cursos.map((curso) => ({
+    value: String(curso.id),
+    label: curso.nome,
+  }));
+
+  const cursoSelecionado = cursos.find(
+    (c) => String(c.id) === String(dados.curso),
+  );
+
+  const periodosAtivos = new Set(
+    cursoSelecionado?.periodos
+      ?.filter((p) => p.matriculaAtiva)
+      .map((p) => p.periodo) || [],
+  );
+
+  const opcoesPeriodos = PERIODOS_CURSO.filter((p) =>
+    periodosAtivos.has(p.value),
+  );
 
   const handleChange = (campo) => (evento) => {
     if (onChange) {
@@ -38,118 +50,118 @@ export const DadosAlunoForm = ({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="md:col-span-2">
-        <Input
-          label="Nome do Aluno"
-          name="nome"
-          value={dados.nome}
-          onChange={handleChange("nome")}
-          error={erros.nome}
-          disabled={disabled}
-          required
-          placeholder="Nome completo do aluno"
-        />
-      </div>
+          <Input
+            label="Nome do Aluno"
+            name="nome"
+            value={dados.nome}
+            onChange={handleChange("nome")}
+            error={erros.nome}
+            disabled={disabled}
+            required
+            placeholder="Nome completo do aluno"
+          />
+        </div>
 
-      <div>
-        <Input
-          label="Classificação"
-          name="classificacao"
-          type="number"
-          min="1"
-          value={dados.classificacao}
-          onChange={handleChange("classificacao")}
-          error={erros.classificacao}
-          disabled={disabled}
-          required
-          placeholder="Ex: 1"
-        />
-      </div>
+        <div>
+          <Input
+            label="Classificação"
+            name="classificacao"
+            type="number"
+            min="1"
+            value={dados.classificacao}
+            onChange={handleChange("classificacao")}
+            error={erros.classificacao}
+            disabled={disabled}
+            required
+            placeholder="Ex: 1"
+          />
+        </div>
 
-      <div className="md:col-span-2">
-        <Select
-          label="Curso"
-          name="curso"
-          value={dados.curso}
-          onChange={handleChange("curso")}
-          options={opcoesCursos}
-          placeholder="Selecione o curso..."
-          error={erros.curso}
-          disabled={disabled}
-          required
-        />
-      </div>
+        <div className="md:col-span-2">
+          <Select
+            label="Curso"
+            name="curso"
+            value={dados.curso}
+            onChange={handleChange("curso")}
+            options={opcoesCursos}
+            placeholder="Selecione o curso..."
+            error={erros.curso}
+            disabled={disabled}
+            required
+          />
+        </div>
 
-      <div>
-        <Select
-          label="Período"
-          name="periodo"
-          value={dados.periodo}
-          onChange={handleChange("periodo")}
-          options={PERIODOS_CURSO}
-          placeholder="Selecione o período..."
-          error={erros.periodo}
-          disabled={disabled}
-          required
-        />
-      </div>
+        <div>
+          <Select
+            label="Período"
+            name="periodo"
+            value={dados.periodo}
+            onChange={handleChange("periodo")}
+            options={opcoesPeriodos}
+            placeholder={dados.curso ? "Selecione o período..." : "Selecione um curso primeiro"}
+            error={erros.periodo}
+            disabled={disabled || !dados.curso}
+            required
+          />
+        </div>
 
-      <div>
-        <Select
-          label="Ano Escolar"
-          name="ano"
-          value={dados.ano}
-          onChange={handleChange("ano")}
-          options={OPCOES_ANO_ESCOLAR}
-          placeholder="Selecione o ano..."
-          error={erros.ano}
-          disabled={disabled}
-          required
-        />
-      </div>
+        <div>
+          <Select
+            label="Ano Escolar"
+            name="ano"
+            value={dados.ano}
+            onChange={handleChange("ano")}
+            options={OPCOES_ANO_ESCOLAR}
+            placeholder="Selecione o ano..."
+            error={erros.ano}
+            disabled={disabled}
+            required
+          />
+        </div>
 
-      <div>
-        <Select
-          label="Escolaridade Pública"
-          name="escolaridadePublica"
-          value={dados.escolaridadePublica}
-          onChange={handleChange("escolaridadePublica")}
-          options={OPCOES_ESCOLARIDADE_PUBLICA}
-          placeholder="Selecione..."
-          error={erros.escolaridadePublica}
-          disabled={disabled}
-          required
-        />
-      </div>
+        <div>
+          <Select
+            label="Escolaridade Pública"
+            name="escolaridadePublica"
+            value={dados.escolaridadePublica}
+            onChange={handleChange("escolaridadePublica")}
+            options={OPCOES_ESCOLARIDADE_PUBLICA}
+            placeholder="Selecione..."
+            error={erros.escolaridadePublica}
+            disabled={disabled}
+            required
+          />
+        </div>
 
-      <div>
-        <Select
-          label="Sexo"
-          name="sexo"
-          value={dados.sexo}
-          onChange={handleChange("sexo")}
-          options={OPCOES_SEXO}
-          placeholder="Selecione o sexo..."
-          error={erros.sexo}
-          disabled={disabled}
-          required
-        />
-      </div>
+        <div>
+          <Select
+            label="Sexo"
+            name="sexo"
+            value={dados.sexo}
+            onChange={handleChange("sexo")}
+            options={OPCOES_SEXO}
+            placeholder="Selecione o sexo..."
+            error={erros.sexo}
+            disabled={disabled}
+            required
+          />
+        </div>
 
-      <div className="md:col-span-2 lg:col-span-2">
-        <Input
-          label="Cidade"
-          name="cidade"
-          value={dados.cidade}
-          onChange={handleChange("cidade")}
-          error={erros.cidade}
-          disabled={disabled}
-          required
-          placeholder="Cidade do aluno"
-        />
+        <div className="md:col-span-2 lg:col-span-2">
+          <Input
+            label="Cidade"
+            name="cidade"
+            value={dados.cidade}
+            onChange={handleChange("cidade")}
+            error={erros.cidade}
+            disabled={disabled}
+            required
+            placeholder="Cidade do aluno"
+          />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default DadosAlunoForm;

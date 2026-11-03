@@ -1,3 +1,4 @@
+import { notificarErro } from "../../../../services/apiClient";
 import * as React from "react";
 import { FiClock, FiAlertCircle } from "react-icons/fi";
 import { useAtendimento } from "../../context/atendimentoContext";
@@ -22,36 +23,17 @@ const DADOS_INICIAIS = {
   escolaridadePublica: "",
 };
 
-const alunoParaForm = (aluno) => {
-  return {
-    nome: aluno?.nome || "",
-    cidade: aluno?.cidade || "",
-    sexo: aluno?.sexo || "",
-    escolaridadePublica: aluno?.escolaridadePublica || "",
-    classificacao: aluno?.classificacao || "",
-    curso: aluno?.cursoId || "",
-    periodo: aluno?.periodo || "",
-    ano: aluno?.anoEscolar || "1",
-  };
-};
+const string = (valor, padrao = "") => valor?.toString() ?? padrao;
 
-const formParaPayload = (dados, alunoId) => ({
-  alunoId,
-  dadosAluno: {
-    nome: dados.nome.trim(),
-    cidade: dados.cidade.trim() || null,
-    sexo: dados.sexo || null,
-    escolaridadePublica:
-      dados.escolaridadePublica === ""
-        ? null
-        : String(dados.escolaridadePublica) === "true",
-  },
-  matricula: {
-    cursoId: Number(dados.curso),
-    classificacao: dados.classificacao ? Number(dados.classificacao) : null,
-    periodo: dados.periodo,
-    anoEscolar: Number(dados.ano),
-  },
+export const formPayload = (aluno) => ({
+  nome: string(aluno?.nome),
+  cidade: string(aluno?.cidade),
+  sexo: string(aluno?.sexo),
+  escolaridadePublica: string(aluno?.escolaridadePublica),
+  classificacao: string(aluno?.classificacao),
+  curso: string(aluno?.cursoId),
+  periodo: string(aluno?.periodo),
+  ano: string(aluno?.anoEscolar, "1"),
 });
 
 export const TriagemMain = () => {
@@ -97,7 +79,7 @@ export const TriagemMain = () => {
 
   const handleSelecionarAluno = (aluno) => {
     setAlunoId(aluno.id);
-    setDadosAluno(alunoParaForm(aluno));
+    setDadosAluno(formPayload(aluno));
   };
 
   const handleLimparFormulario = () => {
@@ -107,22 +89,19 @@ export const TriagemMain = () => {
   };
 
   const handleChangeCampo = (campo, valor) => {
-    setDadosAluno((prev) => ({ ...prev, [campo]: valor }));
+    setDadosAluno((prev) => ({
+      ...prev,
+      [campo]: valor,
+      ...(campo === "curso" ? { periodo: "" } : {}),
+    }));
   };
 
   const handleSalvarPendencia = async () => {
-    if (documentosSelecionados.length === 0 || !atendimentoAtual) return;
+    if (!podeSalvarPendencia || !atendimentoAtual) return;
 
     try {
       setCarregando(true);
-
-      if (dadosAluno.nome.trim() && dadosAluno.curso) {
-        await TriagemService.salvarAluno(
-          senhaAtual.id,
-          formParaPayload(dadosAluno, alunoId),
-        );
-      }
-
+      await TriagemService.vincularAluno(senhaAtual.id, dadosAluno, alunoId);
       await TriagemService.registrarPendencia(
         atendimentoAtual.idHistorico,
         documentosSelecionados,
@@ -130,7 +109,8 @@ export const TriagemMain = () => {
 
       limparAtendimento();
       handleLimparFormulario();
-    } catch {
+    } catch (erro) {
+      notificarErro(erro);
     } finally {
       setCarregando(false);
     }
@@ -139,36 +119,46 @@ export const TriagemMain = () => {
   const handleFinalizar = async () => {
     try {
       setCarregando(true);
-
-      await TriagemService.salvarAluno(
-        senhaAtual.id,
-        formParaPayload(dadosAluno, alunoId),
-      );
-
+      await TriagemService.vincularAluno(senhaAtual.id, dadosAluno, alunoId);
       await finalizar();
       handleLimparFormulario();
-    } catch {
+    } catch (erro) {
+      notificarErro(erro);
     } finally {
       setCarregando(false);
     }
   };
 
   const handleRetomar = async (senhaId) => {
-    const res = await retomar(senhaId);
-    if (res.documentos) {
-      setDocumentosSelecionados(res.documentos);
+    try {
+      const res = await retomar(senhaId);
+      if (res?.documentos) {
+        setDocumentosSelecionados(res.documentos);
+      }
+      if (res?.senha?.aluno) {
+        setAlunoId(res.senha.aluno.id);
+        setDadosAluno(formPayload(res.senha.aluno));
+      }
+      setAbaAtiva("atendimento");
+    } catch (erro) {
+      notificarErro(erro);
     }
-    setAbaAtiva("atendimento");
   };
 
-  const podeFinalizar = Boolean(
+  const alunoPreenchido = Boolean(
     fase === "iniciada" &&
-    dadosAluno.nome &&
+    dadosAluno.nome.trim() &&
     dadosAluno.curso &&
     dadosAluno.periodo &&
     dadosAluno.ano &&
-    documentosSelecionados.length === 0,
+    dadosAluno.escolaridadePublica !== "" &&
+    dadosAluno.sexo &&
+    dadosAluno.cidade.trim() &&
+    Number(dadosAluno.classificacao) > 0,
   );
+  const podeFinalizar = alunoPreenchido && documentosSelecionados.length === 0;
+  const podeSalvarPendencia =
+    alunoPreenchido && documentosSelecionados.length > 0;
 
   const abasTriagem = [
     { id: "atendimento", label: "Atendimento atual", icone: FiClock },
@@ -217,6 +207,7 @@ export const TriagemMain = () => {
                 documentosSelecionados={documentosSelecionados}
                 onChange={setDocumentosSelecionados}
                 onSalvarPendencia={handleSalvarPendencia}
+                podeSalvar={podeSalvarPendencia}
                 salvando={carregando}
                 disabled={fase !== "iniciada"}
               />

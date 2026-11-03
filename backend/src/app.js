@@ -9,11 +9,10 @@ import produtosRoutes from "./routes/produtosRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import alunoRoutes from "./routes/alunoRoutes.js";
 import atendimentoRoutes from "./routes/atendimentoRoutes.js";
-import triagemRoutes from "./routes/triagemRoutes.js";
 import relatorioRoutes from "./routes/relatorioRoutes.js";
 import painelRoutes from "./routes/painelRoutes.js";
-import triagemRoutes from "./routes/triagemRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import triagemRoutes from "./routes/triagemRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import cookieParser from "cookie-parser";
 
@@ -35,12 +34,11 @@ app.use("/usuarios", usuarioRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/auth", authRoutes);
 app.use("/alunos", alunoRoutes);
-app.use("/atendimentos", atendimentoRoutes);
-app.use("/", triagemRoutes);
-app.use("/relatorios", relatorioRoutes);
 app.use("/painel", painelRoutes);
-app.use("/triagem", triagemRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/atendimentos", atendimentoRoutes);
+app.use("/relatorios", relatorioRoutes);
+app.use("/triagem", triagemRoutes);
 
 app.get("/", (req, res) => {
   res.json({

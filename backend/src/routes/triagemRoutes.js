@@ -7,7 +7,7 @@ import * as auth from "../middlewares/authMiddleware.js";
 const triagemRoutes = Router();
 triagemRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor", "atendente"]));
 
-triagemRoutes.put("/senhas/:senhaId/aluno",
+triagemRoutes.put("/:senhaId/aluno",
   validarRequisicao(ValidatorTriagem.vincularAlunoSchema),
   TriagemController.vincularAluno,
 );
