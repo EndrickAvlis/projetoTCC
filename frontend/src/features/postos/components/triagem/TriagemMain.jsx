@@ -1,6 +1,6 @@
-import { notificarErro } from "../../../../services/apiClient";
 import * as React from "react";
 import { FiClock, FiAlertCircle } from "react-icons/fi";
+import { useToast } from "../../../../context/toastContext";
 import { useAtendimento } from "../../context/atendimentoContext";
 import { usePendencias } from "../../hooks/usePendencias";
 import * as TriagemService from "../../services/triagemService";
@@ -23,30 +23,42 @@ const DADOS_INICIAIS = {
   escolaridadePublica: "",
 };
 
-const string = (valor, padrao = "") => valor?.toString() ?? padrao;
+const formatarParaTexto = (valor, padrao = "") => valor?.toString() ?? padrao;
 
 export const formPayload = (aluno) => ({
-  nome: string(aluno?.nome),
-  cidade: string(aluno?.cidade),
-  sexo: string(aluno?.sexo),
-  escolaridadePublica: string(aluno?.escolaridadePublica),
-  classificacao: string(aluno?.classificacao),
-  curso: string(aluno?.cursoId),
-  periodo: string(aluno?.periodo),
-  ano: string(aluno?.anoEscolar, "1"),
+  nome: formatarParaTexto(aluno?.nome),
+  cidade: formatarParaTexto(aluno?.cidade),
+  sexo: formatarParaTexto(aluno?.sexo),
+  escolaridadePublica: formatarParaTexto(aluno?.escolaridadePublica),
+  classificacao: formatarParaTexto(aluno?.classificacao),
+  curso: formatarParaTexto(aluno?.cursoId),
+  periodo: formatarParaTexto(aluno?.periodo),
+  ano: formatarParaTexto(aluno?.anoEscolar, "1"),
 });
 
+const validarDadosAluno = (dados) =>
+  Boolean(
+    dados.nome?.trim() &&
+      dados.curso &&
+      dados.periodo &&
+      dados.ano &&
+      dados.escolaridadePublica !== "" &&
+      dados.sexo &&
+      dados.cidade?.trim() &&
+      Number(dados.classificacao) > 0,
+  );
+
 export const TriagemMain = () => {
+  const toast = useToast();
   const {
     fase,
     senhaAtual,
     atendimentoAtual,
     carregando,
-    finalizar,
+    finalizarAtendimento,
     limparAtendimento,
     setCarregando,
   } = useAtendimento();
-
   const {
     pendencias,
     total: totalPendencias,
@@ -60,9 +72,7 @@ export const TriagemMain = () => {
   const [cursos, setCursos] = React.useState([]);
   const [alunoId, setAlunoId] = React.useState(null);
   const [dadosAluno, setDadosAluno] = React.useState(DADOS_INICIAIS);
-  const [documentosSelecionados, setDocumentosSelecionados] = React.useState(
-    [],
-  );
+  const [documentosSelecionados, setDocumentosSelecionados] = React.useState([]);
 
   React.useEffect(() => {
     const carregarCursos = async () => {
@@ -110,7 +120,7 @@ export const TriagemMain = () => {
       limparAtendimento();
       handleLimparFormulario();
     } catch (erro) {
-      notificarErro(erro);
+      toast.erro(erro.message);
     } finally {
       setCarregando(false);
     }
@@ -120,10 +130,10 @@ export const TriagemMain = () => {
     try {
       setCarregando(true);
       await TriagemService.vincularAluno(senhaAtual.id, dadosAluno, alunoId);
-      await finalizar();
+      await finalizarAtendimento();
       handleLimparFormulario();
     } catch (erro) {
-      notificarErro(erro);
+      toast.erro(erro.message);
     } finally {
       setCarregando(false);
     }
@@ -141,21 +151,11 @@ export const TriagemMain = () => {
       }
       setAbaAtiva("atendimento");
     } catch (erro) {
-      notificarErro(erro);
+      toast.erro(erro.message);
     }
   };
 
-  const alunoPreenchido = Boolean(
-    fase === "iniciada" &&
-    dadosAluno.nome.trim() &&
-    dadosAluno.curso &&
-    dadosAluno.periodo &&
-    dadosAluno.ano &&
-    dadosAluno.escolaridadePublica !== "" &&
-    dadosAluno.sexo &&
-    dadosAluno.cidade.trim() &&
-    Number(dadosAluno.classificacao) > 0,
-  );
+  const alunoPreenchido = fase === "iniciada" && validarDadosAluno(dadosAluno);
   const podeFinalizar = alunoPreenchido && documentosSelecionados.length === 0;
   const podeSalvarPendencia =
     alunoPreenchido && documentosSelecionados.length > 0;

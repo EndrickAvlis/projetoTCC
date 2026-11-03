@@ -9,7 +9,6 @@ export const AtendimentoProvider = ({ children }) => {
   const [dadosAluno, setDadosAluno] = React.useState(null);
   const [atendimentoAtual, setAtendimentoAtual] = React.useState(null);
   const [carregando, setCarregando] = React.useState(false);
-  const [erro, setErro] = React.useState(null);
 
   const fase = !senhaAtual
     ? "sem_senha"
@@ -21,7 +20,6 @@ export const AtendimentoProvider = ({ children }) => {
     setSenhaAtual(null);
     setAtendimentoAtual(null);
     setDadosAluno(null);
-    setErro(null);
     setCarregando(false);
   }, []);
 
@@ -35,14 +33,9 @@ export const AtendimentoProvider = ({ children }) => {
     async (senhaId, etapa) => {
       try {
         setCarregando(true);
-        setErro(null);
-
         const senha = await filaService.chamarSenha(senhaId, etapa);
         definirAtendimento(senha, null);
         return senha;
-      } catch (err) {
-        setErro(err.message);
-        throw err;
       } finally {
         setCarregando(false);
       }
@@ -50,12 +43,10 @@ export const AtendimentoProvider = ({ children }) => {
     [definirAtendimento],
   );
 
-  const alterarPrioridade = React.useCallback(async () => {
+  const alterarPrioridadeSenha = React.useCallback(async () => {
     if (!senhaAtual) return null;
     try {
       setCarregando(true);
-      setErro(null);
-
       const senhaAtualizada = await filaService.alterarPrioridade(
         senhaAtual.id,
         !senhaAtual.prioritaria,
@@ -64,20 +55,16 @@ export const AtendimentoProvider = ({ children }) => {
         prevs ? { ...prevs, ...senhaAtualizada } : senhaAtualizada,
       );
       return senhaAtualizada;
-    } catch (err) {
-      setErro(err.message);
-      throw err;
     } finally {
       setCarregando(false);
     }
   }, [senhaAtual]);
 
-  const iniciar = React.useCallback(async () => {
+  const iniciarAtendimento = React.useCallback(async () => {
     if (!senhaAtual) return null;
 
     try {
       setCarregando(true);
-      setErro(null);
       const res = await atendimentoService.iniciarAtendimento(senhaAtual.id);
       setAtendimentoAtual(res.atendimento);
       setSenhaAtual((prev) =>
@@ -87,58 +74,43 @@ export const AtendimentoProvider = ({ children }) => {
         setDadosAluno(res.aluno);
       }
       return res.atendimento;
-    } catch (error) {
-      setErro(error.message);
-      throw error;
     } finally {
       setCarregando(false);
     }
   }, [senhaAtual]);
 
-  const rechamar = React.useCallback(async () => {
+  const rechamarSenha = React.useCallback(async () => {
     if (!senhaAtual) return null;
 
     try {
       setCarregando(true);
-      setErro(null);
       return await filaService.rechamarSenha(senhaAtual.id, senhaAtual.etapa);
-    } catch (error) {
-      setErro(error.message);
-      throw error;
     } finally {
       setCarregando(false);
     }
   }, [senhaAtual]);
 
-  const finalizar = React.useCallback(async () => {
+  const finalizarAtendimento = React.useCallback(async () => {
     if (!senhaAtual) return null;
 
     try {
       setCarregando(true);
-      setErro(null);
       const res = await atendimentoService.finalizarAtendimento(senhaAtual.id);
       limparAtendimento();
       return res;
-    } catch (error) {
-      setErro(error.message);
-      throw error;
     } finally {
       setCarregando(false);
     }
   }, [senhaAtual, limparAtendimento]);
 
-  const cancelar = React.useCallback(async () => {
+  const cancelarAtendimento = React.useCallback(async () => {
     if (!senhaAtual) return null;
 
     try {
       setCarregando(true);
-      setErro(null);
       const res = await atendimentoService.cancelarAtendimento(senhaAtual.id);
       limparAtendimento();
       return res;
-    } catch (error) {
-      setErro(error.message);
-      throw error;
     } finally {
       setCarregando(false);
     }
@@ -150,7 +122,6 @@ export const AtendimentoProvider = ({ children }) => {
 
       try {
         setCarregando(true);
-        setErro(null);
         const res = await atendimentoService.recuperarAtendimento(etapa);
         if (res?.senha) {
           definirAtendimento(res.senha, res.atendimento);
@@ -160,7 +131,6 @@ export const AtendimentoProvider = ({ children }) => {
         return res;
       } catch (error) {
         limparAtendimento();
-        setErro(error.message);
         throw error;
       } finally {
         setCarregando(false);
@@ -185,16 +155,14 @@ export const AtendimentoProvider = ({ children }) => {
     fase,
     carregando,
     setCarregando,
-    erro,
-    setErro,
     chamarSenha,
-    alterarPrioridade,
+    alterarPrioridadeSenha,
     definirAtendimento,
     limparAtendimento,
-    iniciar,
-    rechamar,
-    finalizar,
-    cancelar,
+    iniciarAtendimento,
+    rechamarSenha,
+    finalizarAtendimento,
+    cancelarAtendimento,
     recuperarAtendimentoAtivo,
   };
 

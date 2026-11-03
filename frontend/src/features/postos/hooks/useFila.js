@@ -41,14 +41,11 @@ export const useFila = (etapa) => {
     return () => window.clearInterval(intervalo);
   }, [carregarFila]);
 
-  const limparerro = () => setErro(null);
-
   return {
     senhasAguardando,
     senhasChamadasHoje,
     carregandoFila,
     erro,
-    limparerro,
     carregarFila,
   };
 };

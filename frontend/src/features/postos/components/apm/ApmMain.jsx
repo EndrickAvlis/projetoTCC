@@ -1,4 +1,4 @@
-import { notificarErro } from "../../../../services/apiClient";
+import { useToast } from "../../../../context/toastContext";
 import InfoAluno from "./InfoAluno";
 import ArmarioVenda from "./ArmarioVenda";
 import ContribuicaoVoluntaria from "./ContribuicaoVoluntaria";
@@ -14,7 +14,9 @@ import * as ApmService from "../../services/apmService";
 import * as React from "react";
 
 const ApmMain = () => {
-  const { senhaAtual, dadosAluno, fase, finalizar } = useAtendimento();
+  const toast = useToast();
+  const { senhaAtual, dadosAluno, fase, finalizarAtendimento } =
+    useAtendimento();
   const venda = useVenda();
   const [salvando, setSalvando] = React.useState(false);
 
@@ -38,10 +40,10 @@ const ApmMain = () => {
           ...venda.payload(),
         });
       }
-      await finalizar();
+      await finalizarAtendimento();
       venda.limparVenda();
     } catch (erro) {
-      notificarErro(erro);
+      toast.erro(erro.message);
     } finally {
       setSalvando(false);
     }
@@ -54,7 +56,7 @@ const ApmMain = () => {
         textoFinalizar={salvando ? "Finalizando..." : "Finalizar Compra"}
         onFinalizar={handleFinalizar}
       />
-      
+
       {venda.erro && <Alert type="error" message={venda.erro} />}
       <div className="w-full min-w-0 flex flex-col lg:flex-row gap-5 items-stretch">
         <div className="flex-1 min-w-0 w-full bg-surface rounded-lg border border-border p-5 shadow-xs flex flex-col gap-5">

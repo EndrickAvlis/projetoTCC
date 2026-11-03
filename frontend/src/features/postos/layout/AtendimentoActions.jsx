@@ -1,10 +1,11 @@
 import { FiPlay, FiRotateCw, FiCheck, FiClock, FiX } from "react-icons/fi";
-import{ useState } from "react"; 
+import { useState } from "react";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import ConfirmarModal from "../../../components/ui/ConfirmarModal";
 import { formatarSenha } from "../../../utils/formatters";
 import { useAtendimento } from "../context/atendimentoContext";
+import { useToast } from "../../../context/toastContext";
 
 export const AtendimentoActions = ({
   podeFinalizar = true,
@@ -13,27 +14,40 @@ export const AtendimentoActions = ({
   onFinalizar,
   className = "",
 }) => {
-  const { senhaAtual, fase, carregando, iniciar, rechamar, cancelar } =
-    useAtendimento();
+  const {
+    senhaAtual,
+    fase,
+    carregando,
+    iniciarAtendimento,
+    rechamarSenha,
+    cancelarAtendimento,
+  } = useAtendimento();
+  const toast = useToast();
   const [modalCancelarAberto, setModalCancelarAberto] = useState(false);
 
   const handleConfirmarCancelamento = async () => {
     try {
-      await cancelar();
+      await cancelarAtendimento();
       setModalCancelarAberto(false);
-    } catch {}
+    } catch (err) {
+      toast.erro(err.message);
+    }
   };
 
   const handleRechamar = async () => {
     try {
-      await rechamar();
-    } catch {}
+      await rechamarSenha();
+    } catch (err) {
+      toast.erro(err.message);
+    }
   };
 
   const handleIniciar = async () => {
     try {
-      await iniciar();
-    } catch {}
+      await iniciarAtendimento();
+    } catch (err) {
+      toast.erro(err.message);
+    }
   };
 
   return (

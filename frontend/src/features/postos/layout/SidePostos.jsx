@@ -5,26 +5,35 @@ import HistoricoGrid from "../components/fila/HistoricoGrid";
 import SenhaAtualCard from "../components/fila/SenhaAtualCard";
 import { useAtendimento } from "../context/atendimentoContext";
 import { useFila } from "../hooks/useFila";
+import { useToast } from "../../../context/toastContext";
 
 const SidePostos = ({ etapa }) => {
   const [visualizacao, setVisualizacao] = useState("aguardando");
   const exibindoHistorico = visualizacao === "historico";
+  const toast = useToast();
 
-  const { senhaAtual, chamarSenha, alterarPrioridade, carregando } =
+  const { senhaAtual, chamarSenha, alterarPrioridadeSenha, carregando } =
     useAtendimento();
 
   const { senhasAguardando, senhasChamadasHoje, carregandoFila, carregarFila } =
     useFila(etapa);
 
   const handleChamarSenha = async (senha) => {
-    await chamarSenha(senha.id, etapa);
-    await carregarFila({ silencioso: true });
+    try {
+      await chamarSenha(senha.id, etapa);
+    } catch (err) {
+      toast.erro(err.message);
+    } finally {
+      await carregarFila({ silencioso: true });
+    }
   };
 
   const handleAlternarPrioridade = async () => {
     try {
-      await alterarPrioridade();
-    } catch {}
+      await alterarPrioridadeSenha();
+    } catch (err) {
+      toast.erro(err.message);
+    }
   };
 
   const ocupado = carregando || carregandoFila;

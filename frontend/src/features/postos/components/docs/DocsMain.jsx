@@ -1,10 +1,12 @@
-import { notificarErro } from "../../../../services/apiClient";
+import { useToast } from "../../../../context/toastContext";
 import { useAtendimento } from "../../context/atendimentoContext";
 import { useState } from "react";
 import AtendimentoActions from "../../layout/AtendimentoActions";
 
 export const DocsMain = () => {
-  const { senhaAtual, dadosAluno, fase, finalizar } = useAtendimento();
+  const toast = useToast();
+  const { senhaAtual, dadosAluno, fase, finalizarAtendimento } =
+    useAtendimento();
   const [salvando, setSalvando] = useState(false);
 
   const podeFinalizar = fase === "iniciada" && Boolean(dadosAluno) && !salvando;
@@ -12,9 +14,9 @@ export const DocsMain = () => {
   const handleFinalizar = async () => {
     try {
       setSalvando(true);
-      await finalizar();
+      await finalizarAtendimento();
     } catch (erro) {
-      notificarErro(erro);
+      toast.erro(erro.message);
     } finally {
       setSalvando(false);
     }
@@ -42,7 +44,7 @@ export const DocsMain = () => {
         textoFinalizar={salvando ? "Concluindo..." : "Concluir Matrícula"}
         onFinalizar={handleFinalizar}
       />
-      
+
       <div className="bg-surface rounded-lg border border-border p-6 shadow-xs">
         {!senhaAtual || !dadosAluno ? (
           <p className="py-12 text-center text-text-secondary">
