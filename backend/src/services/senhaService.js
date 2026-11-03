@@ -38,7 +38,7 @@ const obterDia = (data) => {
 
 let ultimoResetEm = null;
 
-const obterIntervaloDia = (agora) => {
+export const obterIntervaloDia = (agora = new Date()) => {
   const dia = obterDia(agora);
   const inicioDia = new Date(`${dia}T00:00:00-03:00`);
   const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000);

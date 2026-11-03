@@ -23,7 +23,6 @@ export const listarFila = async (req, res) => {
 
   return res.json({
     senhas: senhas.map(senhaResposta),
-    total: senhas.length,
   });
 };
 
@@ -104,6 +103,16 @@ export const rechamarSenha = async (req, res) => {
     mensagem: "Senha rechamda com sucesso.",
   });
 };
+
+export const listarHistorico = async (req, res) => {
+  const { etapa } = req.validado.query;
+  const senhas = await historicoSenhaService.listarChamadaHoje(etapa);
+
+  return res.json({
+    mensagem: "Senhas chamadas hoje listadas com sucesso",
+    senhas: senhas.map(senhaResposta),
+  })
+} 
 
 const senhaNaoEncontrada = () =>
   new AppError("Senha não encontrada.", {

@@ -10,25 +10,15 @@ const SidePostos = ({ etapa }) => {
   const [visualizacao, setVisualizacao] = useState("aguardando");
   const exibindoHistorico = visualizacao === "historico";
 
-  const {
-    senhaAtual,
-    chamarSenha,
-    alterarPrioridade,
-    carregando,
-  } = useAtendimento();
+  const { senhaAtual, chamarSenha, alterarPrioridade, carregando } =
+    useAtendimento();
 
-  const {
-    senhasAguardando,
-    senhasChamadasHoje,
-    carregandoFila,
-    carregarFila,
-  } = useFila(etapa);
+  const { senhasAguardando, senhasChamadasHoje, carregandoFila, carregarFila } =
+    useFila(etapa);
 
-  const handleSelecionarSenha = async (senhaSelecionada) => {
-    try {
-      await chamarSenha(senhaSelecionada.id, etapa);
-      await carregarFila({ silencioso: true });
-    } catch {}
+  const handleChamarSenha = async (senha) => {
+    await chamarSenha(senha.id, etapa);
+    await carregarFila({ silencioso: true });
   };
 
   const handleAlternarPrioridade = async () => {
@@ -38,15 +28,27 @@ const SidePostos = ({ etapa }) => {
   };
 
   const ocupado = carregando || carregandoFila;
+  const proximaSenha = senhasAguardando[0];
+  const podeChamar = !ocupado && !senhaAtual && Boolean(proximaSenha);
+
+  const handleChamarProximo = () => {
+    if (proximaSenha) {
+      handleChamarSenha(proximaSenha);
+    }
+  };
 
   return (
     <aside className="flex h-screen w-75 shrink-0 flex-col border-r border-border bg-surface">
       <div className="flex flex-col items-center justify-center gap-1 border-b border-border bg-page p-4">
         <p className="text-[0.9rem] font-medium uppercase tracking-wide text-text-secondary">
-          Senhas aguardando
+          {visualizacao === "aguardando"
+            ? "Senhas aguardando"
+            : "Senhas chamadas hoje"}
         </p>
         <p className="text-3xl font-bold text-primary">
-          {senhasAguardando.length}
+          {visualizacao === "aguardando"
+            ? senhasAguardando.length
+            : senhasChamadasHoje.length}
         </p>
       </div>
 
@@ -85,10 +87,21 @@ const SidePostos = ({ etapa }) => {
         ) : (
           <FilaGrid
             senhas={senhasAguardando}
-            onSelecionarSenha={handleSelecionarSenha}
+            onSelecionarSenha={handleChamarSenha}
             desabilitada={ocupado || Boolean(senhaAtual)}
           />
         )}
+      </div>
+      <div className="border-t border-border bg-page p-4">
+        <Button
+          variant="primary"
+          size="lg"
+          className="w-full"
+          onClick={handleChamarProximo}
+          disabled={!podeChamar}
+        >
+          Chamar próximo
+        </Button>
       </div>
     </aside>
   );

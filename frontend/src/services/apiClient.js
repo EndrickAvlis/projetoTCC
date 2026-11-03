@@ -19,7 +19,7 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
-let promisseRefresh = null;
+let promiseRefresh = null;
 apiClient.interceptors.response.use(
   (res) => res,
   async (erro) => {
@@ -42,8 +42,8 @@ apiClient.interceptors.response.use(
         return Promise.reject(erro);
       }
 
-      if (!promisseRefresh) {
-        promisseRefresh = apiClient
+      if (!promiseRefresh) {
+        promiseRefresh = apiClient
           .post("/auth/refresh")
           .catch((falhouReq) => {
             if (
@@ -59,11 +59,11 @@ apiClient.interceptors.response.use(
             return Promise.reject(falhouReq);
           })
           .finally(() => {
-            promisseRefresh = null;
+            promiseRefresh = null;
           });
       }
 
-      await promisseRefresh;
+      await promiseRefresh;
       return apiClient(dadosReq);
     }
 
@@ -85,33 +85,30 @@ export const requisitarApi = async (
     });
     return res.data;
   } catch (error) {
-    const res = error.response;
-    const corpo = res?.data;
-    const mensagem =
-      corpo?.details?.[0]?.message ||
-      corpo?.message ||
-      corpo?.mensagem ||
-      "Não foi possível concluir a solicitação.";
-
-    const deveNotificar =
-      !rota.startsWith("/auth") &&
-      (!res ||
-        res.status >= 500 ||
-        (method !== "GET" && res.status !== 401));
-
-    if (deveNotificar) {
-      window.dispatchEvent(new CustomEvent("api:erro", { detail: mensagem }));
+    if (error instanceof ApiError) {
+      throw error;
     }
 
-    throw new ApiError(mensagem, {
+    const res = error.response;
+    const corpo = res?.data;
+
+    const message =
+      corpo?.details?.[0]?.message ||
+      corpo?.message ||
+      (!res && error.request
+        ? "Sem conexão com o servidor."
+        : "Não foi possível concluir a solicitação.");
+
+    throw new ApiError(message, {
       status: res?.status,
       code: corpo?.code,
       details: corpo?.details,
     });
   }
 };
+
 export const notificarErro = (erro) => {
-  if (erro instanceof ApiError) return;
-  const mensagem = erro?.message || "Ocorreu um erro inesperado.";
-  window.dispatchEvent(new CustomEvent("api:erro", { detail: mensagem }));
+  const message = erro?.message || "Ocorreu um erro inesperado.";
+  window.dispatchEvent(new CustomEvent("api:erro", { detail: message }));
 };
+
