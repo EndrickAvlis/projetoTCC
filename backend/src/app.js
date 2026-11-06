@@ -12,7 +12,7 @@ import atendimentoRoutes from "./routes/atendimentoRoutes.js";
 import triagemRoutes from "./routes/triagemRoutes.js";
 import relatorioRoutes from "./routes/relatorioRoutes.js";
 import painelRoutes from "./routes/painelRoutes.js";
-import triagemRoutes from "./routes/triagemRoutes.js";
+import compraRoutes from "./routes/compraRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import cookieParser from "cookie-parser";
 
@@ -39,6 +39,7 @@ app.use("/", triagemRoutes);
 app.use("/relatorios", relatorioRoutes);
 app.use("/painel", painelRoutes);
 app.use("/triagem", triagemRoutes);
+app.use("/compras", compraRoutes);
 
 app.get("/", (req, res) => {
   res.json({
