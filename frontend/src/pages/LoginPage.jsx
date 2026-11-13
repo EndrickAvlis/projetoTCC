@@ -12,6 +12,7 @@ const TELAS = [
   { value: "triagem", label: "Triagem" },
   { value: "apm", label: "APM" },
   { value: "docs", label: "Docs" },
+  { value: "secretaria", label: "Secretaria" },
 ];
 
 const TELAS_COM_GUICHE = ["triagem", "apm", "docs"];
@@ -156,3 +157,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

@@ -7,51 +7,44 @@ import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
 import RetiradaModal from "./RetiradaModal";
+import { useSecretaria } from "../hooks/useSecretaria";
 import { useCursos } from "../../admin/hooks/useCursos";
-import { formatarDataHora } from "../../../utils/formatters";
+import { formatarDataHora, formatarPeriodo } from "../../../utils/formatters";
 
-const formatarPeriodo = (periodo) => {
-  switch (periodo) {
-    case "manha":
-      return "Manhã";
-    case "tarde":
-      return "Tarde";
-    case "noite":
-      return "Noite";
-    case "integral":
-      return "Integral";
-    case "online":
-      return "EAD - Online";
-    default:
-      return periodo || "—";
-  }
-};
+const ITENS_POR_PAGINA = 8;
 
-const SecaoRetiradas = ({
-  compras = [],
-  total = 0,
-  pagina = 1,
-  limite = 8,
-  carregando = false,
-  erro = null,
-  busca = "",
-  cursoId = "",
-  onAlterarFiltro,
-  onLimparFiltros,
-  onMudarPagina,
-  onRecarregar,
-}) => {
-  const { cursos } = useCursos();
+const SecaoRetiradas = ({ onRetiradaRegistrada }) => {
+  const [busca, setBusca] = React.useState("");
+  const [cursoId, setCursoId] = React.useState("");
+  const [pagina, setPagina] = React.useState(1);
   const [modalAberto, setModalAberto] = React.useState(false);
   const [compraSelecionada, setCompraSelecionada] = React.useState(null);
 
-  const opcoesCursos = React.useMemo(() => [
-    { value: "", label: "Todos os cursos" },
-    ...cursos.map((c) => ({
-      value: String(c.id),
-      label: c.nome,
-    })),
-  ], [cursos]);
+  const { compras, total, carregando, erro, recarregar } = useSecretaria({
+    busca,
+    cursoId,
+    pagina,
+    limite: ITENS_POR_PAGINA,
+  });
+
+  const { cursos } = useCursos({ arquivado: false });
+
+  const opcoesCursos = cursos.map((c) => ({
+    value: String(c.id),
+    label: c.nome,
+  }));
+
+  const alterarFiltro = (campo, valor) => {
+    if (campo === "busca") setBusca(valor);
+    if (campo === "cursoId") setCursoId(valor);
+    setPagina(1);
+  };
+
+  const limparFiltros = () => {
+    setBusca("");
+    setCursoId("");
+    setPagina(1);
+  };
 
   const handleAbrirModal = (compra) => {
     setCompraSelecionada(compra);
@@ -63,15 +56,20 @@ const SecaoRetiradas = ({
     setCompraSelecionada(null);
   };
 
+  const handleSucessoRetirada = () => {
+    recarregar();
+    onRetiradaRegistrada?.();
+  };
+
   const temFiltroAtivo = Boolean(busca.trim() || cursoId);
 
   const colunas = [
     {
-      key: "codigo",
+      key: "codigoRetirada",
       label: "Código",
       render: (compra) => (
         <span className="font-mono font-bold text-primary text-xs tracking-wider">
-          {compra.codigo || compra.codigoRetirada || `#${compra.id}`}
+          {compra.codigoRetirada}
         </span>
       ),
     },
@@ -97,10 +95,8 @@ const SecaoRetiradas = ({
       key: "periodoAno",
       label: "Período / Ano",
       render: (compra) => {
-        const periodo = compra.aluno?.periodo
-          ? formatarPeriodo(compra.aluno.periodo)
-          : null;
-        const ano = compra.aluno?.ano ? `${compra.aluno.ano}º Ano` : null;
+        const periodo = formatarPeriodo(compra.aluno?.periodo);
+        const ano = compra.aluno?.anoEscolar ? `${compra.aluno.anoEscolar}º Ano` : null;
         const texto = [periodo, ano].filter(Boolean).join(" — ");
         return <span className="text-text-secondary text-xs">{texto || "—"}</span>;
       },
@@ -110,21 +106,19 @@ const SecaoRetiradas = ({
       label: "Data da Compra",
       render: (compra) => (
         <span className="text-text-secondary text-xs">
-          {formatarDataHora(compra.dataHoraCompra || compra.dataHora)}
+          {formatarDataHora(compra.dataHora)}
         </span>
       ),
     },
     {
       key: "pendentes",
       label: "Itens Pendentes",
-      render: (compra) => {
-        const qtd = compra.quantidadePendente ?? compra.itensPendentes ?? 0;
-        return (
-          <span className="rounded-sm bg-status-warning-bg px-2 py-0.5 text-xs font-bold text-status-warning whitespace-nowrap">
-            {qtd} {qtd === 1 ? "item pendente" : "itens pendentes"}
-          </span>
-        );
-      },
+      render: (compra) => (
+        <span className="rounded-sm bg-status-warning-bg px-2 py-0.5 text-xs font-bold text-status-warning whitespace-nowrap">
+          {compra.quantidadePendente}{" "}
+          {compra.quantidadePendente === 1 ? "item pendente" : "itens pendentes"}
+        </span>
+      ),
     },
     {
       key: "acoes",
@@ -147,17 +141,15 @@ const SecaoRetiradas = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {erro && <Alert type="error" message={erro} />}
-
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface p-4 rounded-xl border border-border shadow-xs">
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-50">
             <Input
               icon={<FiSearch />}
               iconPosition="left"
               placeholder="Buscar por nome do aluno ou código da compra..."
               value={busca}
-              onChange={(e) => onAlterarFiltro("busca", e.target.value)}
+              onChange={(e) => alterarFiltro("busca", e.target.value)}
               size="md"
             />
           </div>
@@ -165,8 +157,9 @@ const SecaoRetiradas = ({
           <div className="w-full sm:w-60">
             <Select
               aria-label="Filtrar por curso"
+              placeholder="Todos os cursos"
               value={cursoId}
-              onChange={(e) => onAlterarFiltro("cursoId", e.target.value)}
+              onChange={(e) => alterarFiltro("cursoId", e.target.value)}
               options={opcoesCursos}
               size="md"
             />
@@ -176,7 +169,7 @@ const SecaoRetiradas = ({
             <Button
               variant="secondary"
               size="md"
-              onClick={onLimparFiltros}
+              onClick={limparFiltros}
               leftIcon={<FiRotateCcw />}
               title="Limpar filtros"
             >
@@ -186,6 +179,8 @@ const SecaoRetiradas = ({
         </div>
       </div>
 
+      {erro && <Alert type="error" message={erro} />}
+
       <DataTable
         columns={colunas}
         data={compras}
@@ -193,17 +188,19 @@ const SecaoRetiradas = ({
         emptyMessage="Nenhuma compra com retirada pendente encontrada."
         carregando={carregando}
         pagina={pagina}
-        limite={limite}
+        limite={ITENS_POR_PAGINA}
         total={total}
-        onPaginaChange={onMudarPagina}
+        onPaginaChange={setPagina}
       />
 
-      <RetiradaModal
-        aberto={modalAberto}
-        onFechar={handleFecharModal}
-        compra={compraSelecionada}
-        onSucesso={onRecarregar}
-      />
+      {modalAberto && (
+        <RetiradaModal
+          aberto={modalAberto}
+          onFechar={handleFecharModal}
+          compra={compraSelecionada}
+          onSucesso={handleSucessoRetirada}
+        />
+      )}
     </div>
   );
 };

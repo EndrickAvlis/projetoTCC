@@ -3,26 +3,9 @@ import { FiPlus, FiMinus, FiCheckCircle } from "react-icons/fi";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
-import { formatarDataHora } from "../../../utils/formatters";
+import { formatarDataHora, formatarPeriodo } from "../../../utils/formatters";
 import { registrarRetirada } from "../services/secretariaService";
 import { useToast } from "../../../context/toastContext";
-
-const formatarPeriodo = (periodo) => {
-  switch (periodo) {
-    case "manha":
-      return "Manhã";
-    case "tarde":
-      return "Tarde";
-    case "noite":
-      return "Noite";
-    case "integral":
-      return "Integral";
-    case "online":
-      return "EAD - Online";
-    default:
-      return periodo || "Não informado";
-  }
-};
 
 const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
   const toast = useToast();
@@ -30,35 +13,9 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
   const [salvando, setSalvando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
 
-  const itensNormalizados = React.useMemo(() => {
-    if (!compra?.itens) return [];
-    return compra.itens.map((item) => {
-      const produtoId = item.produtoId ?? item.codProduto;
-      const nome = item.nome ?? item.produto?.nomeProduto ?? "Uniforme";
-      const comprada = item.quantidadeComprada ?? item.quantidadeItem ?? 0;
-      const retirada = item.quantidadeRetirada ?? item.quantidadeRetiradaItem ?? 0;
-      const pendente = item.quantidadePendente ?? Math.max(0, comprada - retirada);
-      const estoque = item.estoque ?? item.produto?.quantidadeProduto ?? 0;
-
-      return {
-        produtoId,
-        nome,
-        quantidadeComprada: comprada,
-        quantidadeRetirada: retirada,
-        quantidadePendente: pendente,
-        estoque,
-      };
-    });
-  }, [compra]);
-
-  React.useEffect(() => {
-    if (aberto) {
-      setQuantidades({});
-      setErro(null);
-    }
-  }, [aberto, compra?.id]);
-
   if (!aberto || !compra) return null;
+
+  const itens = compra.itens || [];
 
   const alterarQtdRetirar = (produtoId, delta, maximo) => {
     setQuantidades((prev) => {
@@ -70,7 +27,7 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
 
   const handleRetirarTudoDisponivel = () => {
     const novasQtds = {};
-    for (const item of itensNormalizados) {
+    for (const item of itens) {
       if (item.quantidadePendente > 0) {
         novasQtds[item.produtoId] = Math.min(item.quantidadePendente, item.estoque);
       }
@@ -110,8 +67,8 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
   const aluno = compra.aluno;
   const cursoDescricao = [
     aluno?.curso,
-    aluno?.periodo ? formatarPeriodo(aluno.periodo) : null,
-    aluno?.ano ? `${aluno.ano}º Ano` : null,
+    formatarPeriodo(aluno?.periodo),
+    aluno?.anoEscolar ? `${aluno.anoEscolar}º Ano` : null,
   ]
     .filter(Boolean)
     .join(" — ");
@@ -129,7 +86,9 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
             {totalRetirarAgora > 0 ? (
               <span>
                 Total a entregar agora:{" "}
-                <strong className="text-primary">{totalRetirarAgora} {totalRetirarAgora === 1 ? "peça" : "peças"}</strong>
+                <strong className="text-primary">
+                  {totalRetirarAgora} {totalRetirarAgora === 1 ? "peça" : "peças"}
+                </strong>
               </span>
             ) : (
               <span>Selecione os itens a serem entregues</span>
@@ -164,13 +123,13 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
               Código da Compra
             </p>
             <p className="text-base font-bold text-primary font-mono tracking-wider">
-              {compra.codigo || compra.codigoRetirada || `#${compra.id}`}
+              {compra.codigoRetirada}
             </p>
           </div>
           <div className="text-right">
             <p className="text-xs text-text-secondary">Data da Compra</p>
             <p className="font-medium text-text-primary">
-              {formatarDataHora(compra.dataHoraCompra || compra.dataHora)}
+              {formatarDataHora(compra.dataHora)}
             </p>
           </div>
         </div>
@@ -217,7 +176,7 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {itensNormalizados.map((item) => {
+                {itens.map((item) => {
                   const maxDisponivel = Math.min(item.quantidadePendente, item.estoque);
                   const qtdAtual = quantidades[item.produtoId] || 0;
                   const semEstoque = item.estoque <= 0 && item.quantidadePendente > 0;
