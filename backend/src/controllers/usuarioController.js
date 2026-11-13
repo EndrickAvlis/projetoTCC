@@ -22,7 +22,7 @@ export const listarUsuarios = async (req, res) => {
 };
 
 export const criarUsuario = async (req, res) => {
-  const usuario = await usuarioService.criar(req.validado.body);
+  const usuario = await usuarioService.criar(req.validado.body, req.usuario);
 
   return res.status(201).json({
     usuario: mapearUsuario(usuario),
@@ -34,16 +34,8 @@ export const atualizarUsuario = async (req, res) => {
   const usuario = await usuarioService.atualizar(
     id,
     req.validado.body,
+    req.usuario,
   );
-
-  return res.status(200).json({
-    usuario: mapearUsuario(usuario),
-  });
-};
-
-export const excluirUsuario = async (req, res) => {
-  const { id } = req.validado.params;
-  const usuario = await usuarioService.excluir(id);
 
   return res.status(200).json({
     usuario: mapearUsuario(usuario),

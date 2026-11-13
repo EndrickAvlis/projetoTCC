@@ -1,4 +1,5 @@
 import * as React from "react";
+import Alert from "../../../../../components/ui/Alert";
 import Button from "../../../../../components/ui/Button";
 import CardRetratil from "../../../../../components/ui/CardRetratil";
 import Badge from "../../../../../components/ui/Badge";
@@ -35,7 +36,7 @@ const CARDS_POSTOS = [
 ];
 
 const SecaoFilas = () => {
-  const { postos, pendencias, recarregar } = useFilas();
+  const { postos, pendencias, erro, recarregar } = useFilas();
 
   const [senhaSelecionada, setSenhaSelecionada] = React.useState(null);
   const [abertos, setAbertos] = React.useState({
@@ -78,6 +79,8 @@ const SecaoFilas = () => {
           Recolher todos
         </Button>
       </div>
+
+      {erro && <Alert type="error" message={erro} />}
 
       <div className="space-y-4">
         {CARDS_POSTOS.map((posto) => {

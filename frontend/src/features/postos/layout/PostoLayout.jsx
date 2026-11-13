@@ -8,7 +8,7 @@ const PostoLayout = ({ etapa, children }) => {
 
   React.useEffect(() => {
     if (etapa) {
-      void recuperarAtendimentoAtivo(etapa);
+      recuperarAtendimentoAtivo(etapa).catch(() => {});
     }
   }, [etapa, recuperarAtendimentoAtivo]);
 
@@ -17,7 +17,7 @@ const PostoLayout = ({ etapa, children }) => {
       <SidePostos etapa={etapa} />
 
       <div className="flex h-screen flex-1 flex-col overflow-hidden">
-        <Header />
+        <Header etapa={etapa} />
         <main className="flex flex-1 flex-col items-stretch justify-start gap-4 overflow-y-auto overflow-x-hidden bg-page p-4">
           {children}
         </main>

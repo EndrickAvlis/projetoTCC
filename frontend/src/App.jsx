@@ -19,12 +19,13 @@ import ConfiguracoesPage from "./features/admin/pages/ConfiguracoesPage";
 import PainelPage from "./pages/PainelPage";
 
 import Testes from "./testes";
-import Toast from "./components/ui/Toast";
+import { ToastProvider } from "./context/toastContext";
 
 function App() {
   return (
     <ReactRouter.BrowserRouter>
       <AuthProvider>
+        <ToastProvider>
         <ReactRouter.Routes>
           {/* 1. Rotas Públicas */}
           <ReactRouter.Route path="/testes" element={<Testes />} />
@@ -88,7 +89,7 @@ function App() {
             element={<ReactRouter.Navigate to="/" replace />}
           />
         </ReactRouter.Routes>
-        <Toast />
+        </ToastProvider>
       </AuthProvider>
     </ReactRouter.BrowserRouter>
   );

@@ -1,19 +1,20 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import { FiEdit2, FiEyeOff, FiEye, FiPlus } from "react-icons/fi";
 
+import Alert from "../../../../../components/ui/Alert";
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
-import ConfirmarModal from "../../../../../components/ui/ConfirmarModal";
 import ArmarioModal from "./ArmarioModal";
 
 import { useArmario } from "../../../hooks/useArmario";
 import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
 import { useAuth } from "../../../../../context/authContext";
+import { useToast } from "../../../../../context/toastContext";
 
 const SecaoArmarios = () => {
+  const toast = useToast();
   const { usuario: usuarioLogado } = useAuth();
-  const ehAdmin = usuarioLogado?.tipo === "admin";
 
   const [modalAtivo, setModalAtivo] = React.useState(null);
   const [salvando, setSalvando] = React.useState(false);
@@ -21,6 +22,7 @@ const SecaoArmarios = () => {
   const {
     armario,
     carregando: carregandoArmario,
+    erro: erroArmario,
     recarregar: recarregarArmario,
   } = useArmario();
 
@@ -38,9 +40,9 @@ const SecaoArmarios = () => {
         });
       }
       setModalAtivo(null);
-      await recarregarArmario();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+      await recarregarArmario({ silencioso: true });
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -55,25 +57,9 @@ const SecaoArmarios = () => {
       await produtoService.atualizarProduto(armario.id, {
         status: !armario.status,
       });
-      await recarregarArmario();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  const handleExcluirArmario = async () => {
-    if (!armario) return;
-
-    setSalvando(true);
-
-    try {
-      await produtoService.excluirProduto(armario.id);
-      setModalAtivo(null);
-      await recarregarArmario();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+      await recarregarArmario({ silencioso: true });
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -88,6 +74,8 @@ const SecaoArmarios = () => {
       aria-labelledby="tab-armarios"
       className="space-y-4"
     >
+      {erroArmario && <Alert type="error" message={erroArmario} />}
+
       {carregandoArmario ? (
         <div className="rounded-xl border border-border bg-surface px-5 py-10 text-center text-text-secondary">
           Carregando configuração do armário...
@@ -97,10 +85,6 @@ const SecaoArmarios = () => {
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div>
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-3 text-primary">
-                  {/* <FiGrid size={22} /> */}
-                </div>
-
                 <div>
                   <h2 className="text-lg font-semibold text-text-primary">
                     Configuração do armário
@@ -139,22 +123,10 @@ const SecaoArmarios = () => {
           </div>
 
           <footer className="mt-6 flex flex-col justify-end gap-3 border-t border-border pt-5 sm:flex-row">
-            {ehAdmin && !estaDisponivel && (
-              <Button
-                type="button"
-                variant="danger"
-                leftIcon={<FiIcons.FiTrash2 />}
-                onClick={() => setModalAtivo("excluir")}
-                disabled={salvando}
-              >
-                Excluir armário
-              </Button>
-            )}
-
             <Button
               type="button"
               variant="secondary"
-              leftIcon={<FiIcons.FiEdit2 />}
+              leftIcon={<FiEdit2 />}
               onClick={() => setModalAtivo("edicao")}
               disabled={salvando}
             >
@@ -164,7 +136,7 @@ const SecaoArmarios = () => {
             <Button
               type="button"
               variant={estaDisponivel ? "danger" : "success"}
-              leftIcon={estaDisponivel ? <FiIcons.FiEyeOff /> : <FiIcons.FiEye />}
+              leftIcon={estaDisponivel ? <FiEyeOff /> : <FiEye />}
               onClick={alterarDisponibilidadeArmario}
               loading={salvando}
             >
@@ -179,7 +151,7 @@ const SecaoArmarios = () => {
           </p>
 
           <Button
-            leftIcon={<FiIcons.FiPlus />}
+            leftIcon={<FiPlus />}
             className="mt-4"
             onClick={() => setModalAtivo("edicao")}
           >
@@ -193,17 +165,6 @@ const SecaoArmarios = () => {
         armario={armario}
         onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarArmario}
-        salvando={salvando}
-      />
-
-      <ConfirmarModal
-        aberto={modalAtivo === "excluir"}
-        onFechar={() => setModalAtivo(null)}
-        onConfirmar={handleExcluirArmario}
-        titulo="Excluir armário"
-        mensagem="Tem certeza de que deseja excluir permanentemente a configuração do armário? Esta ação é irreversível e removerá todos os registros associados a este produto."
-        textoConfirmar="Excluir definitivamente"
-        variante="danger"
         salvando={salvando}
       />
     </section>

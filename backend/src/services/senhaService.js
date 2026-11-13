@@ -38,7 +38,7 @@ const obterDia = (data) => {
 
 let ultimoResetEm = null;
 
-const obterIntervaloDia = (agora) => {
+export const obterIntervaloDia = (agora = new Date()) => {
   const dia = obterDia(agora);
   const inicioDia = new Date(`${dia}T00:00:00-03:00`);
   const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000);
@@ -193,43 +193,5 @@ export default class SenhaService extends BaseService {
     }
 
     return senhaAtualizada;
-  }
-
-  async avancarEtapa(id, etapaAtual) {
-    const senha = await super.buscarPorId(id, {
-      select: {
-        statusSenha: true,
-      },
-    });
-
-    if (!senha) {
-      throw senhaNaoEncontrada();
-    }
-
-    let proximaEtapa = "finalizada";
-    let statusSenha = "aguardando";
-    let dataHoraFimSenha = undefined;
-
-    switch (etapaAtual) {
-      case "triagem":
-        proximaEtapa = "apm";
-        break;
-      case "apm":
-        proximaEtapa = "docs";
-        break;
-      case "docs":
-        proximaEtapa = "docs";
-        statusSenha = "finalizada";
-        dataHoraFimSenha = new Date();
-        break;
-    }
-
-    return super.atualizar(id, {
-      etapaSenha: proximaEtapa,
-      statusSenha,
-      ...(dataHoraFimSenha && {
-        dataHoraFimSenha,
-      }),
-    });
   }
 }

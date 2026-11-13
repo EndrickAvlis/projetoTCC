@@ -1,4 +1,5 @@
 import TriagemService from "../services/triagemService.js";
+import { painelService } from "../services/painelService.js";
 
 const triagemService = new TriagemService();
 
@@ -33,5 +34,10 @@ export const retomarAtendimento = async (req, res) => {
     req.validado.body.etapa,
     req.usuario.id,
   );
+  painelService.mostrarSenhaChamada({
+    codigo: resultado.senha.codigo,
+    posto: req.validado.body.etapa,
+    guiche: req.usuario?.guiche,
+  })
   return res.status(200).json(resultado);
 };

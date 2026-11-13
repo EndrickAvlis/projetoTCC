@@ -3,7 +3,10 @@ import { z } from "zod";
 const id = z.coerce.number().int().positive();
 const etapa = z.enum(["triagem", "apm", "docs"]);
 const documentosValidos = [
-  "RG_CIN", "CPF_CIN", "FOTO", "ESCOLARIDADE_PUBLICA",
+  "RG_CIN",
+  "CPF_CIN",
+  "FOTO",
+  "ESCOLARIDADE_PUBLICA",
   "HISTORICO_ENSINO_FUNDAMENTAL",
 ];
 
@@ -12,16 +15,21 @@ export const vincularAlunoSchema = z.object({
   body: z.object({
     alunoId: id.nullish(),
     dadosAluno: z.object({
-      nome: z.string().trim().min(1).max(100),
-      cidade: z.string().trim().max(100).nullish(),
-      sexo: z.string().trim().max(20).nullish(),
+      nome: z.string().trim().min(1, "Informe o nome").max(100),
+      cidade: z.string().trim().min(1, "Informe a cidade").max(100),
+      sexo: z.enum(["MASCULINO", "FEMININO", "OUTRO"], {
+        errorMap: () => ({ message: "Selecione o sexo" }),
+      }),
       escolaridadePublica: z.boolean(),
     }),
     matricula: z.object({
       cursoId: id,
-      classificacao: z.number().int().positive().nullish(),
+      classificacao: z
+        .number()
+        .int()
+        .positive("Classificação deve ser maior que 0"),
       periodo: z.enum(["manha", "tarde", "noite", "integral", "online"]),
-      anoEscolar: z.number().int().positive().nullish(),
+      anoEscolar: z.number().int().positive(),
     }),
   }),
 });

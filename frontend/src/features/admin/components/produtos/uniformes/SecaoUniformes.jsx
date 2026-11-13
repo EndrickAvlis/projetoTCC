@@ -1,6 +1,13 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import {
+  FiEdit2,
+  FiPackage,
+  FiRotateCcw,
+  FiArchive,
+  FiPlus,
+} from "react-icons/fi";
 
+import Alert from "../../../../../components/ui/Alert";
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import DataTable from "../../../../../components/ui/DataTable";
@@ -15,8 +22,10 @@ import { useUniformes } from "../../../hooks/useUniformes";
 import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
 import { useAuth } from "../../../../../context/authContext";
+import { useToast } from "../../../../../context/toastContext";
 
 const SecaoUniformes = () => {
+  const toast = useToast();
   const { usuario: usuarioLogado } = useAuth();
   const ehAdmin = usuarioLogado?.tipo === "admin";
 
@@ -25,7 +34,7 @@ const SecaoUniformes = () => {
   const [salvando, setSalvando] = React.useState(false);
   const [modalAtivo, setModalAtivo] = React.useState(null);
 
-  const { uniformes, total, carregando, recarregar } = useUniformes({
+  const { uniformes, total, carregando, erro, recarregar } = useUniformes({
     busca,
     arquivado,
   });
@@ -36,7 +45,7 @@ const SecaoUniformes = () => {
       if (modalAtivo?.uniforme) {
         await produtoService.atualizarProduto(
           modalAtivo.uniforme.id,
-          dadosUniforme
+          dadosUniforme,
         );
       } else {
         await produtoService.criarProduto({
@@ -46,8 +55,8 @@ const SecaoUniformes = () => {
       }
       setModalAtivo(null);
       await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -61,12 +70,12 @@ const SecaoUniformes = () => {
     try {
       await produtoService.atualizarEstoque(
         modalAtivo.uniforme.id,
-        movimentacao
+        movimentacao,
       );
       setModalAtivo(null);
       await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -78,30 +87,13 @@ const SecaoUniformes = () => {
     setSalvando(true);
 
     try {
-      await produtoService.atualizarProduto(
-        modalAtivo.uniforme.id,
-        { status: !modalAtivo.uniforme.status }
-      );
+      await produtoService.atualizarProduto(modalAtivo.uniforme.id, {
+        status: !modalAtivo.uniforme.status,
+      });
       setModalAtivo(null);
       await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  const handleExcluirUniforme = async () => {
-    if (!modalAtivo?.uniforme) return;
-
-    setSalvando(true);
-
-    try {
-      await produtoService.excluirProduto(modalAtivo.uniforme.id);
-      setModalAtivo(null);
-      await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -156,8 +148,8 @@ const SecaoUniformes = () => {
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (uniforme) => {
+        if (!ehAdmin) return null;
         const isArquivado = !uniforme.status;
-        const podeExcluir = ehAdmin && isArquivado;
 
         return (
           <TableMenuActions
@@ -165,25 +157,19 @@ const SecaoUniformes = () => {
             itens={[
               {
                 label: "Editar uniforme",
-                icone: FiIcons.FiEdit2,
+                icone: FiEdit2,
                 onClick: () => setModalAtivo({ tipo: "edicao", uniforme }),
               },
               {
                 label: "Movimentar estoque",
-                icone: FiIcons.FiPackage,
+                icone: FiPackage,
                 onClick: () => setModalAtivo({ tipo: "estoque", uniforme }),
               },
               {
                 label: isArquivado ? "Desarquivar" : "Arquivar",
-                icone: isArquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
+                icone: isArquivado ? FiRotateCcw : FiArchive,
                 onClick: () => setModalAtivo({ tipo: "arquivar", uniforme }),
                 variante: isArquivado ? "success" : "danger",
-              },
-              podeExcluir && {
-                label: "Excluir",
-                icone: FiIcons.FiTrash2,
-                onClick: () => setModalAtivo({ tipo: "excluir", uniforme }),
-                variante: "danger",
               },
             ]}
           />
@@ -205,7 +191,7 @@ const SecaoUniformes = () => {
         </p>
 
         <Button
-          leftIcon={<FiIcons.FiPlus />}
+          leftIcon={<FiPlus />}
           className="w-full sm:w-auto"
           onClick={() => setModalAtivo({ tipo: "cadastro" })}
         >
@@ -219,6 +205,8 @@ const SecaoUniformes = () => {
         arquivado={arquivado}
         onAlterarArquivado={setArquivado}
       />
+
+      {erro && <Alert type="error" message={erro} />}
 
       <DataTable
         columns={columnsUniforme}
@@ -276,17 +264,6 @@ const SecaoUniformes = () => {
             ? "success"
             : "danger"
         }
-        salvando={salvando}
-      />
-
-      <ConfirmarModal
-        aberto={modalAtivo?.tipo === "excluir"}
-        onFechar={() => setModalAtivo(null)}
-        onConfirmar={handleExcluirUniforme}
-        titulo="Excluir uniforme"
-        mensagem={`Tem certeza de que deseja excluir permanentemente o uniforme ${modalAtivo?.uniforme?.nome}? Esta ação é irreversível e removerá todos os registros associados a este produto.`}
-        textoConfirmar="Excluir definitivamente"
-        variante="danger"
         salvando={salvando}
       />
     </section>

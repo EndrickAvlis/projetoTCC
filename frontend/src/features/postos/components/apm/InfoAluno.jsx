@@ -1,9 +1,5 @@
 const InfoAluno = ({ aluno }) => {
-  const matricula = aluno?.matriculas?.[0];
-  const detalhesCurso = [
-    matricula?.curso,
-    matricula?.periodo,
-  ]
+  const detalhesCurso = [aluno?.curso, aluno?.periodo]
     .filter(Boolean)
     .join(" — ");
 

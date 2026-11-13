@@ -4,6 +4,7 @@ import * as FiIcons from "react-icons/fi";
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import Select from "../../../../../components/ui/Select";
+import Alert from "../../../../../components/ui/Alert";
 
 const MapeamentoCursos = ({
   gruposCursos = [],

@@ -1,4 +1,3 @@
-import BaseService from "./baseService.js";
 import prisma from "../config/prisma.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -9,11 +8,7 @@ const ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN;
 
-export default class AuthClass extends BaseService {
-  constructor() {
-    super(prisma.voluntario, "idVoluntario");
-  }
-
+export default class AuthClass {
   async login(dados) {
     const usuario = await prisma.voluntario.findFirst({
       where: {

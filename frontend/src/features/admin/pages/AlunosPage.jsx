@@ -1,6 +1,15 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import {
+  FiCheck,
+  FiClock,
+  FiCheckCircle,
+  FiArchive,
+  FiRotateCcw,
+  FiUploadCloud,
+  FiSearch,
+} from "react-icons/fi";
 
+import Alert from "../../../components/ui/Alert";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
@@ -8,12 +17,12 @@ import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import TableFiltro from "../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
-
 import ImportarAlunosModal from "../components/alunos/importacao/ImportarAlunosModal";
 
 import * as alunoService from "../services/alunoService";
 import { useAlunos } from "../hooks/useAlunos";
 import { useCursos } from "../hooks/useCursos";
+import { useToast } from "../../../context/toastContext";
 
 const OPCOES_STATUS_ALUNO = [
   { valor: "ATIVO", label: "Ativos" },
@@ -21,7 +30,10 @@ const OPCOES_STATUS_ALUNO = [
   { valor: "ARQUIVADO", label: "Arquivados" },
 ];
 
+const ITENS_POR_PAGINA = 8;
+
 const AlunosPage = () => {
+  const toast = useToast();
   const [filtros, setFiltros] = React.useState({
     busca: "",
     cursoId: "",
@@ -41,6 +53,7 @@ const AlunosPage = () => {
     alunos,
     total,
     carregando,
+    erro,
     recarregar: recarregarAlunos,
   } = useAlunos({
     busca: filtros.busca,
@@ -48,7 +61,7 @@ const AlunosPage = () => {
     cidade: filtros.cidade,
     status: filtros.status,
     pagina,
-    limite: 6,
+    limite: ITENS_POR_PAGINA,
   });
 
   const { cursos } = useCursos({ arquivado: false });
@@ -69,14 +82,15 @@ const AlunosPage = () => {
     try {
       await alunoService.atualizarAluno(alunoId, { status: novoStatus });
       recarregarAlunos();
-    } catch {
+    } catch (erro) {
+      toast.erro(erro.message);
     }
   };
 
   const renderBadgeStatusMatricula = (statusMatricula) => {
     if (statusMatricula === "ATIVA") {
       return (
-        <Badge variant="success" icon={<FiIcons.FiCheck size={12} />}>
+        <Badge variant="success" icon={<FiCheck size={12} />}>
           Ativa
         </Badge>
       );
@@ -84,7 +98,7 @@ const AlunosPage = () => {
 
     if (statusMatricula === "PENDENTE") {
       return (
-        <Badge variant="warning" icon={<FiIcons.FiClock size={12} />}>
+        <Badge variant="warning" icon={<FiClock size={12} />}>
           Pendente
         </Badge>
       );
@@ -175,18 +189,18 @@ const AlunosPage = () => {
           itens={[
             aluno.status === "CANDIDATO" && {
               label: "Ativar Aluno",
-              icone: FiIcons.FiCheckCircle,
+              icone: FiCheckCircle,
               onClick: () => handleAtualizarStatusAluno(aluno.id, "ATIVO"),
             },
             aluno.status === "ATIVO" && {
               label: "Arquivar Aluno",
-              icone: FiIcons.FiArchive,
+              icone: FiArchive,
               onClick: () => handleAtualizarStatusAluno(aluno.id, "ARQUIVADO"),
               variante: "danger",
             },
             aluno.status === "ARQUIVADO" && {
               label: "Reativar Aluno",
-              icone: FiIcons.FiRotateCcw,
+              icone: FiRotateCcw,
               onClick: () => handleAtualizarStatusAluno(aluno.id, "ATIVO"),
               variante: "success",
             },
@@ -201,12 +215,18 @@ const AlunosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {total} {total === 1 ? "aluno" : "alunos"} {filtros.status === "ATIVO" ? "ativo" : filtros.status === "CANDIDATO" ? "candidato" : "arquivado"}{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
+            {total} {total === 1 ? "aluno" : "alunos"}{" "}
+            {filtros.status === "ATIVO"
+              ? "ativo"
+              : filtros.status === "CANDIDATO"
+                ? "candidato"
+                : "arquivado"}
+            {total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
           </p>
         </div>
 
         <Button
-          leftIcon={<FiIcons.FiUploadCloud size={18} />}
+          leftIcon={<FiUploadCloud size={18} />}
           className="w-full sm:w-auto"
           onClick={() => setModalAtivo({ tipo: "importacao" })}
         >
@@ -220,7 +240,7 @@ const AlunosPage = () => {
             value={filtros.busca}
             onChange={(e) => alterarFiltro("busca", e.target.value)}
             placeholder="Pesquisar por nome do aluno..."
-            icon={<FiIcons.FiSearch />}
+            icon={<FiSearch />}
             size="md"
             className="w-full sm:max-w-md"
           />
@@ -254,6 +274,8 @@ const AlunosPage = () => {
         />
       </div>
 
+      {erro && <Alert type="error" message={erro} />}
+
       <DataTable
         columns={colunas}
         data={alunos}
@@ -262,7 +284,7 @@ const AlunosPage = () => {
         emptyMessage="Nenhum aluno encontrado para os filtros selecionados."
         alturaMinima="380px"
         pagina={pagina}
-        limite={6}
+        limite={ITENS_POR_PAGINA}
         total={total}
         onPaginaChange={setPagina}
       />
@@ -281,4 +303,3 @@ const AlunosPage = () => {
 };
 
 export default AlunosPage;
-

@@ -1,4 +1,3 @@
-// src/pages/PainelPrincipalPage.jsx
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { FiVolume2, FiClock, FiTv } from "react-icons/fi";
@@ -7,10 +6,10 @@ import Button from "../components/ui/Button.jsx";
 import { formatarSenha } from "../utils/formatters.js";
 import { tocarAlertaSonoro, falarChamada } from "../services/audioChamada.js";
 
-const TEMPO_DESTAQUE_MS = 5000;
+const TEMPO_DESTAQUE_MS = 7000;
 
 const API_URL = (
-  import.meta.env.VITE_API_URL ?? "http://localhost:3000"
+  import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:3000`
 ).replace(/\/+$/, "");
 
 const formatarGuiche = (guiche) =>
@@ -55,7 +54,7 @@ const TEMAS_PAINEL = {
   },
 };
 
-const PainelPrincipalPage = () => {
+const PainelPage = () => {
   const { posto: postoParam } = useParams();
   const postoAtivo = postoParam?.toLowerCase();
   const tema = TEMAS_PAINEL[postoAtivo] ?? TEMAS_PAINEL.padrao;
@@ -259,7 +258,7 @@ const PainelPrincipalPage = () => {
                     Posto
                   </span>
                   <span className="mt-1 text-3xl font-extrabold text-text-inverse">
-                    {senhaDestaque.posto.toUpperCase()}
+                    {senhaDestaque.posto?.toUpperCase() ?? "—"}
                   </span>
                 </div>
 
@@ -283,16 +282,6 @@ const PainelPrincipalPage = () => {
                 Aguardando senhas...
               </span>
             </div>
-          )}
-
-          {emDestaque && (
-            <div
-              className={`absolute bottom-0 left-0 h-2 ${tema.barra} transition-all duration-5000 ease-linear`}
-              style={{
-                width: emDestaque ? "0%" : "100%",
-                transitionProperty: "width",
-              }}
-            />
           )}
         </section>
 
@@ -324,7 +313,7 @@ const PainelPrincipalPage = () => {
 
                   <div className="flex flex-col items-end">
                     <span className="text-xl font-bold text-admin-sidebar-text">
-                      {item.posto.toUpperCase()}
+                      {item.posto?.toUpperCase() ?? "—"}
                     </span>
                   </div>
                   <div className="flex flex-col items-end">
@@ -345,4 +334,4 @@ const PainelPrincipalPage = () => {
   );
 };
 
-export default PainelPrincipalPage;
+export default PainelPage;

@@ -41,14 +41,16 @@ const ActionMenu = ({ itens = [], label = "Ações" }) => {
       }
     };
 
+    const fecharNoScroll = () => setAberto(false);
+
     document.addEventListener("mousedown", fechar);
-    document.addEventListener("scroll", () => setAberto(false), true);
+    document.addEventListener("scroll", fecharNoScroll, true);
+
     return () => {
       document.removeEventListener("mousedown", fechar);
-      document.removeEventListener("scroll", () => setAberto(false), true);
+      document.removeEventListener("scroll", fecharNoScroll, true);
     };
   }, [aberto]);
-
   return (
     <div className="flex justify-end">
       <button

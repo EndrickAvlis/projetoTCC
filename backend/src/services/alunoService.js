@@ -26,49 +26,49 @@ export default class AlunoService extends BaseService {
   }
 
   async listarAlunos({
-  nome,
-  cidade,
-  cursoId,
-  status,
-  pagina = 1,
-  limite = 10,
-} = {}) {
-  const page = Math.max(1, Number(pagina) || 1);
-  const take = Math.max(1, Number(limite) || 10);
-  const skip = (page - 1) * take;
+    nome,
+    cidade,
+    cursoId,
+    status,
+    pagina = 1,
+    limite = 10,
+  } = {}) {
+    const page = Math.max(1, Number(pagina) || 1);
+    const take = Math.max(1, Number(limite) || 10);
+    const skip = (page - 1) * take;
 
-  const where = {
-    nomeAluno: nome?.trim()
-      ? { contains: nome.trim(), mode: "insensitive" }
-      : undefined,
-    cidadeAluno: cidade?.trim() || undefined,
-    statusAluno: status || undefined,
-    cursosAluno: cursoId ? { some: { codCurso: cursoId } } : undefined,
-  };
+    const where = {
+      nomeAluno: nome?.trim()
+        ? { contains: nome.trim(), mode: "insensitive" }
+        : undefined,
+      cidadeAluno: cidade?.trim() || undefined,
+      statusAluno: status || undefined,
+      cursosAluno: cursoId ? { some: { codCurso: cursoId } } : undefined,
+    };
 
-  const [total, alunos] = await Promise.all([
-    prisma.aluno.count({ where }),
-    prisma.aluno.findMany({
-      where,
-      skip,
-      take,
-      orderBy: { nomeAluno: "asc" },
-      include: {
-        cursosAluno: {
-          include: { curso: true },
+    const [total, alunos] = await Promise.all([
+      prisma.aluno.count({ where }),
+      prisma.aluno.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { nomeAluno: "asc" },
+        include: {
+          cursosAluno: {
+            include: { curso: true },
+          },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
-  return {
-    alunos,
-    total,
-    pagina: page,
-    limite: take,
-    totalPaginas: Math.ceil(total / take),
-  };
-}
+    return {
+      alunos,
+      total,
+      pagina: page,
+      limite: take,
+      totalPaginas: Math.ceil(total / take),
+    };
+  }
 
   async listarCidades() {
     const registros = await prisma.aluno.findMany({
@@ -162,7 +162,8 @@ export default class AlunoService extends BaseService {
           codAluno: idPorNome.get(formatarNome(c.nome).toUpperCase()),
           statusMatricula: "PENDENTE",
           periodo: c.periodo,
-          classificacao: Number(c.classificacao),
+          classificacao:
+            c.classificacao != null && c.classificacao !== "" && Number(c.classificacao) > 0 ? Number(c.classificacao) : null,
         }));
 
       if (matriculas.length > 0) {

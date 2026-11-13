@@ -12,12 +12,11 @@ const RESUMO_INICIAL = {
 };
 
 export const useRelatorios = ({
-  periodo = "HOJE",
+  periodo = "TODO",
   dataInicio = "",
   dataFim = "",
   cursoId = "",
   formaPagamento = "",
-  tipoReceita = "",
   atendenteId = "",
   pagina = 1,
   limite = 10,
@@ -26,9 +25,15 @@ export const useRelatorios = ({
   const [vendas, setVendas] = React.useState([]);
   const [totalVendas, setTotalVendas] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
   const carregarRelatorios = React.useCallback(async () => {
+    if (periodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
+      return;
+    }
+
     setCarregando(true);
+    setErro(null);
 
     try {
       const res = await dadosRelatorio({
@@ -37,7 +42,6 @@ export const useRelatorios = ({
         dataFim,
         cursoId,
         formaPagamento,
-        tipoReceita,
         atendenteId,
         pagina,
         limite,
@@ -46,10 +50,11 @@ export const useRelatorios = ({
       setResumoReceita(res?.resumoReceita ?? RESUMO_INICIAL);
       setVendas(res?.vendas ?? []);
       setTotalVendas(res?.totalVendas ?? 0);
-    } catch {
+    } catch (err) {
       setResumoReceita(RESUMO_INICIAL);
       setVendas([]);
       setTotalVendas(0);
+      setErro(err.message);
     } finally {
       setCarregando(false);
     }
@@ -59,14 +64,13 @@ export const useRelatorios = ({
     dataFim,
     cursoId,
     formaPagamento,
-    tipoReceita,
     atendenteId,
     pagina,
     limite,
   ]);
 
   React.useEffect(() => {
-    void Promise.resolve().then(carregarRelatorios);
+    carregarRelatorios();
   }, [carregarRelatorios]);
 
   return {
@@ -74,6 +78,9 @@ export const useRelatorios = ({
     vendas,
     totalVendas,
     carregando,
+    erro,
     recarregar: carregarRelatorios,
   };
 };
+
+export default useRelatorios;

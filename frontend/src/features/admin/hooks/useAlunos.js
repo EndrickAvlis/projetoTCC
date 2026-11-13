@@ -14,9 +14,11 @@ export const useAlunos = ({
   const [alunos, setAlunos] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
   const carregarAlunos = React.useCallback(async () => {
     setCarregando(true);
+    setErro(null);
 
     try {
       const res = await listarAlunos({
@@ -30,9 +32,10 @@ export const useAlunos = ({
 
       setAlunos(res?.alunos ?? []);
       setTotal(res?.total ?? 0);
-    } catch {
+    } catch (err) {
       setAlunos([]);
       setTotal(0);
+      setErro(err.message);
     } finally {
       setCarregando(false);
     }
@@ -46,7 +49,9 @@ export const useAlunos = ({
     alunos,
     total,
     carregando,
+    erro,
     recarregar: carregarAlunos,
   };
 };
 
+export default useAlunos;

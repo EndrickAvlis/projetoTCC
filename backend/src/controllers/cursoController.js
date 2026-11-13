@@ -69,12 +69,4 @@ export const atualizarPeriodo = async (req, res) => {
   });
 };
 
-export const excluirCurso = async (req, res) => {
-  const { cursoId } = req.validado.params;
-  const curso = await cursoService.excluir(cursoId);
-
-  return res.json({
-    curso: mapearCursoResposta(curso),
-  });
-};
 

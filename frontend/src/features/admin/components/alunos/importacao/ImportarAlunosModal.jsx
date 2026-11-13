@@ -5,8 +5,10 @@ import * as AlunosService from "../../../services/alunoService";
 import UploadCsv from "./UploadCsv";
 import MapeamentoCursos from "./MapeamentoCursos";
 import ResultadoImportacao from "./ResultadoImportacao";
+import { useToast } from "../../../../../context/toastContext";
 
 const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
+  const toast = useToast();
   const [etapa, setEtapa] = React.useState(1);
   const [anoProcesso, setAnoProcesso] = React.useState(
     new Date().getFullYear(),
@@ -70,8 +72,8 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
       });
       setResultadoFinal(resposta);
       setEtapa(3);
-    } catch {
-      // Toast global do apiClient já notifica o usuário
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setCarregando(false);
     }

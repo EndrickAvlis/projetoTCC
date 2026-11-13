@@ -1,3 +1,4 @@
+import { useToast } from "../../../../context/toastContext";
 import InfoAluno from "./InfoAluno";
 import ArmarioVenda from "./ArmarioVenda";
 import ContribuicaoVoluntaria from "./ContribuicaoVoluntaria";
@@ -10,59 +11,80 @@ import Alert from "../../../../components/ui/Alert";
 import { useAtendimento } from "../../context/atendimentoContext";
 import { useVenda } from "../../hooks/useVenda";
 import * as ApmService from "../../services/apmService";
+import * as React from "react";
 
 const ApmMain = () => {
-  const { senhaAtual, dadosAluno, finalizar } = useAtendimento();
+  const toast = useToast();
+  const { senhaAtual, dadosAluno, fase, finalizarAtendimento } =
+    useAtendimento();
   const venda = useVenda();
+  const [salvando, setSalvando] = React.useState(false);
 
-  const desabilitado = !senhaAtual || venda.carregando;
+  React.useEffect(() => {
+    if (!senhaAtual || fase !== "iniciada") {
+      venda.limparVenda();
+    }
+  }, [senhaAtual?.id, fase]);
+
+  const desabilitado =
+    !senhaAtual || fase !== "iniciada" || venda.catalogo.carregando || salvando;
 
   const handleFinalizar = async () => {
-    if (venda.totalCompra > 0) {
-      await ApmService.registrarVenda({
-        codAluno: dadosAluno.id,
-        ...venda.payload(),
-      });
+    if (!dadosAluno?.id) return;
+
+    try {
+      setSalvando(true);
+      if (venda.pagamento.total > 0) {
+        await ApmService.registrarVenda({
+          codAluno: dadosAluno.id,
+          ...venda.gerarPayload(),
+        });
+      }
+      await finalizarAtendimento();
+      venda.limparVenda();
+    } catch (erro) {
+      toast.erro(erro.message);
+    } finally {
+      setSalvando(false);
     }
-    await finalizar();
-    venda.limparVenda();
   };
 
   return (
     <div className="w-full flex flex-col gap-6">
       <AtendimentoActions
-        podeFinalizar={venda.podeFinalizar}
-        textoFinalizar="Finalizar Compra"
+        podeFinalizar={fase === "iniciada" && venda.pagamento.podeFinalizar && !salvando}
+        textoFinalizar={salvando ? "Finalizando..." : "Finalizar Compra"}
         onFinalizar={handleFinalizar}
       />
-      {venda.erro && <Alert type="error" message={venda.erro} />}
+
+      {venda.catalogo.erro && <Alert type="error" message={venda.catalogo.erro} />}
       <div className="w-full min-w-0 flex flex-col lg:flex-row gap-5 items-stretch">
         <div className="flex-1 min-w-0 w-full bg-surface rounded-lg border border-border p-5 shadow-xs flex flex-col gap-5">
           <InfoAluno aluno={dadosAluno} />
           <div className="flex flex-col md:flex-row gap-4 w-full">
             <ArmarioVenda
               armario={venda.armario}
-              onChange={venda.setArmarioIncluido}
+              onChange={venda.armario.setIncluido}
               disabled={desabilitado}
             />
             <ContribuicaoVoluntaria
-              contribuicao={venda.contribuicao}
-              onChange={venda.setContribuicao}
+              contribuicao={venda.contribuicao.valor}
+              onChange={venda.contribuicao.setValor}
               disabled={desabilitado}
             />
           </div>
           <div className="flex flex-col gap-4 border-t border-border pt-4">
             <h3 className="font-semibold text-text-primary">Uniformes</h3>
             <SelectUniformes
-              uniformes={venda.uniformes}
-              onAdicionar={venda.adicionarUniforme}
+              uniformes={venda.uniformes.disponiveis}
+              onAdicionar={venda.uniformes.adicionar}
               disabled={desabilitado}
             />
             <ListaUniformes
-              items={venda.items}
-              onAlterarComprada={venda.alterarQuantidadeComprada}
-              onAlterarRetirada={venda.alterarQuantidadeRetirada}
-              onExcluir={venda.excluirUniforme}
+              items={venda.uniformes.selecionados}
+              onAlterarComprada={venda.uniformes.alterarComprada}
+              onAlterarRetirada={venda.uniformes.alterarRetirada}
+              onExcluir={venda.uniformes.remover}
               disabled={desabilitado}
             />
           </div>
@@ -70,20 +92,20 @@ const ApmMain = () => {
         <div className="w-full lg:w-80 shrink-0 bg-surface rounded-lg border border-border p-4 shadow-xs flex flex-col gap-3">
           <ResumoCompra
             aluno={dadosAluno}
-            items={venda.items}
+            items={venda.uniformes.selecionados}
             armario={venda.armario}
-            contribuicao={venda.contribuicao}
-            totalCompra={venda.totalCompra}
+            contribuicao={venda.contribuicao.valor}
+            totalCompra={venda.pagamento.total}
           />
           <div className="border-t border-border pt-3 mt-auto">
             <FormasPagamento
-              formas={venda.formasPagamento}
-              pagamentosSelecionados={venda.pagamentosSelecionados}
-              valores={venda.valores}
-              totalCompra={venda.totalCompra}
-              diferencaPagamento={venda.diferencaPagamento}
-              onAlternarForma={venda.alterarFormaPagamento}
-              onAlterarValor={venda.alterarValorPagamento}
+              formas={venda.pagamento.formas}
+              pagamentosSelecionados={venda.pagamento.selecionados}
+              valores={venda.pagamento.valores}
+              totalCompra={venda.pagamento.total}
+              diferencaPagamento={venda.pagamento.diferenca}
+              onAlternarForma={venda.pagamento.alternarForma}
+              onAlterarValor={venda.pagamento.alterarValor}
               disabled={desabilitado}
             />
           </div>

@@ -1,26 +1,7 @@
 import AlunoService from "../services/alunoService.js";
+import { mapearAluno } from "../mappers/alunoMapper.js";
 
 const alunoService = new AlunoService();
-
-export const mapearAluno = (aluno) => {
-  if (!aluno) return null;
-  const matricula = aluno.cursosAluno?.[0];
-
-  return {
-    id: aluno.idAluno,
-    nome: aluno.nomeAluno,
-    status: aluno.statusAluno,
-    cidade: aluno.cidadeAluno,
-    sexo: aluno.sexoAluno,
-    escolaridadePublica: aluno.escolaridadePublica,
-    cursoId: matricula?.codCurso,
-    curso: matricula?.curso?.nomeCurso,
-    periodo: matricula?.periodo,
-    classificacao: matricula?.classificacao,
-    anoEscolar: matricula?.anoEscolar,
-    statusMatricula: matricula?.statusMatricula,
-  };
-};
 
 export const listarAlunos = async (req, res) => {
   const resultado = await alunoService.listarAlunos(req.validado.query);
@@ -54,4 +35,3 @@ export const importarAlunos = async (req, res) => {
 
   return res.status(201).json(resultado);
 };
-

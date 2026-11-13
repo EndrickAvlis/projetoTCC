@@ -4,7 +4,13 @@ const HistoricoGrid = ({ senhas }) => {
   const renderizarSenha = (senha) => (
     <div
       key={senha.id}
-      className="min-h-16 rounded-btn border border-border bg-surface-muted px-2 py-2 text-center font-bold text-text-secondary"
+      className={[
+        "flex min-h-16 items-center justify-center rounded-btn border px-2 py-2 text-center font-bold transition-colors",
+        senha.prioritaria
+          ? "border-2 border-status-warning text-status-warning"
+          : "border-border text-text-secondary",
+        "bg-page",
+      ].join(" ")}
     >
       {formatarSenha(senha.codigo)}
     </div>
@@ -18,7 +24,9 @@ const HistoricoGrid = ({ senhas }) => {
     );
   }
 
-  return <div className="grid grid-cols-3 gap-2">{senhas.map(renderizarSenha)}</div>;
+  return (
+    <div className="grid grid-cols-3 gap-2">{senhas.map(renderizarSenha)}</div>
+  );
 };
 
 export default HistoricoGrid;

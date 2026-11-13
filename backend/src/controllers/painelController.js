@@ -4,6 +4,7 @@ export const streamChamadas = (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
 
   const enviarSenha = (dados) => {
     res.write(`data: ${JSON.stringify(dados)}\n\n`);

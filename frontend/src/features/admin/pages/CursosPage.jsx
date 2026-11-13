@@ -1,6 +1,14 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import {
+  FiChevronDown,
+  FiPlus,
+  FiEdit2,
+  FiRotateCcw,
+  FiArchive,
+  FiSearch,
+} from "react-icons/fi";
 
+import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
 import Input from "../../../components/ui/Input";
@@ -15,6 +23,7 @@ import PeriodoResumo from "../components/cursos/PeriodoResumo";
 import { useCursos } from "../hooks/useCursos";
 import * as cursoService from "../services/cursoService";
 import { useAuth } from "../../../context/authContext";
+import { useToast } from "../../../context/toastContext";
 
 const OPCOES_STATUS_CURSO = [
   { valor: false, label: "Ativos" },
@@ -22,6 +31,7 @@ const OPCOES_STATUS_CURSO = [
 ];
 
 const CursosPage = () => {
+  const toast = useToast();
   const { usuario: usuarioLogado } = useAuth();
   const ehAdmin = usuarioLogado?.tipo === "admin";
 
@@ -32,7 +42,7 @@ const CursosPage = () => {
   const [modalAtivo, setModalAtivo] = React.useState(null);
   const [cursoExpandido, setCursoExpandido] = React.useState(null);
 
-  const { cursos, total, carregando, recarregar } = useCursos({
+  const { cursos, total, carregando, erro, recarregar } = useCursos({
     busca,
     arquivado,
   });
@@ -51,8 +61,8 @@ const CursosPage = () => {
 
       setModalAtivo(null);
       await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -73,8 +83,8 @@ const CursosPage = () => {
 
       setModalAtivo(null);
       await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -92,24 +102,8 @@ const CursosPage = () => {
 
       setModalAtivo(null);
       await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  const handleExcluirCurso = async () => {
-    if (!modalAtivo?.curso) return;
-
-    setSalvando(true);
-
-    try {
-      await cursoService.excluirCurso(modalAtivo.curso.id);
-      setModalAtivo(null);
-      await recarregar();
-    } catch {
-      // Erro já exibido pelo Toast do apiClient
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setSalvando(false);
     }
@@ -129,11 +123,28 @@ const CursosPage = () => {
         <div>
           <p className="font-semibold text-text-primary">{curso.nome}</p>
           <p className="mt-1 text-xs text-text-secondary">
-            {(curso.periodos?.length ?? 0)} período
-            {curso.periodos?.length === 1 ? "" : "s"}
+            {curso.periodos?.length ?? 0}{" "}
+            {curso.periodos?.length === 1 ? "período" : "períodos"}
           </p>
         </div>
       ),
+    },
+    {
+      key: "vagasTotais",
+      label: "Total de Vagas",
+      headerClassName: "text-center",
+      cellClassName: "text-center",
+      render: (curso) => {
+        const totalVagas = (curso.periodos ?? []).reduce(
+          (acc, p) => acc + (p.vagasTotais ?? 0),
+          0,
+        );
+        return (
+          <span className="font-semibold text-text-primary">
+            {totalVagas} {totalVagas === 1 ? "vaga" : "vagas"}
+          </span>
+        );
+      },
     },
     {
       key: "periodos",
@@ -143,12 +154,13 @@ const CursosPage = () => {
         const primeiroPeriodo = periodos[0];
         const periodosRestantes = periodos.slice(1);
         const expandido = cursoExpandido === curso.id;
+
         return primeiroPeriodo ? (
           <div className="space-y-1.5">
             <PeriodoResumo
               periodoCurso={primeiroPeriodo}
               onEditar={
-                curso.arquivado
+                curso.arquivado || !ehAdmin
                   ? null
                   : () =>
                       setModalAtivo({
@@ -161,11 +173,11 @@ const CursosPage = () => {
 
             {expandido &&
               periodosRestantes.map((periodoCurso) => (
-                <div key={periodoCurso.id} className="animate-offer-expand">
+                <div key={periodoCurso.id} className="pt-1">
                   <PeriodoResumo
                     periodoCurso={periodoCurso}
                     onEditar={
-                      curso.arquivado
+                      curso.arquivado || !ehAdmin
                         ? null
                         : () =>
                             setModalAtivo({
@@ -182,17 +194,17 @@ const CursosPage = () => {
               <button
                 type="button"
                 onClick={() => alternarPeriodos(curso.id)}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary-hover"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary-hover cursor-pointer"
+                aria-expanded={expandido}
               >
                 {expandido
                   ? "Ver menos"
                   : `Ver mais ${periodosRestantes.length} período${
                       periodosRestantes.length === 1 ? "" : "s"
                     }`}
-
-                <FiIcons.FiChevronDown
-                  size={16}
-                  className={`transition-transform duration-200 ease-out ${
+                <FiChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${
                     expandido ? "rotate-180" : ""
                   }`}
                 />
@@ -200,7 +212,9 @@ const CursosPage = () => {
             )}
           </div>
         ) : (
-          "—"
+          <p className="text-xs text-text-secondary">
+            Nenhum período cadastrado
+          </p>
         );
       },
     },
@@ -210,7 +224,7 @@ const CursosPage = () => {
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (curso) => {
-        const podeExcluir = ehAdmin && curso.arquivado;
+        if (!ehAdmin) return null;
 
         return (
           <TableMenuActions
@@ -218,25 +232,19 @@ const CursosPage = () => {
             itens={[
               !curso.arquivado && {
                 label: "Adicionar período",
-                icone: FiIcons.FiPlus,
+                icone: FiPlus,
                 onClick: () => setModalAtivo({ tipo: "periodo", curso }),
               },
               {
                 label: "Editar nome",
-                icone: FiIcons.FiEdit2,
+                icone: FiEdit2,
                 onClick: () => setModalAtivo({ tipo: "curso", curso }),
               },
               {
                 label: curso.arquivado ? "Desarquivar" : "Arquivar",
-                icone: curso.arquivado ? FiIcons.FiRotateCcw : FiIcons.FiArchive,
+                icone: curso.arquivado ? FiRotateCcw : FiArchive,
                 onClick: () => setModalAtivo({ tipo: "arquivar", curso }),
                 variante: curso.arquivado ? "success" : "danger",
-              },
-              podeExcluir && {
-                label: "Excluir",
-                icone: FiIcons.FiTrash2,
-                onClick: () => setModalAtivo({ tipo: "excluir", curso }),
-                variante: "danger",
               },
             ]}
           />
@@ -250,12 +258,14 @@ const CursosPage = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {total} {total === 1 ? "curso" : "cursos"} {arquivado ? "arquivado" : "ativo"}{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
+            {total} {total === 1 ? "curso" : "cursos"}{" "}
+            {arquivado ? "arquivado" : "ativo"}
+            {total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
           </p>
         </div>
 
         <Button
-          leftIcon={<FiIcons.FiPlus />}
+          leftIcon={<FiPlus />}
           className="w-full sm:w-auto"
           onClick={() => setModalAtivo({ tipo: "curso" })}
         >
@@ -268,7 +278,7 @@ const CursosPage = () => {
           value={busca}
           onChange={(event) => setBusca(event.target.value)}
           placeholder="Pesquisar por nome do curso..."
-          icon={<FiIcons.FiSearch />}
+          icon={<FiSearch />}
           size="md"
           className="max-w-xl"
         />
@@ -280,6 +290,8 @@ const CursosPage = () => {
           ariaLabel="Situação dos cursos"
         />
       </div>
+
+      {erro && <Alert type="error" message={erro} />}
 
       <DataTable
         columns={columnsCurso}
@@ -314,9 +326,7 @@ const CursosPage = () => {
         onFechar={() => setModalAtivo(null)}
         onConfirmar={confirmarArquivamento}
         titulo={
-          modalAtivo?.curso?.arquivado
-            ? "Desarquivar curso"
-            : "Arquivar curso"
+          modalAtivo?.curso?.arquivado ? "Desarquivar curso" : "Arquivar curso"
         }
         mensagem={
           modalAtivo?.curso?.arquivado
@@ -329,20 +339,8 @@ const CursosPage = () => {
         variante={modalAtivo?.curso?.arquivado ? "success" : "danger"}
         salvando={salvando}
       />
-
-      <ConfirmarModal
-        aberto={modalAtivo?.tipo === "excluir"}
-        onFechar={() => setModalAtivo(null)}
-        onConfirmar={handleExcluirCurso}
-        titulo="Excluir curso"
-        mensagem={`Tem certeza de que deseja excluir permanentemente o curso ${modalAtivo?.curso?.nome}? Esta ação é irreversível e removerá todos os registros associados a este curso.`}
-        textoConfirmar="Excluir definitivamente"
-        variante="danger"
-        salvando={salvando}
-      />
     </section>
   );
 };
 
 export default CursosPage;
-

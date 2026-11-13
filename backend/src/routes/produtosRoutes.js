@@ -31,11 +31,5 @@ produtosRoutes.patch(
   validarRequisicao(produtos.alterarEstoqueSchema),
   produtosController.atualizarEstoque,
 );
-produtosRoutes.delete(
-  "/:produtoId",
-  auth.validarRole(["admin"]),
-  validarRequisicao(produtos.produtoIdSchema),
-  produtosController.excluirProduto,
-);
 
 export default produtosRoutes;

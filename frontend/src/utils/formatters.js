@@ -25,7 +25,7 @@ export const valorTextoParaDecimal = (valor) => {
 };
 
 export const ehValorMonetarioEmDigitacao = (valor) =>
-  /^\d*(?:[,.]\d{0,2})?$/.test(valor);
+  /^[\d.]*(?:,\d{0,2})?$/.test(valor) || /^\d*(?:\.\d{0,2})?$/.test(valor);
 
 export const formatarSenha = (codigo) => {
   const numero = Number(codigo);

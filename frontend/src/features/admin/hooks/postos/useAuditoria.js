@@ -15,9 +15,13 @@ export const useAuditoria = ({
   const [senhas, setSenhas] = React.useState([]);
   const [total, setTotal] = React.useState(0);
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
 
   const carregar = React.useCallback(async (silencioso = false) => {
-    if (!silencioso) setCarregando(true);
+    if (!silencioso) {
+      setCarregando(true);
+      setErro(null);
+    }
 
     try {
       const res = await dadosAuditoria({
@@ -32,8 +36,9 @@ export const useAuditoria = ({
 
       setSenhas(res.itens);
       setTotal(res.paginacao.totalItens);
-    } catch {}
-    finally {
+    } catch (err) {
+      setErro(err.message);
+    } finally {
       if (!silencioso) setCarregando(false);
     }
   }, [buscaDebounced, status, tipoPeriodo, dataInicio, dataFim, pagina, limite]);
@@ -52,6 +57,7 @@ export const useAuditoria = ({
     senhas,
     total,
     carregando,
+    erro,
     recarregar: carregar,
   };
 };

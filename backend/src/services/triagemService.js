@@ -1,6 +1,6 @@
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
-import { mapearAluno } from "../controllers/alunoController.js";
+import { mapearAluno } from "../mappers/alunoMapper.js";
 
 const erro = (mensagem, status = 409, code = "ERRO_TRIAGEM") =>
   new AppError(mensagem, { status, code });
@@ -84,6 +84,14 @@ export default class TriagemService {
           })
         : await transacao.aluno.create({ data: dados });
 
+      await transacao.cursoAluno.deleteMany({
+        where: {
+          codAluno: aluno.idAluno,
+          codCurso: { not: matricula.cursoId },
+          statusMatricula: "PENDENTE",
+        },
+      });
+
       await transacao.cursoAluno.upsert({
         where: {
           codCurso_codAluno: {
@@ -95,13 +103,15 @@ export default class TriagemService {
           codCurso: matricula.cursoId,
           codAluno: aluno.idAluno,
           periodo: matricula.periodo,
-          classificacao: matricula.classificacao ?? null,
-          anoEscolar: matricula.anoEscolar ?? null,
+          classificacao: matricula.classificacao,
+          anoEscolar: matricula.anoEscolar,
+          statusMatricula: "PENDENTE",
         },
         update: {
           periodo: matricula.periodo,
-          classificacao: matricula.classificacao ?? null,
-          anoEscolar: matricula.anoEscolar ?? null,
+          classificacao: matricula.classificacao,
+          anoEscolar: matricula.anoEscolar,
+          statusMatricula: "PENDENTE",
         },
       });
 
@@ -118,7 +128,9 @@ export default class TriagemService {
 
   async registrarPendencias(atendimentoId, idUsuario, documentos) {
     return prisma.$transaction(async (transacao) => {
-      const atendimento = await transacao.historicoSenha.findUnique({});
+      const atendimento = await transacao.historicoSenha.findUnique({
+        where: { idHistorico: atendimentoId },
+      });
       if (
         !atendimento ||
         atendimento.codVoluntario !== idUsuario ||
@@ -173,7 +185,7 @@ export default class TriagemService {
       senha: {
         id: senha.idSenha,
         codigo: senha.senhaCodigo,
-        tipoSenha: senha.tipoSenha,
+        prioritaria: Boolean(senha.tipoSenha),
       },
       aluno: mapearAluno(senha.aluno),
       documentos: senha.documentosPendentes?.documentos ?? [],
@@ -197,16 +209,28 @@ export default class TriagemService {
         );
       const senha = await transacao.senha.findUnique({
         where: { idSenha: senhaId },
-        include: { aluno: true },
+        include: {
+          aluno: {
+            include: {
+              cursosAluno: {
+                include: { curso: true },
+              },
+            },
+          },
+        },
       });
+
       if (!senha)
         throw erro("Senha não encontrada.", 404, "SENHA_NAO_ENCONTRADA");
+
       const resultado = await transacao.senha.updateMany({
         where: { idSenha: senhaId, etapaSenha: etapa, statusSenha: "pendente" },
         data: { statusSenha: "em_atendimento" },
       });
+
       if (!resultado.count)
         throw erro("Esta senha não está pendente nesta etapa.");
+
       const atendimento = await transacao.historicoSenha.create({
         data: {
           codSenha: senhaId,
@@ -215,15 +239,18 @@ export default class TriagemService {
           dataHoraInicioHistorico: new Date(),
         },
       });
+
       return {
         mensagem: "Atendimento retomado com sucesso.",
         senha: {
           id: senha.idSenha,
           codigo: senha.senhaCodigo,
-          tipoSenha: senha.tipoSenha,
+          prioritaria: Boolean(senha.tipoSenha),
           etapa,
           status: "em_atendimento",
+          aluno: mapearAluno(senha.aluno),
         },
+        documentos: senha.documentosPendentes?.documentos ?? [],
         atendimento: {
           idHistorico: atendimento.idHistorico,
           iniciadoEm: atendimento.dataHoraInicioHistorico,

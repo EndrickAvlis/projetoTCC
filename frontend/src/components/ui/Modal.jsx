@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom"; // <-- 1. Importe o createPortal
 import { FiX } from "react-icons/fi";
 
 const Modal = ({
@@ -13,7 +14,8 @@ const Modal = ({
         return null;
     }
 
-    return (
+    // 2. Envolva o retorno com createPortal(..., document.body)
+    return createPortal(
         <div
             className="animate-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
             onClick={onFechar}
@@ -41,7 +43,8 @@ const Modal = ({
                     </footer>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

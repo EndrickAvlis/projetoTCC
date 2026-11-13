@@ -1,4 +1,5 @@
 import * as React from "react";
+import Alert from "../../../../../components/ui/Alert";
 import Select from "../../../../../components/ui/Select";
 import Input from "../../../../../components/ui/Input";
 import Card from "../../../../../components/ui/Card";
@@ -50,7 +51,7 @@ const SecaoAtendimento = () => {
   const [dataFim, setDataFim] = React.useState("");
 
   const { cursos } = useCursos();
-  const { cards, finalizadasPorHora, cursosAtivos } = useAtendimento({
+  const { cards, finalizadasPorHora, cursosAtivos, erro } = useAtendimento({
     tipoPeriodo,
     dataInicio: tipoPeriodo === "personalizado" ? dataInicio : undefined,
     dataFim: tipoPeriodo === "personalizado" ? dataFim : undefined,
@@ -120,6 +121,8 @@ const SecaoAtendimento = () => {
           </div>
         )}
       </div>
+
+      {erro && <Alert type="error" message={erro} />}
 
       <div className="grid grid-cols-4 gap-4">
         {CONFIG_CARDS.map((item) => {

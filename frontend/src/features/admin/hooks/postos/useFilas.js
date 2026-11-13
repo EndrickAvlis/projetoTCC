@@ -10,10 +10,14 @@ export const useFilas = () => {
     totalPendentes: 0,
   });
   const [carregando, setCarregando] = React.useState(true);
+  const [erro, setErro] = React.useState(null);
   const [atualizadoEm, setAtualizadoEm] = React.useState(null);
 
   const carregar = React.useCallback(async (silencioso = false) => {
-    if (!silencioso) setCarregando(true);
+    if (!silencioso) {
+      setCarregando(true);
+      setErro(null);
+    }
 
     try {
       const res = await dadosFila();
@@ -21,7 +25,8 @@ export const useFilas = () => {
       setPendencias(res.pendencias);
       setResumo(res.resumo);
       setAtualizadoEm(res.atualizadoEm);
-    } catch {
+    } catch (err) {
+      setErro(err.message);
     } finally {
       if (!silencioso) setCarregando(false);
     }
@@ -42,6 +47,7 @@ export const useFilas = () => {
     pendencias,
     resumo,
     carregando,
+    erro,
     atualizadoEm,
     recarregar: carregar,
   };
