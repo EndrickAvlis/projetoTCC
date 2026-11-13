@@ -18,20 +18,23 @@ export const ToastProvider = ({ children }) => {
     setToastAtivo(null);
   }, []);
 
-  const exibirToast = (tipo, mensagem, duracao = DURACAO_PADRAO_MS, fechavel = true) => {
-    if (!mensagem) return;
+  const exibirToast = React.useCallback(
+    (tipo, mensagem, duracao = DURACAO_PADRAO_MS, fechavel = true) => {
+      if (!mensagem) return;
 
-    if (temporizadorRef.current) {
-      clearTimeout(temporizadorRef.current);
-    }
+      if (temporizadorRef.current) {
+        clearTimeout(temporizadorRef.current);
+      }
 
-    setToastAtivo({ tipo, mensagem, fechavel });
+      setToastAtivo({ tipo, mensagem, fechavel });
 
-    temporizadorRef.current = setTimeout(() => {
-      setToastAtivo(null);
-      temporizadorRef.current = null;
-    }, duracao);
-  };
+      temporizadorRef.current = setTimeout(() => {
+        setToastAtivo(null);
+        temporizadorRef.current = null;
+      }, duracao);
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const escutarLegado = (evento) => {

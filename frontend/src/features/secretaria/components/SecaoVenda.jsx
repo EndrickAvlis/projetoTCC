@@ -120,8 +120,18 @@ const SecaoVenda = ({ onVendaRealizada }) => {
             </div>
           </div>
 
-          <div className="w-full lg:w-84 shrink-0 bg-surface rounded-xl border border-border p-5 shadow-xs flex flex-col gap-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
-            <div className="flex flex-col gap-5 overflow-y-auto">
+          <div className="w-full lg:w-84 shrink-0 bg-surface rounded-xl border border-border p-5 shadow-xs flex flex-col gap-5">
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={handleFinalizarCompra}
+              disabled={!podeFinalizar}
+              rightIcon={<FiShoppingBag />}
+            >
+              {salvando ? "Finalizando..." : "Finalizar Compra"}
+            </Button>
+
             <ResumoCompra
               aluno={alunoSelecionado}
               items={venda.uniformes.selecionados}
@@ -140,18 +150,6 @@ const SecaoVenda = ({ onVendaRealizada }) => {
                 disabled={salvando || venda.uniformes.selecionados.length === 0}
               />
             </div>
-            </div>
-
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full"
-              onClick={handleFinalizarCompra}
-              disabled={!podeFinalizar}
-              rightIcon={<FiShoppingBag />}
-            >
-              {salvando ? "Finalizando..." : "Finalizar Compra"}
-            </Button>
           </div>
         </div>
       )}
