@@ -5,10 +5,8 @@ import Button from "../../../components/ui/Button";
 import Alert from "../../../components/ui/Alert";
 import { formatarDataHora, formatarPeriodo } from "../../../utils/formatters";
 import { registrarRetirada } from "../services/secretariaService";
-import { useToast } from "../../../context/toastContext";
 
 const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
-  const toast = useToast();
   const [quantidades, setQuantidades] = React.useState({});
   const [salvando, setSalvando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
@@ -54,7 +52,6 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
       setSalvando(true);
       setErro(null);
       await registrarRetirada(compra.id, itensParaEnviar);
-      toast.sucesso("Retirada registrada com sucesso!");
       onSucesso?.();
       onFechar();
     } catch (err) {
