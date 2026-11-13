@@ -17,6 +17,7 @@ import RelatoriosPage from "./features/admin/pages/RelatoriosPage";
 import UsuariosPage from "./features/admin/pages/UsuariosPage";
 import ConfiguracoesPage from "./features/admin/pages/ConfiguracoesPage";
 import PainelPage from "./pages/PainelPage";
+import SecretariaPage from "./features/secretaria/pages/SecretariaPage";
 
 import Testes from "./testes";
 import { ToastProvider } from "./context/toastContext";
@@ -55,6 +56,10 @@ function App() {
               <ReactRouter.Route element={<RotaProtegida tela="docs" />}>
                 <ReactRouter.Route path="/docs" element={<DocsPage />} />
               </ReactRouter.Route>
+            </ReactRouter.Route>
+
+            <ReactRouter.Route element={<RotaProtegida tela="secretaria" />}>
+              <ReactRouter.Route path="/secretaria" element={<SecretariaPage />} />
             </ReactRouter.Route>
 
             <ReactRouter.Route element={<RotaProtegida tela="admin" />}>

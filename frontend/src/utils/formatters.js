@@ -61,3 +61,20 @@ export const formatarHora = (dataIso) => {
   }
 };
 
+export const formatarPeriodo = (periodo) => {
+  switch (periodo) {
+    case "manha":
+      return "Manhã";
+    case "tarde":
+      return "Tarde";
+    case "noite":
+      return "Noite";
+    case "integral":
+      return "Integral";
+    case "online":
+      return "EAD - Online";
+    default:
+      return "";
+  }
+};
+

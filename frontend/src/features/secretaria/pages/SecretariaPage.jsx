@@ -7,35 +7,57 @@ import Tabs from "../../../components/ui/Tabs";
 import Button from "../../../components/ui/Button";
 import SecaoRetiradas from "../components/SecaoRetiradas";
 import SecaoVenda from "../components/SecaoVenda";
-import { useSecretaria } from "../hooks/useSecretaria";
+import { obterKpis } from "../services/secretariaService";
 
 const ITENS_ABA = [
   { id: "retiradas", label: "Retiradas Pendentes", icone: FiBox },
   { id: "venda", label: "Venda Avulsa", icone: FiShoppingBag },
 ];
 
+const KPIS_INICIAIS = {
+  comprasPendentes: 0,
+  itensPendentes: 0,
+};
+
 const SecretariaPage = () => {
   const navigate = useNavigate();
   const { usuario, logout } = useAuth();
-  const secretaria = useSecretaria();
   const [abaAtiva, setAbaAtiva] = React.useState("retiradas");
+  const [kpis, setKpis] = React.useState(KPIS_INICIAIS);
+  const [carregandoKpis, setCarregandoKpis] = React.useState(true);
+
+  const carregarKpis = React.useCallback(async () => {
+    try {
+      setCarregandoKpis(true);
+      const res = await obterKpis();
+      setKpis({
+        comprasPendentes: res?.comprasPendentes ?? 0,
+        itensPendentes: res?.itensPendentes ?? 0,
+      });
+    } catch {
+      setKpis(KPIS_INICIAIS);
+    } finally {
+      setCarregandoKpis(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void Promise.resolve().then(carregarKpis);
+  }, [carregarKpis]);
 
   const handleLogout = async () => {
     await logout();
     navigate("/", { replace: true });
   };
 
-  const abasComBadge = React.useMemo(() => {
-    return ITENS_ABA.map((item) => {
-      if (item.id === "retiradas") {
-        return {
+  const abasComBadge = ITENS_ABA.map((item) =>
+    item.id === "retiradas"
+      ? {
           ...item,
-          badge: secretaria.kpis.comprasPendentes > 0 ? secretaria.kpis.comprasPendentes : undefined,
-        };
-      }
-      return item;
-    });
-  }, [secretaria.kpis.comprasPendentes]);
+          badge: kpis.comprasPendentes > 0 ? kpis.comprasPendentes : undefined,
+        }
+      : item,
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-page">
@@ -78,7 +100,7 @@ const SecretariaPage = () => {
           >
             <div className="flex flex-col">
               <span className="text-3xl font-extrabold text-text-primary tracking-tight">
-                {secretaria.carregandoKpis ? "—" : secretaria.kpis.comprasPendentes}
+                {carregandoKpis ? "—" : kpis.comprasPendentes}
               </span>
               <p className="text-xs text-text-secondary mt-1">
                 Compras aguardando retirada parcial ou total
@@ -93,7 +115,7 @@ const SecretariaPage = () => {
           >
             <div className="flex flex-col">
               <span className="text-3xl font-extrabold text-primary tracking-tight">
-                {secretaria.carregandoKpis ? "—" : secretaria.kpis.itensPendentes}
+                {carregandoKpis ? "—" : kpis.itensPendentes}
               </span>
               <p className="text-xs text-text-secondary mt-1">
                 Peças de uniforme aguardando entrega física
@@ -111,24 +133,11 @@ const SecretariaPage = () => {
           />
 
           {abaAtiva === "retiradas" && (
-            <SecaoRetiradas
-              compras={secretaria.compras}
-              total={secretaria.total}
-              pagina={secretaria.pagina}
-              limite={secretaria.limite}
-              carregando={secretaria.carregando}
-              erro={secretaria.erro}
-              busca={secretaria.busca}
-              cursoId={secretaria.cursoId}
-              onAlterarFiltro={secretaria.alterarFiltro}
-              onLimparFiltros={secretaria.limparFiltros}
-              onMudarPagina={secretaria.mudarPagina}
-              onRecarregar={secretaria.recarregar}
-            />
+            <SecaoRetiradas onRetiradaRegistrada={carregarKpis} />
           )}
 
           {abaAtiva === "venda" && (
-            <SecaoVenda onVendaRealizada={secretaria.recarregar} />
+            <SecaoVenda onVendaRealizada={carregarKpis} />
           )}
         </div>
       </main>

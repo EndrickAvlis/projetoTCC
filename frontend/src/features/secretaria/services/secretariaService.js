@@ -13,7 +13,7 @@ export const registrarRetirada = (compraId, itens) =>
   });
 
 export const registrarVenda = (dados) =>
-  requisitarApi("/secretaria/vendas", {
+  requisitarApi("/compras", {
     method: "POST",
     body: dados,
   });
