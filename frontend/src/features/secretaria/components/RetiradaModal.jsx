@@ -54,7 +54,7 @@ const RetiradaModal = ({ aberto, onFechar, compra, onSucesso }) => {
       setSalvando(true);
       setErro(null);
       await registrarRetirada(compra.id, itensParaEnviar);
-      toast.sucesso("Retirada registrada com sucesso!");
+      toast.confirmacao("Itens retirados com sucesso");
       onSucesso?.();
       onFechar();
     } catch (err) {

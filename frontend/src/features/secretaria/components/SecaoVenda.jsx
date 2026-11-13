@@ -39,7 +39,7 @@ const SecaoVenda = ({ onVendaRealizada }) => {
         ...venda.gerarPayload(),
       });
 
-      toast.sucesso("Venda avulsa registrada com sucesso!");
+      toast.confirmacao("Venda efetuada com sucesso");
       venda.limparVenda();
       setAlunoSelecionado(null);
       venda.catalogo.carregarProdutos({ silencioso: true });
@@ -120,7 +120,8 @@ const SecaoVenda = ({ onVendaRealizada }) => {
             </div>
           </div>
 
-          <div className="w-full lg:w-84 shrink-0 bg-surface rounded-xl border border-border p-5 shadow-xs flex flex-col gap-5">
+          <div className="w-full lg:w-84 shrink-0 bg-surface rounded-xl border border-border p-5 shadow-xs flex flex-col gap-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
+            <div className="flex flex-col gap-5 overflow-y-auto">
             <ResumoCompra
               aluno={alunoSelecionado}
               items={venda.uniformes.selecionados}
@@ -138,6 +139,7 @@ const SecaoVenda = ({ onVendaRealizada }) => {
                 onAlterarValor={venda.pagamento.alterarValor}
                 disabled={salvando || venda.uniformes.selecionados.length === 0}
               />
+            </div>
             </div>
 
             <Button
