@@ -48,7 +48,7 @@ export const ToastProvider = ({ children }) => {
     };
   }, [exibirToast]);
 
-  const toast = () => ({
+  const toast = {
     erro: (mensagem) => exibirToast("error", mensagem),
     sucesso: (mensagem) => exibirToast("success", mensagem),
     alerta: (mensagem) => exibirToast("warning", mensagem),
@@ -56,7 +56,7 @@ export const ToastProvider = ({ children }) => {
     fechar: fecharToast,
     error: (mensagem) => exibirToast("error", mensagem),
     success: (mensagem) => exibirToast("success", mensagem),
-  });
+  };
 
   return (
     <ToastContext.Provider value={{ toast, toastAtivo, fecharToast }}>
