@@ -13,7 +13,7 @@ senhaRoutes.patch(
   validarRequisicao(alterarPrioridadeSenhaSchema),
   senhaController.alterarPrioridadeSenha,
 );
-senhaRoutes.get("/ultima", accessValidator, senhaController.buscarUltimaSenha);
+senhaRoutes.get("/ultima", senhaController.buscarUltimaSenha);
 senhaRoutes.post(
   "/reiniciar-sequencia",
   accessValidator,

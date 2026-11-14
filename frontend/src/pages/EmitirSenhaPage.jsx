@@ -1,15 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import logoEtec from "../assets/logoEtec.png";
-import { emitirSenha } from "../features/postos/services/filaService";
+import {
+  buscarUltimaSenha,
+  emitirSenha,
+} from "../features/postos/services/filaService";
 import { formatarSenha } from "../utils/formatters";
 
 const EmitirSenhaPage = () => {
   const [senha, setSenha] = useState(null);
   const [emitindo, setEmitindo] = useState(false);
   const [erro, setErro] = useState(null);
+  const emissaoSeqRef = useRef(0);
+
+  useEffect(() => {
+    let ativo = true;
+
+    const carregarUltimaSenha = async () => {
+      const seqAntes = emissaoSeqRef.current;
+
+      try {
+        const { ultimoNumero } = await buscarUltimaSenha();
+        if (!ativo || seqAntes !== emissaoSeqRef.current) return;
+
+        setSenha(ultimoNumero > 0 ? { codigo: ultimoNumero } : null);
+      } catch (err) {
+        if (ativo && seqAntes === emissaoSeqRef.current) {
+          setErro(err.message);
+        }
+      }
+    };
+
+    const aoAlterarVisibilidade = () => {
+      if (document.visibilityState === "visible") {
+        carregarUltimaSenha();
+      }
+    };
+
+    carregarUltimaSenha();
+    document.addEventListener("visibilitychange", aoAlterarVisibilidade);
+
+    return () => {
+      ativo = false;
+      document.removeEventListener("visibilitychange", aoAlterarVisibilidade);
+    };
+  }, []);
 
   const handleEmitirSenha = async () => {
     if (emitindo) return;
+
+    emissaoSeqRef.current += 1;
 
     try {
       setEmitindo(true);
