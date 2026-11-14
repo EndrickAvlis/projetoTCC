@@ -2,6 +2,8 @@ import { triggerAsyncId } from "node:async_hooks";
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
 import BaseService from "./baseService.js";
+import { stripTypeScriptTypes } from "node:module";
+import { threadCpuUsage } from "node:process";
 
 export default class PostosService extends BaseService {
     async ListarFilas() {
@@ -212,7 +214,7 @@ export default class PostosService extends BaseService {
     }
 
 
-    async listarAtendimento(tipoPeriodo = "hoje", dataInicio, dataFim, cursoId, periodoCurso) {
+    async listarAtendimento(tipoPeriodo, dataInicio, dataFim, cursoId, periodoCurso) {
         try {
             const intervalo = obterIntervaloDatas(tipoPeriodo, dataInicio, dataFim);
             const resultado = await prisma.$transaction(async (tx) => {
@@ -266,14 +268,14 @@ export default class PostosService extends BaseService {
                 let tma = 0;
                 if (senhas.length >= 0) {
                     tma = senhas.reduce((total, senha) => {
-                        const inicio = new Date(senha.dataInicioAtendimento);
-                        const fim = new Date(senha.dataFinalizacao);
+                        const inicio = new Date(senha.dataHoraInicioSenha);
+                        const fim = new Date(senha.dataHoraFimSenha);
 
                         return total + (fim - inicio);
                     }, 0) / senhas.length / 1000 / 60;
                 }
 
-                const finalizadasPorHora = await obterFinalizadasPorHora(intervalo.dataInicio, intervalo.dataFim);
+                const finalizadasPorHora = await obterFinalizadasPorHora(intervalo.dataInicio, intervalo.dataFim, tx);
 
                 const cursos = await tx.curso.findMany({
                     where: {
@@ -320,6 +322,248 @@ export default class PostosService extends BaseService {
             throw AppError;
         }
     }
+
+    async listarAuditoria(busca, status, tipoPeriodo, dataInicio, dataFim, pagina, limite) {
+        try{
+            const intervalo = obterIntervaloDatas(tipoPeriodo, dataInicio, dataFim);
+            const skip = (pagina - 1) * limite;
+
+            const buscaNumero = Number(busca);
+            const numeroValido = !Number.isNaN(buscaNumero) && busca.trim() !== "";
+
+            const resultado = await prisma.$transaction(async (tx) => {
+
+                const filtro = {
+                        statusSenha: {
+                            in: (status? [status] : ["finalizada", "cancelada"])
+                        },
+                        dataHoraInicioSenha: {
+                            gte: intervalo.dataInicio
+                        },
+                        dataHoraFimSenha: {
+                            lte: intervalo.dataFim
+                        },
+                        OR: [
+                            {
+                                ...(numeroValido ? [{ senhaCodigo: { equals: buscaNumero } }] : [])
+                            },
+                            {
+                                aluno: {
+                                    nomeAluno: {
+                                        contains: busca,
+                                        mode: "insensitive"
+                                    }
+                                }
+                            }
+                        ]
+                    };
+
+                const senhas = await tx.senha.findMany({
+                    where: filtro,
+                    include: {
+                        aluno: {
+                            include: {
+                                cursosAluno: {
+                                    include:{
+                                        curso: true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    skip: skip,
+                    take: limite,
+                    orderBy: {
+                        dataHoraFimSenha: "desc"
+                    }
+                });
+
+                const totalSenhas = await tx.senha.count({
+                    where: filtro
+                });                
+
+                const itens = senhas.reduce((itens, senha) => {
+                    const inicio = new Date(senha.dataHoraInicioSenha);
+                    const fim = new Date(senha.dataHoraFimSenha);
+
+                    const tempo = (fim - inicio) / 1000;
+
+                    const hora = Math.trunc(tempo / 60 / 60);
+                    const minutos = Math.trunc((tempo / 60) % 60);
+
+                    const tempoTotal = `${hora}h${minutos}`;
+
+                    const info = {
+                        id: senha.idSenha,
+                        codigo: senha.senhaCodigo,
+                        prioritaria: senha.tipoSenha,
+                        status: senha.statusSenha,
+                        posto: senha.etapaSenha,
+                        aluno: {
+                            id: senha.aluno.idAluno,
+                            nome: senha.aluno.nomeAluno
+                        },
+                        curso:{
+                            id: senha.aluno.cursosAluno[0].curso.idCurso,
+                            nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
+                            periodo: senha.aluno.cursosAluno[0].periodo
+                        },
+                        emiditaEm: senha.dataHoraInicioSenha,
+                        encerradaEm: senha.dataHoraFimSenha,
+                        tempoTotal: tempoTotal,
+                        duracaoSegundos: tempo,
+                        documentos: senha.documentosPendentes
+                    };
+
+                    itens.push(info);
+
+                    return itens;
+                }, [])
+
+                const totalPaginas = Math.ceil(totalSenhas / limite);
+
+                return {
+                    itens: itens,
+                    paginacao: {
+                        pagina: pagina,
+                        limite: limite,
+                        totalItens: totalSenhas,
+                        totalPaginas: totalPaginas
+                    }
+                }
+            });
+            return resultado;
+        }catch (AppError) {
+            throw AppError
+        }
+    }
+
+    async trocarDePosto(idSenha, postoDestino){
+        try{
+            const resultado = prisma.$transaction(async (tx) => {
+                const senha = await tx.senha.findUnique({
+                    where:{
+                        idSenha: idSenha,
+                        statusSenha: "aguardando"
+                    }
+                });
+
+                if (!senha) {
+                    throw new AppError("senha deve existir", {
+                        status: 404,
+                        code: "SENHA_NAO_ENCONTRADA"
+                    });
+                }
+
+                if (senha.statusSenha !== "aguardando") {
+                    throw new AppError("senha não está aguardando", {
+                        status: 409,
+                        code: "SENHA_NAO_AGUARDANDO"
+                    });
+                }
+
+                if (senha.etapaSenha === postoDestino) {
+                    throw new AppError("posto de destino não deve ser idêntico ao posto autal", {
+                        status: 400,
+                        code: "POSTO_IGUAL"
+                    })
+                }
+
+                const senhaAtualizada = await tx.senha.update({
+                    where: {
+                        idSenha: senha.idSenha
+                    },
+                    data: {
+                        etapaSenha: postoDestino
+                    }
+                });
+
+                return {
+                    senha: {
+                        id: senhaAtualizada.idSenha,
+                        codigo: senhaAtualizada.senhaCodigo,
+                        posto: senhaAtualizada.etapaSenha,
+                        status: senhaAtualizada.statusSenha
+                    }
+                }
+            });
+            return resultado;
+        }catch (AppError) {
+            throw AppError;
+        }
+    }
+
+    async cancelarSenha(idSenha) {
+        try{
+            const resultado = prisma.$transaction(async (tx) => {
+                const senha = await tx.senha.findUnique({
+                    where:{
+                        idSenha: idSenha
+                    }
+                });
+
+                if (!senha) {
+                    throw new AppError("senha deve existir", {
+                        status: 404,
+                        code: "SENHA_NAO_ENCONTRADA"
+                    });
+                }
+
+                if (senha.statusSenha === "finalizada" || senha.statusSenha === "cancelada") {
+                    throw new AppError("senha já está encerrada", {
+                        status: 409,
+                        code: "SENHA_JA_ENCERRADA"
+                    });
+                }
+
+                const agora = new Date();
+
+                const emAtendimento = await tx.historicoSenha.findMany({
+                    where: {
+                        NOT: {
+                                dataHoraFimHistorico: {
+                                    lte: agora
+                            }
+                        }
+                    }
+                });
+
+                if (emAtendimento) {
+                    await tx.historicoSenha.update({
+                    where: {
+                        codSenha: idSenha
+                    },
+                    data: {
+                        dataHoraFimHistorico: agora
+                    }
+                });
+                }
+
+                const senhaAtualizada = await tx.senha.update({
+                    where: {
+                        idSenha: senha.idSenha
+                    },
+                    data: {
+                        statusSenha: "cancelada",
+                        dataHoraFimSenha: agora
+                    }
+                });
+
+                return {
+                    senha: {
+                        id: senhaAtualizada.idSenha,
+                        codigo: senhaAtualizada.senhaCodigo,
+                        status: senhaAtualizada.statusSenha,
+                        encerradaEm: senhaAtualizada.dataHoraFimSenha
+                    }
+                }
+            });
+            return resultado;
+        }catch (AppError) {
+            throw AppError;
+        }
+    }
+
 }
 
 const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
@@ -353,11 +597,19 @@ const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
             break;
 
         case "personalizado":
-            dataInicio = new Date(inicio);
-            dataInicio.setHours(0, 0, 0, 0);
+            if (!inicio || !fim){
+                dataInicio = new Date(agora);
+                dataInicio.setHours(0, 0, 0, 0);
 
-            dataFim = new Date(fim);
-            dataFim.setHours(23, 59, 59, 999);
+                dataFim = new Date(agora);
+                dataFim.setHours(23, 59, 59, 999);
+            } else {
+                dataInicio = new Date(inicio);
+                dataInicio.setHours(0, 0, 0, 0);
+
+                dataFim = new Date(fim);
+                dataFim.setHours(23, 59, 59, 999);
+            }
             break;
 
         default:
@@ -371,7 +623,7 @@ const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
 };
 
 
-const obterFinalizadasPorHora = async (dataInicio, dataFim) => {
+const obterFinalizadasPorHora = async (dataInicio, dataFim, tx) => {
 
     // Inicializa as 12 horas, de 07h até 18h
     const resultado = Array.from({ length: 12 }, (_, i) => ({
@@ -380,7 +632,7 @@ const obterFinalizadasPorHora = async (dataInicio, dataFim) => {
     }));
 
     // Busca somente as datas de finalização
-    const senhas = await prisma.senha.findMany({
+    const senhas = await tx.senha.findMany({
         where: {
             statusSenha: "finalizada",
             dataHoraInicioSenha:{
