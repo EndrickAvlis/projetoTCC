@@ -6,36 +6,45 @@ import Modal from "../../../../components/ui/Modal";
 import Select from "../../../../components/ui/Select";
 import { PERIODOS_CURSO } from "../../../../constants/cursoOptions";
 
+const PERIODOS_VALIDOS = new Set(PERIODOS_CURSO.map((p) => p.value));
+
 const dadosIniciais = () => ({
   periodo: "",
   vagasTotais: "",
   matriculaAtiva: true,
 });
 
-const CursoModal = ({
-  aberto,
+const construirPeriodosIniciais = (periodosSugeridos = []) => {
+  const validos = periodosSugeridos
+    .filter((p) => PERIODOS_VALIDOS.has(p))
+    .slice(0, 5);
+
+  if (validos.length === 0) {
+    return [dadosIniciais()];
+  }
+
+  return validos.map((periodo) => ({
+    ...dadosIniciais(),
+    periodo,
+  }));
+};
+
+const CursoModalForm = ({
   curso = null,
+  dadosIniciaisCurso = null,
   onFechar,
   onSalvar,
   salvando = false,
 }) => {
   const emEdicao = Boolean(curso);
 
-  const [nome, setNome] = React.useState("");
-  const [periodos, setPeriodos] = React.useState([dadosIniciais()]);
+  const [nome, setNome] = React.useState(() =>
+    curso ? curso.nome : (dadosIniciaisCurso?.nome ?? ""),
+  );
+  const [periodos, setPeriodos] = React.useState(() =>
+    curso ? [dadosIniciais()] : construirPeriodosIniciais(dadosIniciaisCurso?.periodos),
+  );
   const [erros, setErros] = React.useState({});
-
-  React.useEffect(() => {
-    if (aberto) {
-      if (curso) {
-        setNome(curso.nome);
-      } else {
-        setNome("");
-        setPeriodos([dadosIniciais()]);
-      }
-      setErros({});
-    }
-  }, [aberto, curso]);
 
   const adicionarPeriodo = () => {
     if (periodos.length >= 5) return;
@@ -115,14 +124,7 @@ const CursoModal = ({
   };
 
   return (
-    <Modal
-      aberto={aberto}
-      onFechar={() => !salvando && onFechar()}
-      titulo={emEdicao ? "Editar curso" : "Adicionar curso"}
-      largura="max-w-xl"
-      conteudoRolavel={false}
-    >
-      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <Input
           label="Nome do curso"
           maxLength="100"
@@ -239,6 +241,35 @@ const CursoModal = ({
           </Button>
         </footer>
       </form>
+  );
+};
+
+const CursoModal = ({
+  aberto,
+  curso = null,
+  dadosIniciaisCurso = null,
+  onFechar,
+  onSalvar,
+  salvando = false,
+}) => {
+  return (
+    <Modal
+      aberto={aberto}
+      onFechar={() => !salvando && onFechar()}
+      titulo={curso ? "Editar curso" : "Adicionar curso"}
+      largura="max-w-xl"
+      conteudoRolavel={false}
+    >
+      {aberto && (
+        <CursoModalForm
+          key={curso ? `edit-${curso.id}` : `new-${dadosIniciaisCurso?.nome ?? ""}`}
+          curso={curso}
+          dadosIniciaisCurso={dadosIniciaisCurso}
+          onFechar={onFechar}
+          onSalvar={onSalvar}
+          salvando={salvando}
+        />
+      )}
     </Modal>
   );
 };

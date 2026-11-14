@@ -2,9 +2,12 @@ import * as React from "react";
 import Modal from "../../../../../components/ui/Modal";
 import { useCursos } from "../../../hooks/useCursos";
 import * as AlunosService from "../../../services/alunoService";
+import * as cursoService from "../../../services/cursoService";
+import CursoModal from "../../cursos/CursoModal";
 import UploadCsv from "./UploadCsv";
 import MapeamentoCursos from "./MapeamentoCursos";
 import ResultadoImportacao from "./ResultadoImportacao";
+import { sugerirAssociacoesCursos } from "./importAluno";
 import { useToast } from "../../../../../context/toastContext";
 
 const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
@@ -18,6 +21,8 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
   const [gruposCursos, setGruposCursos] = React.useState([]);
   const [resultadoFinal, setResultadoFinal] = React.useState(null);
   const [carregando, setCarregando] = React.useState(false);
+  const [cursoParaCriar, setCursoParaCriar] = React.useState(null);
+  const [salvandoCurso, setSalvandoCurso] = React.useState(false);
 
   const {
     cursos: cursosExistentes,
@@ -25,11 +30,23 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
     carregando: carregandoCursos,
   } = useCursos({ arquivado: false });
 
+  const handleRecarregarCursos = async () => {
+    const listaAtualizada = await recarregarCursos();
+    if (listaAtualizada?.length > 0) {
+      setGruposCursos((atuais) =>
+        atuais.length > 0
+          ? sugerirAssociacoesCursos(atuais, listaAtualizada)
+          : atuais,
+      );
+    }
+  };
+
   const handleFechar = () => {
     setEtapa(1);
     setDadosArquivo(null);
     setGruposCursos([]);
     setResultadoFinal(null);
+    setCursoParaCriar(null);
     onFechar();
   };
 
@@ -42,10 +59,36 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
     setGruposCursos((atuais) =>
       atuais.map((item) =>
         item.chave === chave
-          ? { ...item, idCurso, tipoAssociacao: "MANUAL" }
+          ? {
+              ...item,
+              idCurso,
+              tipoAssociacao: idCurso ? "MANUAL" : "PENDENTE",
+            }
           : item,
       ),
     );
+  };
+
+  const handleSalvarNovoCurso = async (dados) => {
+    if (!cursoParaCriar) return;
+
+    setSalvandoCurso(true);
+    try {
+      const res = await cursoService.criarCurso(dados);
+      const novoCursoId = res?.curso?.id ? String(res.curso.id) : "";
+
+      if (novoCursoId) {
+        handleAtualizarAssociacao(cursoParaCriar.chave, novoCursoId);
+      }
+
+      await handleRecarregarCursos();
+      toast.sucesso("Curso cadastrado e associado com sucesso.");
+      setCursoParaCriar(null);
+    } catch (err) {
+      toast.erro(err.message);
+    } finally {
+      setSalvandoCurso(false);
+    }
   };
 
   const handleConfirmarImportacao = async () => {
@@ -85,13 +128,14 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
   };
 
   return (
-    <Modal
-      aberto={aberto}
-      onFechar={handleFechar}
-      titulo="Importar Lista de Classificação"
-      largura="max-w-3xl"
-    >
-      <div className="sticky top-0 z-10 mb-6 flex items-center justify-between border-b border-border bg-surface pb-4 pt-1">
+    <>
+      <Modal
+        aberto={aberto}
+        onFechar={handleFechar}
+        titulo="Importar Lista de Classificação"
+        largura="max-w-4xl"
+      >
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
         {[
           { num: 1, label: "Selecionar Arquivo" },
           { num: 2, label: "Mapear Cursos" },
@@ -142,37 +186,51 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
         />
       )}
 
-      {etapa === 2 && (
-        <MapeamentoCursos
-          gruposCursos={gruposCursos}
-          cursosExistentes={cursosExistentes}
-          onAtualizarAssociacao={handleAtualizarAssociacao}
+        {etapa === 2 && (
+          <MapeamentoCursos
+            gruposCursos={gruposCursos}
+            cursosExistentes={cursosExistentes}
+            onAtualizarAssociacao={handleAtualizarAssociacao}
+            onCriarCurso={setCursoParaCriar}
           onVoltar={() => setEtapa(1)}
           onConfirmar={handleConfirmarImportacao}
-          onRecarregarCursos={recarregarCursos}
+          onRecarregarCursos={handleRecarregarCursos}
           carregandoCursos={carregandoCursos}
-          carregando={carregando}
-        />
-      )}
+            carregando={carregando}
+          />
+        )}
 
-      {etapa === 3 && (
-        <ResultadoImportacao
-          resultado={resultadoFinal}
-          metricas={dadosArquivo?.metricas}
-          nomeArquivo={dadosArquivo?.nomeArquivo}
-          totalCursosAssociados={gruposCursos.length}
-          anoProcesso={anoProcesso}
-          semestreProcesso={semestreProcesso}
-          onConcluir={handleConcluir}
-          onReiniciar={() => {
-            setEtapa(1);
-            setDadosArquivo(null);
-            setGruposCursos([]);
-            setResultadoFinal(null);
-          }}
-        />
-      )}
-    </Modal>
+        {etapa === 3 && (
+          <ResultadoImportacao
+            resultado={resultadoFinal}
+            metricas={dadosArquivo?.metricas}
+            nomeArquivo={dadosArquivo?.nomeArquivo}
+            totalCursosAssociados={gruposCursos.length}
+            anoProcesso={anoProcesso}
+            semestreProcesso={semestreProcesso}
+            onConcluir={handleConcluir}
+            onReiniciar={() => {
+              setEtapa(1);
+              setDadosArquivo(null);
+              setGruposCursos([]);
+              setResultadoFinal(null);
+            }}
+          />
+        )}
+      </Modal>
+
+      <CursoModal
+        aberto={Boolean(cursoParaCriar)}
+        dadosIniciaisCurso={
+          cursoParaCriar
+            ? { nome: cursoParaCriar.nomeCsv, periodos: cursoParaCriar.periodos }
+            : null
+        }
+        onFechar={() => setCursoParaCriar(null)}
+        onSalvar={handleSalvarNovoCurso}
+        salvando={salvandoCurso}
+      />
+    </>
   );
 };
 

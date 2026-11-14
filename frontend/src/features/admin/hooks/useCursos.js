@@ -19,12 +19,15 @@ export const useCursos = ({ busca = "", arquivado = false } = {}) => {
         arquivado,
       });
 
-      setCursos(res.cursos ?? []);
+      const lista = res.cursos ?? [];
+      setCursos(lista);
       setTotal(res.total ?? 0);
+      return lista;
     } catch (err) {
       setCursos([]);
       setTotal(0);
       setErro(err.message);
+      return [];
     } finally {
       setCarregando(false);
     }

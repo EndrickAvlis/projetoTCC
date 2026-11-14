@@ -133,6 +133,29 @@ const normalizarNomeComparacao = (nome) => {
     .trim();
 };
 
+export const sugerirAssociacoesCursos = (
+  gruposCursos = [],
+  cursosExistentes = [],
+) => {
+  return gruposCursos.map((grupo) => {
+    if (grupo.idCurso) return grupo;
+
+    const matchNome = cursosExistentes.find(
+      (c) =>
+        normalizarNomeComparacao(c.nome) ===
+        normalizarNomeComparacao(grupo.nomeCsv),
+    );
+
+    if (!matchNome) return grupo;
+
+    return {
+      ...grupo,
+      idCurso: String(matchNome.id),
+      tipoAssociacao: "SUGESTAO",
+    };
+  });
+};
+
 // 4. Análise e aplicação das regras de negócio do CSV
 export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
   const candidatosValidos = [];
@@ -208,22 +231,16 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
     }
   });
 
-  const gruposCursos = Array.from(mapaCursos.values()).map((grupo) => {
-    const matchNome = cursosExistentes.find(
-      (c) =>
-        normalizarNomeComparacao(c.nome) ===
-        normalizarNomeComparacao(grupo.nomeCsv),
-    );
+  const gruposBase = Array.from(mapaCursos.values()).map((grupo) => ({
+    chave: grupo.chave,
+    nomeCsv: grupo.nomeCsv,
+    periodos: Array.from(grupo.periodos),
+    totalCandidatos: grupo.totalCandidatos,
+    idCurso: "",
+    tipoAssociacao: "PENDENTE",
+  }));
 
-    return {
-      chave: grupo.chave,
-      nomeCsv: grupo.nomeCsv,
-      periodos: Array.from(grupo.periodos),
-      totalCandidatos: grupo.totalCandidatos,
-      idCurso: matchNome ? String(matchNome.id) : "",
-      tipoAssociacao: matchNome ? "SUGESTAO" : "PENDENTE",
-    };
-  });
+  const gruposCursos = sugerirAssociacoesCursos(gruposBase, cursosExistentes);
 
   return {
     totalLinhas: registros.length,
