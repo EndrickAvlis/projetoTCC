@@ -36,6 +36,10 @@ export const listarAlunosSchema = z.object({
       (v) => (v === "" ? undefined : v),
       statusAluno.optional(),
     ),
+    ignorarArquivados: z.preprocess(
+      (v) => (v === "true" ? true : v === "false" ? false : v),
+      z.boolean().optional().default(false),
+    ),
     pagina: z.coerce.number().int().positive().optional().default(1),
     limite: z.coerce.number().int().positive().optional().default(10),
   }),
@@ -48,6 +52,37 @@ export const atualizarAlunoSchema = z.object({
   body: z.object({
     nome: nomeAluno.optional(),
     status: statusAluno.optional(),
+  }),
+});
+
+export const arquivarCandidatosSchema = z.object({
+  body: z
+    .object({
+      anoProcesso: z.coerce
+        .number()
+        .int("Informe um ano válido.")
+        .min(2000, "Informe um ano válido.")
+        .max(2100, "Informe um ano válido.")
+        .optional(),
+      semestreProcesso: z.coerce
+        .number()
+        .int("Informe um semestre válido.")
+        .min(1, "O semestre deve ser 1 ou 2.")
+        .max(2, "O semestre deve ser 1 ou 2.")
+        .optional(),
+    })
+    .refine(
+      (body) => (body.anoProcesso == null) === (body.semestreProcesso == null),
+      {
+        message:
+          "Informe o ano e o semestre juntos para filtrar por processo seletivo.",
+      },
+    ),
+});
+
+export const excluirAlunoSchema = z.object({
+  params: z.object({
+    id: id,
   }),
 });
 

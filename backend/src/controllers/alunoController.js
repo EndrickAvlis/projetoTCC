@@ -35,3 +35,21 @@ export const importarAlunos = async (req, res) => {
 
   return res.status(201).json(resultado);
 };
+
+export const arquivarCandidatos = async (req, res) => {
+  const resultado = await alunoService.arquivarCandidatos(req.validado.body);
+
+  return res.json(resultado);
+};
+
+export const excluirAluno = async (req, res) => {
+  await alunoService.excluirAluno(req.validado.params.id);
+
+  return res.status(204).send();
+};
+
+export const excluirAlunos = async (req, res) => {
+  const resultado = await alunoService.excluirAlunos();
+
+  return res.json(resultado);
+};

@@ -18,3 +18,19 @@ export const importarAlunos = (dados) =>
     body: dados,
   });
 
+export const arquivarCandidatos = (dados = {}) =>
+  requisitarApi("/alunos/arquivar", {
+    method: "PATCH",
+    body: dados,
+  });
+
+export const excluirAluno = (alunoId) =>
+  requisitarApi(`/alunos/${alunoId}`, {
+    method: "DELETE",
+  });
+
+export const excluirAlunos = () =>
+  requisitarApi("/alunos", {
+    method: "DELETE",
+  });
+

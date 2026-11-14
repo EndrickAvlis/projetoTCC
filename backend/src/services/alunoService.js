@@ -1,14 +1,7 @@
 import prisma from "../config/prisma.js";
 import BaseService from "./baseService.js";
 import AppError from "../errors/AppError.js";
-
-const formatarNome = (texto) =>
-  texto
-    .trim()
-    .toLowerCase()
-    .split(/\s+/)
-    .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1))
-    .join(" ");
+import { formatarNome } from "../utils/formatarNome.js";
 
 const removerDuplicadosLocais = (candidatos) => {
   const vistos = new Set();
@@ -18,6 +11,18 @@ const removerDuplicadosLocais = (candidatos) => {
     vistos.add(chave);
     return true;
   });
+};
+
+const alunoInclude = {
+  cursosAluno: {
+    include: { curso: true },
+  },
+  _count: {
+    select: {
+      compras: true,
+      senhas: true,
+    },
+  },
 };
 
 export default class AlunoService extends BaseService {
@@ -30,6 +35,7 @@ export default class AlunoService extends BaseService {
     cidade,
     cursoId,
     status,
+    ignorarArquivados = false,
     pagina = 1,
     limite = 10,
   } = {}) {
@@ -42,7 +48,8 @@ export default class AlunoService extends BaseService {
         ? { contains: nome.trim(), mode: "insensitive" }
         : undefined,
       cidadeAluno: cidade?.trim() || undefined,
-      statusAluno: status || undefined,
+      statusAluno:
+        status || (ignorarArquivados ? { not: "ARQUIVADO" } : undefined),
       cursosAluno: cursoId ? { some: { codCurso: cursoId } } : undefined,
     };
 
@@ -53,11 +60,7 @@ export default class AlunoService extends BaseService {
         skip,
         take,
         orderBy: { nomeAluno: "asc" },
-        include: {
-          cursosAluno: {
-            include: { curso: true },
-          },
-        },
+        include: alunoInclude,
       }),
     ]);
 
@@ -101,15 +104,102 @@ export default class AlunoService extends BaseService {
         statusAluno: status,
       },
       {
-        include: {
-          cursosAluno: {
-            include: {
-              curso: true,
-            },
+        include: alunoInclude,
+      },
+    );
+  }
+
+  async arquivarCandidatos({ anoProcesso, semestreProcesso } = {}) {
+    const { count } = await prisma.aluno.updateMany({
+      where: {
+        statusAluno: "CANDIDATO",
+        ...(anoProcesso != null && semestreProcesso != null
+          ? { anoProcesso, semestreProcesso }
+          : {}),
+      },
+      data: { statusAluno: "ARQUIVADO" },
+    });
+
+    return { arquivados: count };
+  }
+
+  async excluirAluno(id) {
+    const aluno = await prisma.aluno.findUnique({
+      where: { idAluno: id },
+      select: {
+        idAluno: true,
+        statusAluno: true,
+        _count: {
+          select: {
+            compras: true,
+            senhas: true,
           },
         },
       },
-    );
+    });
+
+    if (!aluno) {
+      throw new AppError("Aluno não encontrado.", {
+        status: 404,
+        code: "ALUNO_NAO_ENCONTRADO",
+      });
+    }
+
+    if (aluno.statusAluno !== "ARQUIVADO") {
+      throw new AppError("Apenas alunos arquivados podem ser excluídos.", {
+        status: 409,
+        code: "ALUNO_NAO_ARQUIVADO",
+      });
+    }
+
+    if (aluno._count.compras > 0 || aluno._count.senhas > 0) {
+      throw new AppError(
+        "Não é possível excluir um aluno com compras ou atendimentos vinculados.",
+        {
+          status: 409,
+          code: "ALUNO_COM_VINCULOS",
+        },
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.cursoAluno.deleteMany({ where: { codAluno: id } });
+      await tx.aluno.delete({ where: { idAluno: id } });
+    });
+  }
+
+  async excluirAlunos() {
+    return prisma.$transaction(async (tx) => {
+      const [totalArquivados, elegiveis] = await Promise.all([
+        tx.aluno.count({ where: { statusAluno: "ARQUIVADO" } }),
+        tx.aluno.findMany({
+          where: {
+            statusAluno: "ARQUIVADO",
+            compras: { none: {} },
+            senhas: { none: {} },
+          },
+          select: { idAluno: true },
+        }),
+      ]);
+
+      if (elegiveis.length === 0) {
+        return { excluidos: 0, mantidos: totalArquivados };
+      }
+
+      const ids = elegiveis.map((a) => a.idAluno);
+      await tx.cursoAluno.deleteMany({
+        where: { codAluno: { in: ids } },
+      });
+
+      const { count } = await tx.aluno.deleteMany({
+        where: { idAluno: { in: ids } },
+      });
+
+      return {
+        excluidos: count,
+        mantidos: totalArquivados - count,
+      };
+    });
   }
 
   async importarAlunos({ anoProcesso, semestreProcesso, candidatos }) {
@@ -141,7 +231,7 @@ export default class AlunoService extends BaseService {
         data: paraInserir.map((c) => ({
           nomeAluno: formatarNome(c.nome),
           escolaridadePublica: Boolean(c.escolaridadePublica),
-          cidadeAluno: c.cidade,
+          cidadeAluno: c.cidade ? formatarNome(c.cidade) : null,
           sexoAluno: c.sexo,
           statusAluno: "CANDIDATO",
           anoProcesso,
