@@ -127,6 +127,7 @@ export const recuperarAtendimento = async (req, res) => {
       etapa: senha.etapaSenha,
       status: senha.statusSenha,
       aluno: alunoResposta,
+      documentos: senha.documentosPendentes?.documentos ?? [],
     },
     atendimento: {
       idHistorico: atendimentoAberto.idHistorico,

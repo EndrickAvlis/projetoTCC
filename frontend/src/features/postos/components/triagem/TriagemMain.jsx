@@ -20,16 +20,16 @@ const DADOS_INICIAIS = {
   ano: "1",
   cidade: "",
   sexo: "",
-  escolaridadePublica: "",
+  escolaridadePublica: false,
 };
 
 const formatarParaTexto = (valor, padrao = "") => valor?.toString() ?? padrao;
 
-export const formPayload = (aluno) => ({
+const formPayload = (aluno) => ({
   nome: formatarParaTexto(aluno?.nome),
   cidade: formatarParaTexto(aluno?.cidade),
   sexo: formatarParaTexto(aluno?.sexo),
-  escolaridadePublica: formatarParaTexto(aluno?.escolaridadePublica),
+  escolaridadePublica: Boolean(aluno?.escolaridadePublica),
   classificacao: formatarParaTexto(aluno?.classificacao),
   curso: formatarParaTexto(aluno?.cursoId),
   periodo: formatarParaTexto(aluno?.periodo),
@@ -42,13 +42,13 @@ const validarDadosAluno = (dados) =>
       dados.curso &&
       dados.periodo &&
       dados.ano &&
-      dados.escolaridadePublica !== "" &&
+      typeof dados.escolaridadePublica === "boolean" &&
       dados.sexo &&
       dados.cidade?.trim() &&
       Number(dados.classificacao) > 0,
   );
 
-export const TriagemMain = () => {
+const TriagemMain = () => {
   const toast = useToast();
   const {
     fase,
@@ -65,14 +65,39 @@ export const TriagemMain = () => {
     pendenciaSelecionada,
     selecionarPendencia,
     retomar,
+    recarregar: recarregarPendencias,
     carregando: carregandoPendencias,
   } = usePendencias();
 
+  const temAlunoVinculado = fase === "iniciada" && Boolean(senhaAtual?.aluno);
+  const chaveAtendimento = `${senhaAtual?.id ?? "sem-senha"}-${fase}`;
+
+  const [chaveAnterior, setChaveAnterior] = React.useState(chaveAtendimento);
   const [abaAtiva, setAbaAtiva] = React.useState("atendimento");
   const [cursos, setCursos] = React.useState([]);
-  const [alunoId, setAlunoId] = React.useState(null);
-  const [dadosAluno, setDadosAluno] = React.useState(DADOS_INICIAIS);
-  const [documentosSelecionados, setDocumentosSelecionados] = React.useState([]);
+  const [alunoId, setAlunoId] = React.useState(() =>
+    temAlunoVinculado ? senhaAtual.aluno.id : null,
+  );
+  const [dadosAluno, setDadosAluno] = React.useState(() =>
+    temAlunoVinculado ? formPayload(senhaAtual.aluno) : DADOS_INICIAIS,
+  );
+  const [documentosSelecionados, setDocumentosSelecionados] = React.useState(
+    () => (temAlunoVinculado ? (senhaAtual.documentos ?? []) : []),
+  );
+  const [formularioVisivel, setFormularioVisivel] =
+    React.useState(temAlunoVinculado);
+
+  if (chaveAtendimento !== chaveAnterior) {
+    setChaveAnterior(chaveAtendimento);
+    setAlunoId(temAlunoVinculado ? senhaAtual.aluno.id : null);
+    setDadosAluno(
+      temAlunoVinculado ? formPayload(senhaAtual.aluno) : DADOS_INICIAIS,
+    );
+    setDocumentosSelecionados(
+      temAlunoVinculado ? (senhaAtual.documentos ?? []) : [],
+    );
+    setFormularioVisivel(temAlunoVinculado);
+  }
 
   React.useEffect(() => {
     const carregarCursos = async () => {
@@ -90,12 +115,21 @@ export const TriagemMain = () => {
   const handleSelecionarAluno = (aluno) => {
     setAlunoId(aluno.id);
     setDadosAluno(formPayload(aluno));
+    setFormularioVisivel(true);
   };
 
   const handleLimparFormulario = () => {
     setAlunoId(null);
     setDadosAluno(DADOS_INICIAIS);
     setDocumentosSelecionados([]);
+    setFormularioVisivel(false);
+  };
+
+  const handleNovoAluno = () => {
+    setAlunoId(null);
+    setDadosAluno(DADOS_INICIAIS);
+    setDocumentosSelecionados([]);
+    setFormularioVisivel(true);
   };
 
   const handleChangeCampo = (campo, valor) => {
@@ -106,8 +140,13 @@ export const TriagemMain = () => {
     }));
   };
 
+  const alunoPreenchido = fase === "iniciada" && validarDadosAluno(dadosAluno);
+  const podeFinalizar = alunoPreenchido && documentosSelecionados.length === 0;
+  const podeSalvarPendencia =
+    alunoPreenchido && documentosSelecionados.length > 0;
+
   const handleSalvarPendencia = async () => {
-    if (!podeSalvarPendencia || !atendimentoAtual) return;
+    if (!podeSalvarPendencia || !atendimentoAtual || !senhaAtual?.id) return;
 
     try {
       setCarregando(true);
@@ -119,6 +158,7 @@ export const TriagemMain = () => {
 
       limparAtendimento();
       handleLimparFormulario();
+      await recarregarPendencias({ silencioso: true });
     } catch (erro) {
       toast.erro(erro.message);
     } finally {
@@ -127,6 +167,8 @@ export const TriagemMain = () => {
   };
 
   const handleFinalizar = async () => {
+    if (!senhaAtual?.id) return;
+
     try {
       setCarregando(true);
       await TriagemService.vincularAluno(senhaAtual.id, dadosAluno, alunoId);
@@ -141,24 +183,12 @@ export const TriagemMain = () => {
 
   const handleRetomar = async (senhaId) => {
     try {
-      const res = await retomar(senhaId);
-      if (res?.documentos) {
-        setDocumentosSelecionados(res.documentos);
-      }
-      if (res?.senha?.aluno) {
-        setAlunoId(res.senha.aluno.id);
-        setDadosAluno(formPayload(res.senha.aluno));
-      }
+      await retomar(senhaId);
       setAbaAtiva("atendimento");
     } catch (erro) {
       toast.erro(erro.message);
     }
   };
-
-  const alunoPreenchido = fase === "iniciada" && validarDadosAluno(dadosAluno);
-  const podeFinalizar = alunoPreenchido && documentosSelecionados.length === 0;
-  const podeSalvarPendencia =
-    alunoPreenchido && documentosSelecionados.length > 0;
 
   const abasTriagem = [
     { id: "atendimento", label: "Atendimento atual", icone: FiClock },
@@ -187,31 +217,43 @@ export const TriagemMain = () => {
           />
 
           <div className="bg-surface rounded-lg border border-border p-6 shadow-xs flex flex-col gap-6">
-            <BuscarAlunos
-              onSelecionarAluno={handleSelecionarAluno}
-              onNovoAluno={handleLimparFormulario}
-              disabled={fase !== "iniciada"}
-            />
+            {fase !== "iniciada" ? (
+              <p className="py-12 text-center text-text-secondary">
+                {fase === "chamada"
+                  ? "Inicie o atendimento da senha chamada para buscar ou cadastrar um aluno."
+                  : "Aguardando chamada de uma senha para iniciar a triagem."}
+              </p>
+            ) : (
+              <>
+                <BuscarAlunos
+                  label="Pesquise o nome do aluno sendo atendido ou cadastre-o"
+                  onSelecionarAluno={handleSelecionarAluno}
+                  onNovoAluno={handleNovoAluno}
+                />
 
-            <div className="border-t border-border/80 pt-6">
-              <DadosAlunoForm
-                dados={dadosAluno}
-                onChange={handleChangeCampo}
-                disabled={fase !== "iniciada"}
-                cursos={cursos}
-              />
-            </div>
+                {formularioVisivel && (
+                  <>
+                    <div className="border-t border-border/80 pt-6">
+                      <DadosAlunoForm
+                        dados={dadosAluno}
+                        onChange={handleChangeCampo}
+                        cursos={cursos}
+                      />
+                    </div>
 
-            <div className="border-t border-border/80 pt-6">
-              <DocumentosPendentes
-                documentosSelecionados={documentosSelecionados}
-                onChange={setDocumentosSelecionados}
-                onSalvarPendencia={handleSalvarPendencia}
-                podeSalvar={podeSalvarPendencia}
-                salvando={carregando}
-                disabled={fase !== "iniciada"}
-              />
-            </div>
+                    <div className="border-t border-border/80 pt-6">
+                      <DocumentosPendentes
+                        documentosSelecionados={documentosSelecionados}
+                        onChange={setDocumentosSelecionados}
+                        onSalvarPendencia={handleSalvarPendencia}
+                        podeSalvar={podeSalvarPendencia}
+                        salvando={carregando}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

@@ -36,7 +36,7 @@ export const DetalhePendencia = ({
   }
 
   const { senha, aluno, documentos = [], registradaEm } = pendencia;
-  const prioritaria = Boolean(senha?.tipoSenha);
+  const prioritaria = Boolean(senha?.prioritaria);
 
   return (
     <div

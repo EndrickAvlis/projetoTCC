@@ -1,7 +1,11 @@
 import { requisitarApi } from "../../../services/apiClient";
 
 export const listarAlunos = (nome, limite = 10) => {
-  const query = new URLSearchParams({ nome, limite: String(limite) });
+  const query = new URLSearchParams({
+    nome,
+    limite: String(limite),
+    ignorarArquivados: "true",
+  });
   return requisitarApi(`/alunos?${query.toString()}`);
 };
 
@@ -12,7 +16,9 @@ export const vincularAluno = (senhaId, dados, alunoId) => {
       nome: dados.nome.trim(),
       cidade: dados.cidade.trim(),
       sexo: dados.sexo,
-      escolaridadePublica: dados.escolaridadePublica === "true",
+      escolaridadePublica:
+        dados.escolaridadePublica === true ||
+        dados.escolaridadePublica === "true",
     },
     matricula: {
       cursoId: Number(dados.curso),

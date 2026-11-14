@@ -1,4 +1,3 @@
-import * as React from "react";
 import { FiFileText } from "react-icons/fi";
 import Badge from "../../../../components/ui/Badge";
 import Button from "../../../../components/ui/Button";
@@ -30,6 +29,14 @@ export const DocumentosPendentes = ({
       titulo="Documentos pendentes"
       subtitulo="Indique se faltou algum documento obrigatório"
       icone={FiFileText}
+      abertoInicialmente={totalSelecionados > 0}
+      badge={
+        totalSelecionados > 0 ? (
+          <Badge variant="warning" size="sm">
+            {totalSelecionados}
+          </Badge>
+        ) : null
+      }
       disabled={disabled}
       className={className}
     >
