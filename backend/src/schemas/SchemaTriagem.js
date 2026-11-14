@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatarNome } from "../utils/formatarNome.js";
 
 const id = z.coerce.number().int().positive();
 const etapa = z.enum(["triagem", "apm", "docs"]);
@@ -15,8 +16,14 @@ export const vincularAlunoSchema = z.object({
   body: z.object({
     alunoId: id.nullish(),
     dadosAluno: z.object({
-      nome: z.string().trim().min(1, "Informe o nome").max(100),
-      cidade: z.string().trim().min(1, "Informe a cidade").max(100),
+      nome: z
+        .string()
+        .transform(formatarNome)
+        .pipe(z.string().min(1, "Informe o nome").max(100)),
+      cidade: z
+        .string()
+        .transform(formatarNome)
+        .pipe(z.string().min(1, "Informe a cidade").max(100)),
       sexo: z.enum(["MASCULINO", "FEMININO", "OUTRO"], {
         errorMap: () => ({ message: "Selecione o sexo" }),
       }),

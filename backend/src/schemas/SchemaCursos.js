@@ -1,38 +1,12 @@
 import { z } from "zod";
+import { formatarNome } from "../utils/formatarNome.js";
 
 const periodosValidos = ["manha", "tarde", "noite", "integral", "online"];
-const palavrasMinusculas = new Set([
-  "a",
-  "as",
-  "o",
-  "os",
-  "de",
-  "da",
-  "das",
-  "do",
-  "dos",
-  "e",
-  "em",
-  "na",
-  "nas",
-  "no",
-  "nos",
-  "para",
-  "por",
-]);
 
-const nome = (nome) =>
-  nome
-    .trim()
-    .toLocaleLowerCase("pt-BR")
-    .split(/\s+/)
-    .map((palavra, indice) => {
-      if (indice > 0 && palavrasMinusculas.has(palavra)) return palavra;
-      return palavra.charAt(0).toLocaleUpperCase("pt-BR") + palavra.slice(1);
-    })
-    .join(" ");
-
-const nomeCurso = z.string({ error: "Informe o nome do curso." }).transform(nome).pipe(
+const nomeCurso = z
+  .string({ error: "Informe o nome do curso." })
+  .transform(formatarNome)
+  .pipe(
     z
       .string()
       .min(1, "Informe o nome do curso.")
