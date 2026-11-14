@@ -14,7 +14,29 @@ export default class PostosService extends BaseService {
                         statusSenha: {
                             in: ["em_atendimento", "aguardando", "pendente"]
                         }
-                    }
+                    },
+                    include: {
+                        aluno: {
+                            include: {
+                                cursosAluno: {
+                                    include: {
+                                        curso: true
+                                    }
+                                }
+                            }
+                        },
+                        historicos: {
+                            orderBy: [
+                                {
+                                    dataHoraInicioHistorico: "desc"
+                                }
+                            ]
+                        }
+                    },
+                    orderBy: [
+                        {tipoSenha: "desc"},
+                        {dataHoraInicioSenha: "asc"}
+                    ]
                 });
 
                 const resumo = senhas.reduce((total, senha) => {
@@ -45,14 +67,38 @@ export default class PostosService extends BaseService {
                         posto.totais.prioritarias += 1;
                     }
 
+                    const info = {
+                        id: senha.idSenha,
+                        codigo: senha.senhaCodigo,
+                        prioritaria: senha.tipoSenha,
+                        emitidaEm: senha.dataHoraInicioSenha
+                    }
+
+                    if (senha.aluno) {
+                        info.aluno = {
+                            id: senha.aluno.idAluno,
+                            nome: senha.aluno.nomeAluno
+                        }
+                    }
+
+                    if (senha.aluno.cursosAluno[0].curso) {
+                        info.curso = {
+                            id: senha.aluno.cursosAluno[0].curso.idCurso,
+                            nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
+                            periodo: senha.aluno.cursosAluno[0].periodo
+                        }
+                    }
+
                     switch (senha.statusSenha) {
                         case "em_atendimento":
                             posto.totais.emAtendimento += 1;
-                            posto.emAtendimento.push(senha);
+
+                            info.iniciadoEm = senha.historicos[0].dataHoraInicioHistorico;
+                            posto.emAtendimento.push(info);
                             break;
                         case "aguardando":
                             posto.totais.aguardando += 1;
-                            posto.aguardando.push(senha);
+                            posto.aguardando.push(info);
                             break;
                         default:
                             break;
@@ -79,14 +125,38 @@ export default class PostosService extends BaseService {
                         posto.totais.prioritarias += 1;
                     }
 
+                    const info = {
+                        id: senha.idSenha,
+                        codigo: senha.senhaCodigo,
+                        prioritaria: senha.tipoSenha,
+                        emitidaEm: senha.dataHoraInicioSenha
+                    }
+
+                    if (senha.aluno) {
+                        info.aluno = {
+                            id: senha.aluno.idAluno,
+                            nome: senha.aluno.nomeAluno
+                        }
+                    }
+
+                    if (senha.aluno.cursosAluno[0].curso) {
+                        info.curso = {
+                            id: senha.aluno.cursosAluno[0].curso.idCurso,
+                            nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
+                            periodo: senha.aluno.cursosAluno[0].periodo
+                        }
+                    }
+
                     switch (senha.statusSenha) {
                         case "em_atendimento":
                             posto.totais.emAtendimento += 1;
-                            posto.emAtendimento.push(senha);
+                            
+                            info.iniciadoEm = senha.historicos[0].dataHoraInicioHistorico;
+                            posto.emAtendimento.push(info);
                             break;
                         case "aguardando":
                             posto.totais.aguardando += 1;
-                            posto.aguardando.push(senha);
+                            posto.aguardando.push(info);
                             break;
                         default:
                             break;
@@ -113,14 +183,38 @@ export default class PostosService extends BaseService {
                         posto.totais.prioritarias += 1;
                     }
 
+                    const info = {
+                        id: senha.idSenha,
+                        codigo: senha.senhaCodigo,
+                        prioritaria: senha.tipoSenha,
+                        emitidaEm: senha.dataHoraInicioSenha
+                    }
+
+                    if (senha.aluno) {
+                        info.aluno = {
+                            id: senha.aluno.idAluno,
+                            nome: senha.aluno.nomeAluno
+                        }
+                    }
+
+                    if (senha.aluno.cursosAluno[0].curso) {
+                        info.curso = {
+                            id: senha.aluno.cursosAluno[0].curso.idCurso,
+                            nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
+                            periodo: senha.aluno.cursosAluno[0].periodo
+                        }
+                    }
+
                     switch (senha.statusSenha) {
                         case "em_atendimento":
                             posto.totais.emAtendimento += 1;
-                            posto.emAtendimento.push(senha);
+                            
+                            info.iniciadoEm = senha.historicos[0].dataHoraInicioHistorico;
+                            posto.emAtendimento.push(info);
                             break;
                         case "aguardando":
                             posto.totais.aguardando += 1;
-                            posto.aguardando.push(senha);
+                            posto.aguardando.push(info);
                             break;
                         default:
                             break;
@@ -147,8 +241,27 @@ export default class PostosService extends BaseService {
                         return totalPendentes;
                     }
 
-                    return totalPendentes += senha;
-                }, { pendencias: [] });
+                    const info = {
+                        id: senha.idSenha,
+                        codigo: senha.senhaCodigo,
+                        prioritaria: senha.tipoSenha,
+                        //regitradaEm: senha.documentosPendentes.registradaEm,
+                        documentos: senha.documentosPendentes,
+                        aluno: {
+                            id: senha.aluno.idAluno,
+                            nome: senha.aluno.nomeAluno
+                        },
+                        curso: {
+                            id: senha.aluno.cursosAluno[0].curso.idCurso,
+                            nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
+                            periodo: senha.aluno.cursosAluno[0].periodo
+                        }
+                    }
+
+                    totalPendentes.push(info);
+
+                    return totalPendentes;
+                }, []);
 
                 const agora = new Date();
 
@@ -164,12 +277,8 @@ export default class PostosService extends BaseService {
                                 emAtendimento: triagem.totais.emAtendimento,
                                 prioritarias: triagem.totais.prioritarias
                             },
-                            emAtendimento: [
-                                triagem.emAtendimento
-                            ],
-                            aguardando: [
-                                triagem.aguardando
-                            ]
+                            emAtendimento: triagem.emAtendimento,
+                            aguardando: triagem.aguardando
                         },
                         {
                             id: "apm",
@@ -179,12 +288,8 @@ export default class PostosService extends BaseService {
                                 emAtendimento: apm.totais.emAtendimento,
                                 prioritarias: apm.totais.prioritarias
                             },
-                            emAtendimento: [
-                                apm.emAtendimento
-                            ],
-                            aguardando: [
-                                apm.aguardando
-                            ]
+                            emAtendimento: apm.emAtendimento,
+                            aguardando: apm.aguardando
                         },
                         {
                             id: "docs",
@@ -194,17 +299,11 @@ export default class PostosService extends BaseService {
                                 emAtendimento: docs.totais.emAtendimento,
                                 prioritarias: docs.totais.prioritarias
                             },
-                            emAtendimento: [
-                                docs.emAtendimento
-                            ],
-                            aguardando: [
-                                docs.aguardando
-                            ]
+                            emAtendimento: docs.emAtendimento,
+                            aguardando: docs.aguardando
                         }
                     ],
-                    pendencias: {
-                        pendencias
-                    }
+                    pendencias: pendencias
                 }
             });
             return resultado;
@@ -225,7 +324,7 @@ export default class PostosService extends BaseService {
                             gte: intervalo.dataInicio
                         },
                         dataHoraFimSenha: {
-                            gte: intervalo.dataFim
+                            lte: intervalo.dataFim
                         }
                     }
                 });
@@ -248,7 +347,7 @@ export default class PostosService extends BaseService {
                             gte: intervalo.dataInicio
                         },
                         dataHoraFimSenha: {
-                            gte: intervalo.dataFim
+                            lte: intervalo.dataFim
                         }
                     }
                 });
@@ -260,8 +359,11 @@ export default class PostosService extends BaseService {
                             gte: intervalo.dataInicio
                         },
                         dataHoraFimSenha: {
-                            gte: intervalo.dataFim
+                            lte: intervalo.dataFim
                         }
+                    },
+                    orderBy: {
+                        dataHoraFimSenha: "desc"
                     }
                 });
 
@@ -374,7 +476,8 @@ export default class PostosService extends BaseService {
                     skip: skip,
                     take: limite,
                     orderBy: {
-                        dataHoraFimSenha: "desc"
+                        dataHoraFimSenha: "desc" 
+
                     }
                 });
 
@@ -443,8 +546,7 @@ export default class PostosService extends BaseService {
             const resultado = prisma.$transaction(async (tx) => {
                 const senha = await tx.senha.findUnique({
                     where:{
-                        idSenha: idSenha,
-                        statusSenha: "aguardando"
+                        idSenha: idSenha
                     }
                 });
 
@@ -499,6 +601,9 @@ export default class PostosService extends BaseService {
                 const senha = await tx.senha.findUnique({
                     where:{
                         idSenha: idSenha
+                    },
+                    include: {
+                        historicos: true
                     }
                 });
 
@@ -518,8 +623,9 @@ export default class PostosService extends BaseService {
 
                 const agora = new Date();
 
-                const emAtendimento = await tx.historicoSenha.findMany({
+                const emAtendimento = await tx.historicoSenha.findFirst({
                     where: {
+                        codSenha: idSenha,
                         NOT: {
                                 dataHoraFimHistorico: {
                                     lte: agora
@@ -531,6 +637,7 @@ export default class PostosService extends BaseService {
                 if (emAtendimento) {
                     await tx.historicoSenha.update({
                     where: {
+                        idHistorico: emAtendimento.idHistorico,
                         codSenha: idSenha
                     },
                     data: {

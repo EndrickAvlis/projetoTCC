@@ -14,6 +14,7 @@ senhaRoutes.patch(
   senhaController.alterarPrioridadeSenha,
 );
 senhaRoutes.get("/ultima", accessValidator, senhaController.buscarUltimaSenha);
+
 senhaRoutes.post(
   "/reiniciar-sequencia",
   accessValidator,

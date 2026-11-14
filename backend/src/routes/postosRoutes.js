@@ -30,5 +30,6 @@ postosRoutes.patch("/:id/transferencia",
 postosRoutes.patch("/:id/cancelamento",
     validarRequisicao(validatorPostos.cancelamentoSchema),
     postosController.cancelarSenha
-)
+);
+
 export default postosRoutes;
