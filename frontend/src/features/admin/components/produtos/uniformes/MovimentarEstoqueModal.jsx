@@ -1,96 +1,116 @@
 import * as React from "react";
-import { FiEdit3, FiPlus, FiMinus, FiArrowRight, FiAlertCircle } from "react-icons/fi";
+import { FiEdit3, FiPlus, FiMinus, FiAlertCircle } from "react-icons/fi";
 
-import Alert from "../../../../../components/ui/Alert";
-import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import Modal from "../../../../../components/ui/Modal";
 import { formatarMoeda } from "../../../../../utils/formatters";
+import {
+  bloquearTeclasNaoInteiras,
+  validarQuantidadeInteira,
+} from "../../../../../utils/formHelpers";
 
-const OPCOES_MOVIMENTACAO = [
-  {
-    value: "corrigir",
-    label: "Corrigir",
-    descricao: "Ajustar saldo total",
-    icon: FiEdit3,
-    activeColor: "bg-primary text-text-inverse shadow-sm",
-  },
+const ESTOQUE_MAXIMO = 99999;
+
+const OPERACOES_ESTOQUE = [
   {
     value: "adicionar",
     label: "Adicionar",
-    descricao: "Entrada de estoque",
     icon: FiPlus,
-    activeColor: "bg-status-success text-text-inverse shadow-sm",
+    inputLabel: "Quantidade a adicionar",
+    placeholder: "Ex.: 5",
+    min: "1",
+    botaoLabel: "Adicionar ao estoque",
+    botaoVariant: "primary",
   },
   {
     value: "diminuir",
     label: "Diminuir",
-    descricao: "Retirada ou baixa",
     icon: FiMinus,
-    activeColor: "bg-status-danger text-text-inverse shadow-sm",
+    inputLabel: "Quantidade a retirar",
+    placeholder: "Ex.: 5",
+    min: "1",
+    botaoLabel: "Confirmar retirada",
+    botaoVariant: "danger",
+  },
+  {
+    value: "corrigir",
+    label: "Corrigir",
+    icon: FiEdit3,
+    inputLabel: "Novo saldo total",
+    placeholder: "Ex.: 20",
+    min: "0",
+    botaoLabel: "Atualizar estoque total",
+    botaoVariant: "primary",
   },
 ];
 
-const MovimentarEstoqueModal = ({
+const calcularNovoEstoque = (operacao, estoqueAtual, quantidadeTexto) => {
+  if (quantidadeTexto.trim() === "") return null;
+
+  const quantidade = Number(quantidadeTexto);
+  if (!Number.isInteger(quantidade) || quantidade < 0) return NaN;
+
+  if (operacao === "adicionar") return estoqueAtual + quantidade;
+  if (operacao === "diminuir") return estoqueAtual - quantidade;
+  return quantidade;
+};
+
+const MovimentarEstoqueModalForm = ({
   uniforme,
   onFechar,
   onSalvar,
   salvando = false,
 }) => {
+  const estoqueAtual = Number(uniforme.quantidade ?? 0);
+
   const [operacao, setOperacao] = React.useState("adicionar");
   const [quantidade, setQuantidade] = React.useState("");
   const [erros, setErros] = React.useState({});
 
-  const estoqueAtual = Number(uniforme?.quantidade ?? 0);
-  React.useEffect(() => {
-    if (uniforme) {
-      setOperacao("corrigir");
-      setQuantidade(String(estoqueAtual));
-      setErros({});
-    }
-  }, [uniforme, estoqueAtual]);
-
   const alternarOperacao = (novaOperacao) => {
     setOperacao(novaOperacao);
     setErros({});
-    if (novaOperacao === "corrigir") {
-      setQuantidade(String(estoqueAtual));
-    } else {
-      setQuantidade("");
+    setQuantidade(novaOperacao === "corrigir" ? String(estoqueAtual) : "");
+  };
+
+  const obterErroQuantidade = () => {
+    if (operacao === "corrigir") {
+      return validarQuantidadeInteira(quantidade, {
+        mensagemVazio: "Informe a quantidade.",
+        mensagemMinimo: "O novo estoque deve ser maior ou igual a 0.",
+      });
     }
+
+    if (operacao === "adicionar") {
+      return validarQuantidadeInteira(quantidade, {
+        mensagemVazio: "Informe a quantidade.",
+        minimo: 1,
+        mensagemMinimo: "Informe uma quantidade maior que 0.",
+        maximo: ESTOQUE_MAXIMO - estoqueAtual,
+        mensagemMaximo: `O estoque final não pode exceder ${ESTOQUE_MAXIMO.toLocaleString("pt-BR")} unidades.`,
+      });
+    }
+
+    return validarQuantidadeInteira(quantidade, {
+      mensagemVazio: "Informe a quantidade.",
+      minimo: 1,
+      mensagemMinimo: "Informe uma quantidade maior que 0.",
+      maximo: estoqueAtual,
+      mensagemMaximo: `A quantidade a retirar não pode exceder o estoque atual (${estoqueAtual}).`,
+    });
   };
 
   const validarFormulario = () => {
-    const novosErros = {};
-    const qtdNum = Number(quantidade);
-
-    if (quantidade === "") {
-      novosErros.quantidade = "Informe a quantidade.";
-    } else if (!Number.isInteger(qtdNum)) {
-      novosErros.quantidade = "Informe uma quantidade inteira.";
-    } else if (operacao === "corrigir" && qtdNum < 0) {
-      novosErros.quantidade = "O novo estoque deve ser maior ou igual a 0.";
-    } else if (operacao !== "corrigir" && qtdNum <= 0) {
-      novosErros.quantidade = "Informe uma quantidade maior que 0.";
-    } else if (operacao === "diminuir") {
-      if (estoqueAtual === 0) {
-        novosErros.quantidade = "Não há estoque disponível para retirada.";
-      } else if (qtdNum > estoqueAtual) {
-        novosErros.quantidade = `A quantidade a retirar não pode exceder o estoque atual (${estoqueAtual}).`;
-      }
-    }
-
-    setErros(novosErros);
-    return Object.keys(novosErros).length === 0;
+    const erroQuantidade = obterErroQuantidade();
+    setErros(erroQuantidade ? { quantidade: erroQuantidade } : {});
+    return !erroQuantidade;
   };
 
   const handleSubmit = (evento) => {
     evento.preventDefault();
 
-    if (!validarFormulario()) {
-      return;
-    }
+    if (!validarFormulario()) return;
 
     onSalvar({
       operacao,
@@ -98,278 +118,206 @@ const MovimentarEstoqueModal = ({
     });
   };
 
-  // Cálculo de pré-visualização em tempo real
-  const qtdNumero = quantidade === "" ? null : Number(quantidade);
-  const qtdValida =
-    qtdNumero !== null && Number.isInteger(qtdNumero) && qtdNumero >= 0;
+  const novoEstoque = calcularNovoEstoque(operacao, estoqueAtual, quantidade);
+  const operacaoAtual = OPERACOES_ESTOQUE.find((item) => item.value === operacao);
+  const BotaoIcone = operacaoAtual.icon;
 
-  let novoEstoque = estoqueAtual;
-  let diferenca = 0;
+  const renderPreviaEstoque = () => {
+    if (erros.quantidade || novoEstoque === null) return null;
 
-  if (operacao === "corrigir") {
-    if (qtdValida) {
-      novoEstoque = qtdNumero;
-      diferenca = qtdNumero - estoqueAtual;
-    } else if (quantidade === "") {
-      novoEstoque = estoqueAtual;
-      diferenca = 0;
-    } else {
-      novoEstoque = null;
-      diferenca = null;
+    if (Number.isNaN(novoEstoque)) {
+      return (
+        <p className="text-xs text-status-danger">
+          Informe uma quantidade inteira válida.
+        </p>
+      );
     }
-  } else if (operacao === "adicionar") {
-    if (qtdValida) {
-      novoEstoque = estoqueAtual + qtdNumero;
-      diferenca = qtdNumero;
-    } else if (quantidade === "") {
-      novoEstoque = estoqueAtual;
-      diferenca = 0;
-    } else {
-      novoEstoque = null;
-      diferenca = null;
-    }
-  } else if (operacao === "diminuir") {
-    if (qtdValida) {
-      novoEstoque = estoqueAtual - qtdNumero;
-      diferenca = -qtdNumero;
-    } else if (quantidade === "") {
-      novoEstoque = estoqueAtual;
-      diferenca = 0;
-    } else {
-      novoEstoque = null;
-      diferenca = null;
-    }
-  }
 
-  const estoqueZeradoAoDiminuir =
-    operacao === "diminuir" &&
-    qtdValida &&
-    qtdNumero > 0 &&
-    novoEstoque === 0;
+    if (operacao !== "corrigir" && Number(quantidade) === 0) {
+      return (
+        <p className="text-xs text-status-danger">
+          Informe uma quantidade maior que 0.
+        </p>
+      );
+    }
+
+    if (novoEstoque < 0) {
+      return (
+        <p className="text-xs text-status-danger">
+          A retirada excede o estoque atual ({estoqueAtual}).
+        </p>
+      );
+    }
+
+    if (novoEstoque > ESTOQUE_MAXIMO) {
+      return (
+        <p className="text-xs text-status-danger">
+          O estoque final não pode exceder 99.999 unidades.
+        </p>
+      );
+    }
+
+    const ajusteTexto =
+      operacao === "adicionar"
+        ? ` (+${quantidade})`
+        : operacao === "diminuir"
+          ? ` (-${quantidade})`
+          : "";
+
+    if (novoEstoque === 0) {
+      return (
+        <p className="flex items-center gap-1.5 text-xs text-status-warning">
+          <FiAlertCircle size={14} className="shrink-0" />
+          <span>
+            Novo estoque: 0 unidades{ajusteTexto} — atenção: o estoque ficará
+            zerado.
+          </span>
+        </p>
+      );
+    }
+
+    return (
+      <p className="text-xs text-text-secondary">
+        Novo estoque:{" "}
+        <strong className="font-semibold text-text-primary">
+          {novoEstoque} {novoEstoque === 1 ? "unidade" : "unidades"}
+        </strong>
+        {ajusteTexto}
+      </p>
+    );
+  };
 
   return (
-    <Modal
-      aberto={Boolean(uniforme)}
-      onFechar={() => !salvando && onFechar()}
-      titulo="Movimentar estoque"
-      largura="max-w-lg"
-    >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="flex items-center justify-between rounded-xl border border-border bg-surface-muted p-4">
-          <div className="flex items-center gap-3.5">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-text-primary">
-                  Tamanho {uniforme?.nome}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-text-secondary">
-               {formatarMoeda(Number(uniforme?.preco ?? 0))}
-              </p>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <span className="text-xs text-text-secondary">Estoque atual</span>
-            <p className="text-xl font-bold text-text-primary">
-              {estoqueAtual}{" "}
-              <span className="text-xs font-normal text-text-secondary">
-                {estoqueAtual === 1 ? "unidade" : "unidades"}
-              </span>
-            </p>
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      <div className="flex items-center justify-between border-b border-border pb-4">
+        <div>
+          <p className="font-semibold text-text-primary">
+            Tamanho {uniforme.nome}
+          </p>
+          <p className="text-sm text-text-secondary">
+            {formatarMoeda(Number(uniforme.preco ?? 0))}
+          </p>
         </div>
 
-        {/* Seletor Segmentado de Operação */}
-        <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-primary">
-            Tipo de movimentação <span className="text-status-danger">*</span>
-          </label>
-
-          <div
-            className="grid grid-cols-3 gap-2 rounded-xl border border-border bg-surface p-1.5"
-            role="radiogroup"
-            aria-label="Operação de estoque"
-          >
-            {OPCOES_MOVIMENTACAO.map((opcao) => {
-              const Icone = opcao.icon;
-              const selecionada = operacao === opcao.value;
-              const desabilitada =
-                opcao.value === "diminuir" && estoqueAtual === 0;
-
-              return (
-                <button
-                  key={opcao.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selecionada}
-                  disabled={salvando || desabilitada}
-                  onClick={() => alternarOperacao(opcao.value)}
-                  className={`flex flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-2.5 text-xs font-medium transition-all ${selecionada
-                      ? opcao.activeColor
-                      : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"
-                    } ${desabilitada ? "cursor-not-allowed opacity-40" : ""}`}
-                >
-                  <div className="flex items-center gap-1.5 text-sm font-semibold">
-                    <Icone size={15} />
-                    <span>{opcao.label}</span>
-                  </div>
-                  <span className="text-[11px] font-normal opacity-85">
-                    {opcao.descricao}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="text-right">
+          <span className="text-xs text-text-secondary">Estoque atual</span>
+          <p className="text-lg font-bold text-text-primary">
+            {estoqueAtual}{" "}
+            <span className="text-xs font-normal text-text-secondary">
+              {estoqueAtual === 1 ? "unidade" : "unidades"}
+            </span>
+          </p>
         </div>
+      </div>
 
-        {/* Alerta contextual se o estoque atual for 0 ao tentar diminuir */}
-        {operacao === "diminuir" && estoqueAtual === 0 && (
-          <Alert
-            type="warning"
-            message="Este tamanho já não possui itens em estoque para retirada."
-          />
-        )}
+      <div className="space-y-1.5">
+        <span
+          id="label-operacao-estoque"
+          className="block text-sm font-medium text-primary"
+        >
+          Tipo de movimentação <span className="text-status-danger">*</span>
+        </span>
 
-        {/* Campo de Entrada de Quantidade */}
+        <div
+          className="grid grid-cols-3 gap-1 rounded-btn border border-border bg-surface p-1"
+          role="radiogroup"
+          aria-labelledby="label-operacao-estoque"
+        >
+          {OPERACOES_ESTOQUE.map((opcao) => {
+            const Icone = opcao.icon;
+            const selecionada = operacao === opcao.value;
+            const desabilitada =
+              opcao.value === "diminuir" && estoqueAtual === 0;
+
+            return (
+              <button
+                key={opcao.value}
+                type="button"
+                role="radio"
+                aria-checked={selecionada}
+                disabled={salvando || desabilitada}
+                onClick={() => alternarOperacao(opcao.value)}
+                className={`flex items-center justify-center gap-1.5 rounded-btn px-3 py-2 text-sm font-medium transition-colors ${
+                  selecionada
+                    ? "bg-primary text-text-inverse shadow-sm"
+                    : "text-text-secondary hover:bg-surface-muted hover:text-text-primary"
+                } ${desabilitada ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+              >
+                <Icone size={15} />
+                <span>{opcao.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
         <Input
-          label={
-            operacao === "corrigir"
-              ? "Novo saldo total"
-              : operacao === "adicionar"
-                ? "Quantidade a adicionar"
-                : "Quantidade a retirar"
-          }
+          label={operacaoAtual.inputLabel}
           type="number"
-          min={operacao === "corrigir" ? "0" : "1"}
+          min={operacaoAtual.min}
           step="1"
-          placeholder={
-            operacao === "corrigir"
-              ? "Ex.: 20"
-              : "Ex.: 5"
-          }
+          placeholder={operacaoAtual.placeholder}
+          onKeyDown={bloquearTeclasNaoInteiras}
           value={quantidade}
           onChange={(evento) => {
             setQuantidade(evento.target.value);
             setErros({});
           }}
           error={erros.quantidade}
-          disabled={salvando || (operacao === "diminuir" && estoqueAtual === 0)}
+          disabled={salvando}
           required
           autoFocus
         />
+        {renderPreviaEstoque()}
+      </div>
 
-        {/* Simulação / Preview do Estoque Resultante */}
-        <div className="space-y-2.5 rounded-xl border border-border bg-surface-muted p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-            Simulação do estoque
-          </p>
+      <footer className="flex justify-end gap-3 border-t border-border pt-5">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onFechar}
+          disabled={salvando}
+        >
+          Cancelar
+        </Button>
 
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Saldo atual</span>
-              <span className="text-base font-semibold text-text-primary">
-                {estoqueAtual} unid.
-              </span>
-            </div>
+        <Button
+          type="submit"
+          variant={operacaoAtual.botaoVariant}
+          loading={salvando}
+          leftIcon={<BotaoIcone />}
+        >
+          {operacaoAtual.botaoLabel}
+        </Button>
+      </footer>
+    </form>
+  );
+};
 
-            <FiArrowRight className="text-text-secondary" />
-
-            <div className="flex flex-col items-center">
-              <span className="text-xs text-text-secondary">Ajuste</span>
-              <span
-                className={`text-base font-bold ${
-                  diferenca === null
-                    ? "text-status-danger"
-                    : diferenca > 0
-                      ? "text-status-success"
-                      : diferenca < 0
-                        ? "text-status-danger"
-                        : "text-text-secondary"
-                }`}
-              >
-                {diferenca === null
-                  ? "-"
-                  : diferenca > 0
-                    ? `+${diferenca}`
-                    : diferenca === 0
-                      ? "0"
-                      : `${diferenca}`}
-              </span>
-            </div>
-
-            <FiArrowRight className="text-text-secondary" />
-
-            <div className="flex flex-col items-end">
-              <span className="text-xs text-text-secondary">Novo saldo</span>
-              <span
-                className={`text-base font-bold ${
-                  novoEstoque === null || novoEstoque < 0
-                    ? "text-status-danger"
-                    : novoEstoque === 0
-                      ? "text-status-warning"
-                      : "text-status-success"
-                }`}
-              >
-                {novoEstoque === null
-                  ? "Inválido"
-                  : novoEstoque < 0
-                    ? "Inválido"
-                    : `${novoEstoque} ${
-                        novoEstoque === 1 ? "unidade" : "unidades"
-                      }`}
-              </span>
-            </div>
-          </div>
-
-          {estoqueZeradoAoDiminuir && (
-            <div className="flex items-center gap-1.5 border-t border-border/60 pt-2 text-xs text-status-warning">
-              <FiAlertCircle size={14} className="shrink-0" />
-              <span>
-                Atenção: esta baixa deixará o estoque deste uniforme totalmente zerado.
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Rodapé com botões de ação */}
-        <footer className="flex justify-end gap-3 border-t border-border pt-5">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onFechar}
-            disabled={salvando}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            type="submit"
-            variant={
-              operacao === "diminuir"
-                ? "danger"
-                : "primary"
-            }
-            loading={salvando}
-            disabled={operacao === "diminuir" && estoqueAtual === 0}
-            leftIcon={
-              operacao === "adicionar" ? (
-                <FiPlus />
-              ) : operacao === "diminuir" ? (
-                <FiMinus />
-              ) : (
-                ""
-              )
-            }
-          >
-            {operacao === "adicionar"
-              ? "Adicionar ao estoque"
-              : operacao === "diminuir"
-                ? "Confirmar retirada"
-                : "Atualizar estoque total"}
-          </Button>
-        </footer>
-      </form>
+const MovimentarEstoqueModal = ({
+  aberto,
+  uniforme = null,
+  onFechar,
+  onSalvar,
+  salvando = false,
+}) => {
+  return (
+    <Modal
+      aberto={aberto && Boolean(uniforme)}
+      onFechar={() => !salvando && onFechar()}
+      titulo="Movimentar estoque"
+      largura="max-w-lg"
+    >
+      {aberto && uniforme && (
+        <MovimentarEstoqueModalForm
+          key={`estoque-${uniforme.id}`}
+          uniforme={uniforme}
+          onFechar={onFechar}
+          onSalvar={onSalvar}
+          salvando={salvando}
+        />
+      )}
     </Modal>
   );
 };

@@ -18,14 +18,16 @@ export const useArmario = () => {
         setArmario(null);
         setErro(err.message);
       } finally {
-        if (!silencioso) setCarregando(false);
+        if (!silencioso) {
+          setCarregando(false);
+        }
       }
     },
     [],
   );
 
   React.useEffect(() => {
-    void Promise.resolve().then(carregarArmario);
+    void Promise.resolve().then(() => carregarArmario());
   }, [carregarArmario]);
 
   return {

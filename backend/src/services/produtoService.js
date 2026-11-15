@@ -2,6 +2,8 @@ import prisma from "../config/prisma.js";
 import BaseService from "./baseService.js";
 import AppError from "../errors/AppError.js";
 
+const ESTOQUE_MAXIMO = 99999;
+
 const produtoSelect = {
   idProduto: true,
   nomeProduto: true,
@@ -37,14 +39,14 @@ export default class ProdutoService extends BaseService {
   }
 
   async criar({ nome, preco, quantidade, tipo, status = true }) {
-    const nomeLimpo =
+    const nomeProduto =
       tipo === "armario" ? "Armário" : nome.trim().toUpperCase();
 
     if (tipo === "uniforme") {
       const produtoExistente = await prisma.produto.findFirst({
         where: {
           tipoProduto: "uniforme",
-          nomeProduto: nomeLimpo,
+          nomeProduto,
         },
       });
 
@@ -70,7 +72,7 @@ export default class ProdutoService extends BaseService {
 
     return super.criar(
       {
-        nomeProduto: nomeLimpo,
+        nomeProduto,
         precoProduto: preco,
         quantidadeProduto: quantidade,
         tipoProduto: tipo,
@@ -91,6 +93,8 @@ export default class ProdutoService extends BaseService {
       throw produtoNaoEncontrado();
     }
 
+    const dadosAtualizacao = {};
+
     if (produto.tipoProduto === "uniforme") {
       if (dados.quantidade !== undefined) {
         throw new AppError(
@@ -103,39 +107,33 @@ export default class ProdutoService extends BaseService {
       }
 
       if (dados.nome !== undefined) {
-        const nomeLimpo = dados.nome.trim().toUpperCase();
+        const nomeProduto = dados.nome.trim().toUpperCase();
 
-        const produtoExistente = await prisma.produto.findFirst({
-          where: {
-            tipoProduto: "uniforme",
-            nomeProduto: nomeLimpo,
-            idProduto: {
-              not: produtoId,
+        if (nomeProduto !== produto.nomeProduto) {
+          const produtoExistente = await prisma.produto.findFirst({
+            where: {
+              tipoProduto: "uniforme",
+              nomeProduto,
+              idProduto: {
+                not: produtoId,
+              },
             },
-          },
-        });
+          });
 
-        if (produtoExistente) {
-          throw uniformeJaCadastrado();
+          if (produtoExistente) {
+            throw uniformeJaCadastrado();
+          }
         }
 
-        dados.nome = nomeLimpo;
+        dadosAtualizacao.nomeProduto = nomeProduto;
       }
     }
 
-    if (produto.tipoProduto === "armario") {
-      if (dados.nome !== undefined) {
-        throw new AppError("Não é possível alterar o nome do armário.", {
-          status: 400,
-          code: "DADOS_INVALIDOS",
-        });
-      }
-    }
-
-    const dadosAtualizacao = {};
-
-    if (dados.nome !== undefined) {
-      dadosAtualizacao.nomeProduto = dados.nome;
+    if (produto.tipoProduto === "armario" && dados.nome !== undefined) {
+      throw new AppError("Não é possível alterar o nome do armário.", {
+        status: 400,
+        code: "DADOS_INVALIDOS",
+      });
     }
 
     if (dados.preco !== undefined) {
@@ -150,12 +148,14 @@ export default class ProdutoService extends BaseService {
       dadosAtualizacao.statusProduto = dados.status;
     }
 
-    return super.atualizar(produtoId, dadosAtualizacao, {
+    return this.model.update({
+      where: { idProduto: produtoId },
+      data: dadosAtualizacao,
       select: produtoSelect,
     });
   }
 
-  async alterarEstoque(produtoId, operacao, quantidade) {
+  async atualizarEstoque(produtoId, operacao, quantidade) {
     const produto = await super.buscarPorId(produtoId, {
       select: produtoSelect,
     });
@@ -178,9 +178,19 @@ export default class ProdutoService extends BaseService {
 
     if (operacao === "adicionar") {
       novaQuantidade += quantidade;
+
+      if (novaQuantidade > ESTOQUE_MAXIMO) {
+        throw new AppError(
+          "O estoque final não pode exceder 99.999 unidades.",
+          {
+            status: 400,
+            code: "ESTOQUE_MAXIMO_EXCEDIDO",
+          },
+        );
+      }
     } else if (operacao === "diminuir") {
       if (quantidade > produto.quantidadeProduto) {
-        throw new AppError("Não foi possível alterar o estoque.", {
+        throw new AppError("Estoque insuficiente para realizar a baixa.", {
           status: 409,
           code: "ESTOQUE_INSUFICIENTE",
           details: {

@@ -5,8 +5,8 @@ import SecaoUniformes from "../components/produtos/uniformes/SecaoUniformes";
 import SecaoArmarios from "../components/produtos/armarios/SecaoArmarios";
 
 const abasProdutos = [
-  { id: "uniformes", label: "Uniformes"},
-  { id: "armarios", label: "Armários"},
+  { id: "uniformes", label: "Uniformes" },
+  { id: "armarios", label: "Armários" },
 ];
 
 const ProdutosPage = () => {
@@ -21,11 +21,7 @@ const ProdutosPage = () => {
         ariaLabel="Produtos"
       />
 
-      {abaAtiva === "uniformes" ? (
-        <SecaoUniformes />
-      ) : (
-        <SecaoArmarios />
-      )}
+      {abaAtiva === "uniformes" ? <SecaoUniformes /> : <SecaoArmarios />}
     </div>
   );
 };

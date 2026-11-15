@@ -5,29 +5,39 @@ import {
   FiRotateCcw,
   FiArchive,
   FiPlus,
+  FiSearch,
 } from "react-icons/fi";
 
 import Alert from "../../../../../components/ui/Alert";
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import DataTable from "../../../../../components/ui/DataTable";
+import Input from "../../../../../components/ui/Input";
+import TableFiltro from "../../../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../../../components/ui/TableMenuActions";
 import ConfirmarModal from "../../../../../components/ui/ConfirmarModal";
 
 import UniformeModal from "./UniformeModal";
 import MovimentarEstoqueModal from "./MovimentarEstoqueModal";
-import UniformeSelector from "./UniformeSelector";
 
 import { useUniformes } from "../../../hooks/useUniformes";
 import * as produtoService from "../../../services/produtoService";
 import { formatarMoeda } from "../../../../../utils/formatters";
-import { useAuth } from "../../../../../context/authContext";
 import { useToast } from "../../../../../context/toastContext";
+
+const OPCOES_UNIFORME = [
+  { valor: false, label: "Ativos" },
+  { valor: true, label: "Arquivados" },
+];
+
+const corEstoque = (quantidade) => {
+  if (quantidade === 0) return "text-status-danger";
+  if (quantidade < 10) return "text-status-warning";
+  return "text-status-success";
+};
 
 const SecaoUniformes = () => {
   const toast = useToast();
-  const { usuario: usuarioLogado } = useAuth();
-  const ehAdmin = usuarioLogado?.tipo === "admin";
 
   const [busca, setBusca] = React.useState("");
   const [arquivado, setArquivado] = React.useState(false);
@@ -40,9 +50,11 @@ const SecaoUniformes = () => {
   });
 
   const handleSalvarUniforme = async (dadosUniforme) => {
+    const emEdicao = Boolean(modalAtivo?.uniforme);
     setSalvando(true);
+
     try {
-      if (modalAtivo?.uniforme) {
+      if (emEdicao) {
         await produtoService.atualizarProduto(
           modalAtivo.uniforme.id,
           dadosUniforme,
@@ -53,8 +65,14 @@ const SecaoUniformes = () => {
           tipo: "uniforme",
         });
       }
+
       setModalAtivo(null);
-      await recarregar();
+      toast.sucesso(
+        emEdicao
+          ? "Uniforme atualizado com sucesso."
+          : "Uniforme adicionado com sucesso.",
+      );
+      await recarregar({ silencioso: true });
     } catch (err) {
       toast.erro(err.message);
     } finally {
@@ -73,7 +91,8 @@ const SecaoUniformes = () => {
         movimentacao,
       );
       setModalAtivo(null);
-      await recarregar();
+      toast.sucesso("Estoque atualizado com sucesso.");
+      await recarregar({ silencioso: true });
     } catch (err) {
       toast.erro(err.message);
     } finally {
@@ -84,14 +103,20 @@ const SecaoUniformes = () => {
   const confirmarArquivamento = async () => {
     if (!modalAtivo?.uniforme) return;
 
+    const proximoStatus = !modalAtivo.uniforme.status;
     setSalvando(true);
 
     try {
       await produtoService.atualizarProduto(modalAtivo.uniforme.id, {
-        status: !modalAtivo.uniforme.status,
+        status: proximoStatus,
       });
       setModalAtivo(null);
-      await recarregar();
+      toast.sucesso(
+        proximoStatus
+          ? "Uniforme desarquivado com sucesso."
+          : "Uniforme arquivado com sucesso.",
+      );
+      await recarregar({ silencioso: true });
     } catch (err) {
       toast.erro(err.message);
     } finally {
@@ -120,7 +145,7 @@ const SecaoUniformes = () => {
       headerClassName: "text-center",
       cellClassName: "text-center",
       render: (uniforme) => (
-        <span>
+        <span className={`font-semibold ${corEstoque(uniforme.quantidade)}`}>
           {uniforme.quantidade} unidade
           {uniforme.quantidade === 1 ? "" : "s"}
         </span>
@@ -132,11 +157,7 @@ const SecaoUniformes = () => {
       render: (uniforme) => {
         const isAtivo = Boolean(uniforme.status);
         return (
-          <Badge
-            variant={isAtivo ? "success" : "neutral"}
-            dot
-            size="sm"
-          >
+          <Badge variant={isAtivo ? "success" : "neutral"} dot size="sm">
             {isAtivo ? "Ativo" : "Arquivado"}
           </Badge>
         );
@@ -148,7 +169,6 @@ const SecaoUniformes = () => {
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (uniforme) => {
-        if (!ehAdmin) return null;
         const isArquivado = !uniforme.status;
 
         return (
@@ -187,7 +207,9 @@ const SecaoUniformes = () => {
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <p className="mt-1 text-text-secondary">
-          {total} {total === 1 ? "uniforme" : "uniformes"} {arquivado ? "arquivado" : "ativo"}{total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
+          {total} {total === 1 ? "uniforme" : "uniformes"}{" "}
+          {arquivado ? "arquivado" : "ativo"}
+          {total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
         </p>
 
         <Button
@@ -199,12 +221,23 @@ const SecaoUniformes = () => {
         </Button>
       </div>
 
-      <UniformeSelector
-        busca={busca}
-        onAlterarBusca={setBusca}
-        arquivado={arquivado}
-        onAlterarArquivado={setArquivado}
-      />
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <Input
+          value={busca}
+          onChange={(evento) => setBusca(evento.target.value)}
+          placeholder="Pesquisar por tamanho..."
+          icon={<FiSearch />}
+          size="md"
+          className="max-w-xl"
+        />
+
+        <TableFiltro
+          options={OPCOES_UNIFORME}
+          value={arquivado}
+          onChange={setArquivado}
+          ariaLabel="Situação dos uniformes"
+        />
+      </div>
 
       {erro && <Alert type="error" message={erro} />}
 
@@ -221,7 +254,9 @@ const SecaoUniformes = () => {
       />
 
       <UniformeModal
-        aberto={modalAtivo?.tipo === "cadastro" || modalAtivo?.tipo === "edicao"}
+        aberto={
+          modalAtivo?.tipo === "cadastro" || modalAtivo?.tipo === "edicao"
+        }
         uniforme={modalAtivo?.tipo === "edicao" ? modalAtivo.uniforme : null}
         onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarUniforme}
@@ -229,11 +264,7 @@ const SecaoUniformes = () => {
       />
 
       <MovimentarEstoqueModal
-        key={
-          modalAtivo?.tipo === "estoque"
-            ? `estoque-${modalAtivo.uniforme.id}`
-            : "sem-uniforme-estoque"
-        }
+        aberto={modalAtivo?.tipo === "estoque"}
         uniforme={modalAtivo?.tipo === "estoque" ? modalAtivo.uniforme : null}
         onFechar={() => setModalAtivo(null)}
         onSalvar={salvarMovimentacaoEstoque}
@@ -255,15 +286,9 @@ const SecaoUniformes = () => {
             : `Deseja arquivar o uniforme ${modalAtivo?.uniforme?.nome}? Ele deixará de aparecer entre os uniformes ativos.`
         }
         textoConfirmar={
-          !modalAtivo?.uniforme?.status
-            ? "Desarquivar"
-            : "Arquivar"
+          !modalAtivo?.uniforme?.status ? "Desarquivar" : "Arquivar"
         }
-        variante={
-          !modalAtivo?.uniforme?.status
-            ? "success"
-            : "danger"
-        }
+        variante={!modalAtivo?.uniforme?.status ? "success" : "danger"}
         salvando={salvando}
       />
     </section>
