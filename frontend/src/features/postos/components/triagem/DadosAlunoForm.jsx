@@ -8,6 +8,7 @@ import {
 } from "../../constants/triagem";
 import { PERIODOS_CURSO } from "../../../../constants/cursoOptions";
 import { CIDADES_SP } from "../../../../constants/cidadesSp";
+import { bloquearTeclasNaoInteiras } from "../../../../utils/formHelpers";
 
 const normalizarTexto = (valor) =>
   String(valor ?? "")
@@ -47,12 +48,16 @@ export const DadosAlunoForm = ({
     document.addEventListener("mousedown", handleClickFora);
     return () => document.removeEventListener("mousedown", handleClickFora);
   }, []);
-  const opcoesCursos = cursos.map((curso) => ({
+  const cursosDisponiveis = cursos.filter((curso) =>
+    curso.periodos?.some((p) => p.matriculaAtiva),
+  );
+
+  const opcoesCursos = cursosDisponiveis.map((curso) => ({
     value: String(curso.id),
     label: curso.nome,
   }));
 
-  const cursoSelecionado = cursos.find(
+  const cursoSelecionado = cursosDisponiveis.find(
     (c) => String(c.id) === String(dados.curso),
   );
 
@@ -161,12 +166,16 @@ export const DadosAlunoForm = ({
             key={`curso-${opcoesCursos.length}`}
             label="Curso"
             name="curso"
-            value={dados.curso}
+            value={cursoSelecionado ? String(cursoSelecionado.id) : ""}
             onChange={handleChange("curso")}
             options={opcoesCursos}
-            placeholder="Selecione o curso..."
+            placeholder={
+              opcoesCursos.length > 0
+                ? "Selecione o curso..."
+                : "Nenhum curso com matrícula aberta"
+            }
             error={erros.curso}
-            disabled={disabled}
+            disabled={disabled || opcoesCursos.length === 0}
             required
           />
         </div>
@@ -176,14 +185,14 @@ export const DadosAlunoForm = ({
             key={`periodo-${dados.curso}-${opcoesPeriodos.length}`}
             label="Período"
             name="periodo"
-            value={dados.periodo}
+            value={periodosAtivos.has(dados.periodo) ? dados.periodo : ""}
             onChange={handleChange("periodo")}
             options={opcoesPeriodos}
             placeholder={
-              dados.curso ? "Selecione..." : "Selecione um curso"
+              cursoSelecionado ? "Selecione..." : "Selecione um curso"
             }
             error={erros.periodo}
-            disabled={disabled || !dados.curso}
+            disabled={disabled || !cursoSelecionado}
             required
           />
         </div>
@@ -208,6 +217,7 @@ export const DadosAlunoForm = ({
             name="classificacao"
             type="number"
             min="1"
+            onKeyDown={bloquearTeclasNaoInteiras}
             value={dados.classificacao}
             onChange={handleChange("classificacao")}
             error={erros.classificacao}

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { formatarNome } from "../utils/formatarNome.js";
 
 const periodosValidos = ["manha", "tarde", "noite", "integral", "online"];
+const VAGAS_MAXIMAS = 9999;
 
 const nomeCurso = z
   .string({ error: "Informe o nome do curso." })
@@ -13,23 +14,29 @@ const nomeCurso = z
       .max(100, "O nome deve ter no máximo 100 caracteres."),
   );
 
-const periodo = z.string({ error: "Informe um período válido." }).transform((periodo) => periodo.trim().toLowerCase()).pipe(z.enum(periodosValidos, { error: "Informe um período válido." }));
+const periodo = z
+  .string({ error: "Informe um período válido." })
+  .transform((valor) => valor.trim().toLowerCase())
+  .pipe(z.enum(periodosValidos, { error: "Informe um período válido." }));
 
 const vagasTotais = z.preprocess(
   (valor) =>
     typeof valor === "string" && valor.trim() !== "" ? Number(valor) : valor,
   z
     .number({ error: "Informe uma quantidade de vagas válida." })
-    .int("Informe um número inteiro maior ou igual a zero.")
-    .nonnegative("Informe um número inteiro maior ou igual a zero."),
+    .int("Informe um número inteiro maior que zero.")
+    .min(1, "Informe ao menos 1 vaga.")
+    .max(VAGAS_MAXIMAS, "A quantidade máxima permitida é 9.999 vagas."),
 );
+
+const matriculaAtiva = z.boolean({
+  error: "Informe verdadeiro ou falso para a matrícula.",
+});
 
 const dadosPeriodo = z.object({
   periodo: periodo,
   vagasTotais: vagasTotais,
-  matriculaAtiva: z.boolean({
-    error: "Informe verdadeiro ou falso para a matrícula.",
-  }),
+  matriculaAtiva,
 });
 
 const periodosCurso = z.array(dadosPeriodo).superRefine((periodos, contexto) => {
@@ -78,14 +85,22 @@ export const criarCursoSchema = z.object({
 
 export const atualizarCursoSchema = z.object({
   params: z.object({ cursoId: id }),
-  body: z.object({
-    nome: nomeCurso.optional(),
-    arquivado: z
-      .boolean({
-        error: "Informe verdadeiro ou falso para o arquivamento.",
-      })
-      .optional(),
-  }),
+  body: z
+    .object({
+      nome: nomeCurso.optional(),
+      arquivado: z
+        .boolean({
+          error: "Informe verdadeiro ou falso para o arquivamento.",
+        })
+        .optional(),
+    })
+    .refine((dados) => Object.values(dados).some((v) => v !== undefined), {
+      message: "Informe ao menos um campo para atualização.",
+    }),
+});
+
+export const excluirCursoSchema = z.object({
+  params: z.object({ cursoId: id }),
 });
 
 export const criarPeriodoSchema = z.object({
@@ -98,6 +113,20 @@ export const atualizarPeriodoSchema = z.object({
     cursoId: id,
     periodoId: id,
   }),
-  body: dadosPeriodo,
+  body: z
+    .object({
+      vagasTotais: vagasTotais.optional(),
+      matriculaAtiva: matriculaAtiva.optional(),
+    })
+    .refine((dados) => Object.values(dados).some((v) => v !== undefined), {
+      message: "Informe ao menos um campo para atualização.",
+    }),
+});
+
+export const excluirPeriodoSchema = z.object({
+  params: z.object({
+    cursoId: id,
+    periodoId: id,
+  }),
 });
 

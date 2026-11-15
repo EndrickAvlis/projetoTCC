@@ -72,7 +72,7 @@ export const formatarPeriodo = (periodo) => {
     case "integral":
       return "Integral";
     case "online":
-      return "EAD - Online";
+      return "Online";
     default:
       return "";
   }

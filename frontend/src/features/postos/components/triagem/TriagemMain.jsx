@@ -36,17 +36,27 @@ const formPayload = (aluno) => ({
   ano: formatarParaTexto(aluno?.anoEscolar, "1"),
 });
 
-const validarDadosAluno = (dados) =>
-  Boolean(
+const validarDadosAluno = (dados, cursos = []) => {
+  const cursoSelecionado = cursos.find(
+    (curso) => String(curso.id) === String(dados.curso),
+  );
+  const periodoAtivo = Boolean(
+    cursoSelecionado?.periodos?.some(
+      (p) => p.periodo === dados.periodo && p.matriculaAtiva,
+    ),
+  );
+
+  return Boolean(
     dados.nome?.trim() &&
-      dados.curso &&
-      dados.periodo &&
+      cursoSelecionado &&
+      periodoAtivo &&
       dados.ano &&
       typeof dados.escolaridadePublica === "boolean" &&
       dados.sexo &&
       dados.cidade?.trim() &&
       Number(dados.classificacao) > 0,
   );
+};
 
 const TriagemMain = () => {
   const toast = useToast();
@@ -140,7 +150,8 @@ const TriagemMain = () => {
     }));
   };
 
-  const alunoPreenchido = fase === "iniciada" && validarDadosAluno(dadosAluno);
+  const alunoPreenchido =
+    fase === "iniciada" && validarDadosAluno(dadosAluno, cursos);
   const podeFinalizar = alunoPreenchido && documentosSelecionados.length === 0;
   const podeSalvarPendencia =
     alunoPreenchido && documentosSelecionados.length > 0;

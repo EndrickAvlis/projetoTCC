@@ -4,29 +4,35 @@ import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Modal from "../../../../components/ui/Modal";
 import Select from "../../../../components/ui/Select";
-import { PERIODOS_CURSO } from "../../../../constants/cursoOptions";
+import Toggle from "../../../../components/ui/Toggle";
+import {
+  PERIODOS_CURSO,
+  VAGAS_MAXIMAS_PERIODO,
+} from "../../../../constants/cursoOptions";
+import {
+  bloquearTeclasNaoInteiras,
+  validarQuantidadeInteira,
+} from "../../../../utils/formHelpers";
 
 const PERIODOS_VALIDOS = new Set(PERIODOS_CURSO.map((p) => p.value));
+let proximoIdPeriodo = 0;
 
-const dadosIniciais = () => ({
-  periodo: "",
+const criarPeriodoInicial = (periodo = "") => ({
+  chave: `periodo-${++proximoIdPeriodo}`,
+  periodo,
   vagasTotais: "",
   matriculaAtiva: true,
+  erros: {},
 });
 
 const construirPeriodosIniciais = (periodosSugeridos = []) => {
-  const validos = periodosSugeridos
+  const validos = [...new Set(periodosSugeridos)]
     .filter((p) => PERIODOS_VALIDOS.has(p))
-    .slice(0, 5);
+    .slice(0, PERIODOS_CURSO.length);
 
-  if (validos.length === 0) {
-    return [dadosIniciais()];
-  }
-
-  return validos.map((periodo) => ({
-    ...dadosIniciais(),
-    periodo,
-  }));
+  return validos.length > 0
+    ? validos.map((periodo) => criarPeriodoInicial(periodo))
+    : [criarPeriodoInicial()];
 };
 
 const CursoModalForm = ({
@@ -41,206 +47,236 @@ const CursoModalForm = ({
   const [nome, setNome] = React.useState(() =>
     curso ? curso.nome : (dadosIniciaisCurso?.nome ?? ""),
   );
+  const [erroNome, setErroNome] = React.useState("");
   const [periodos, setPeriodos] = React.useState(() =>
-    curso ? [dadosIniciais()] : construirPeriodosIniciais(dadosIniciaisCurso?.periodos),
+    curso ? [] : construirPeriodosIniciais(dadosIniciaisCurso?.periodos),
   );
-  const [erros, setErros] = React.useState({});
+
+  const periodosUsados = new Set(
+    periodos.map((item) => item.periodo).filter(Boolean),
+  );
+
+  const opcoesPeriodo = (periodoAtual) =>
+    PERIODOS_CURSO.map((op) => ({
+      ...op,
+      disabled: periodosUsados.has(op.value) && op.value !== periodoAtual,
+    }));
 
   const adicionarPeriodo = () => {
-    if (periodos.length >= 5) return;
-    setPeriodos((dadosAtuais) => [...dadosAtuais, dadosIniciais()]);
+    if (periodos.length >= PERIODOS_CURSO.length) return;
+    setPeriodos((atuais) => [...atuais, criarPeriodoInicial()]);
   };
 
-  const removerPeriodo = (index) => {
-    setPeriodos((dadosAtuais) =>
-      dadosAtuais.filter((_, indice) => indice !== index),
-    );
+  const removerPeriodo = (chave) => {
+    setPeriodos((atuais) => atuais.filter((item) => item.chave !== chave));
   };
 
-  const atualizarPeriodo = (index, campo, value) => {
-    setPeriodos((prevs) =>
-      prevs.map((item, i) =>
-        i === index ? { ...item, [campo]: value } : item,
+  const atualizarPeriodo = (chave, campo, valor) => {
+    setPeriodos((atuais) =>
+      atuais.map((item) =>
+        item.chave === chave
+          ? {
+              ...item,
+              [campo]: valor,
+              erros: { ...item.erros, [campo]: "" },
+            }
+          : item,
       ),
     );
-
-    if (erros.periodosPorIndice) {
-      setErros((prev) => ({ ...prev, periodosPorIndice: {} }));
-    }
   };
 
   const validarCursoForm = () => {
-    const newErrors = {};
-    if (!nome.trim()) {
-      newErrors.nome = "Informe o nome do curso.";
+    const mensagemNome = nome.trim() ? "" : "Informe o nome do curso.";
+    setErroNome(mensagemNome);
+
+    if (emEdicao) {
+      return !mensagemNome;
     }
-    if (!emEdicao) {
-      if (!periodos || periodos.length === 0) {
-        newErrors.periodos = "Adicione pelo menos um período.";
-      } else {
-        const periodosVistos = new Set();
-        const periodosPorIndice = {};
-        periodos.forEach((p, index) => {
-          const itemErro = {};
-          if (!p.periodo) {
-            itemErro.periodo = "Selecione um período.";
-          } else if (periodosVistos.has(p.periodo)) {
-            itemErro.periodo = "Este período já foi adicionado.";
-          }
-          periodosVistos.add(p.periodo);
-          const vagas = Number(p.vagasTotais);
-          if (p.vagasTotais === "" || !Number.isInteger(vagas) || vagas < 0) {
-            itemErro.vagasTotais =
-              "Informe um número inteiro maior ou igual a zero.";
-          }
-          if (Object.keys(itemErro).length > 0) {
-            periodosPorIndice[index] = itemErro;
-          }
-        });
-        if (Object.keys(periodosPorIndice).length > 0) {
-          newErrors.periodosPorIndice = periodosPorIndice;
-        }
+
+    let periodoInvalido = false;
+    const periodosVistos = new Set();
+
+    const periodosValidados = periodos.map((item) => {
+      const itemErros = {};
+
+      if (!item.periodo) {
+        itemErros.periodo = "Selecione um período.";
+      } else if (periodosVistos.has(item.periodo)) {
+        itemErros.periodo = "Este período já foi adicionado.";
       }
-    }
-    setErros(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+      if (item.periodo) {
+        periodosVistos.add(item.periodo);
+      }
+
+      const erroVagas = validarQuantidadeInteira(item.vagasTotais, {
+        mensagemVazio: "Informe o total de vagas.",
+        minimo: 1,
+        mensagemMinimo: "Informe ao menos 1 vaga.",
+        maximo: VAGAS_MAXIMAS_PERIODO,
+        mensagemMaximo: "A quantidade máxima permitida é 9.999 vagas.",
+      });
+
+      if (erroVagas) {
+        itemErros.vagasTotais = erroVagas;
+      }
+
+      if (itemErros.periodo || itemErros.vagasTotais) {
+        periodoInvalido = true;
+      }
+
+      return { ...item, erros: itemErros };
+    });
+
+    setPeriodos(periodosValidados);
+    return !mensagemNome && !periodoInvalido;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!validarCursoForm()) return;
+
     if (emEdicao) {
       onSalvar({ nome: nome.trim() });
-    } else {
-      onSalvar({
-        nome: nome.trim(),
-        periodos: periodos.map((periodo) => ({
-          ...periodo,
-          vagasTotais: Number(periodo.vagasTotais),
-        })),
-      });
+      return;
     }
+
+    onSalvar({
+      nome: nome.trim(),
+      periodos: periodos.map(({ periodo, vagasTotais, matriculaAtiva }) => ({
+        periodo,
+        vagasTotais: Number(vagasTotais),
+        matriculaAtiva,
+      })),
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        <Input
-          label="Nome do curso"
-          maxLength="100"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          placeholder="Ex.: Desenvolvimento de Sistemas"
-          error={erros.nome}
-          autoFocus
-          required
-        />
+      <Input
+        label="Nome do curso"
+        maxLength={100}
+        value={nome}
+        onChange={(e) => {
+          setNome(e.target.value);
+          if (erroNome) setErroNome("");
+        }}
+        placeholder="Ex.: Desenvolvimento de Sistemas"
+        error={erroNome}
+        disabled={salvando}
+        autoFocus
+        required
+      />
 
-        {!emEdicao && (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="font-semibold text-text-primary">Períodos</h3>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={adicionarPeriodo}
-                leftIcon={<FiPlus />}
-                disabled={periodos.length >= 5}
+      {!emEdicao && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="font-semibold text-text-primary">Períodos</h3>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={adicionarPeriodo}
+              leftIcon={<FiPlus />}
+              disabled={salvando || periodos.length >= PERIODOS_CURSO.length}
+            >
+              Adicionar período
+            </Button>
+          </div>
+
+          <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+            {periodos.map((item, index) => (
+              <div
+                key={item.chave}
+                className="rounded-card border border-border bg-surface-muted p-4"
               >
-                Adicionar período
-              </Button>
-            </div>
-
-            {erros.periodos && (
-              <p className="text-sm text-status-danger">{erros.periodos}</p>
-            )}
-
-            <div className="max-h-56 space-y-3 overflow-y-auto pr-1">
-              {periodos.map((item, index) => (
-                <div
-                  key={index}
-                  className="rounded-card border border-border bg-surface-muted p-4"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <h4 className="font-medium text-text-primary">
-                      Período {index + 1}
-                    </h4>
-                    {periodos.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        onClick={() => removerPeriodo(index)}
-                        leftIcon={<FiTrash2 />}
-                      >
-                        Remover
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Select
-                      label="Período"
-                      placeholder="Selecione o período"
-                      options={PERIODOS_CURSO}
-                      value={item.periodo}
-                      onChange={(e) =>
-                        atualizarPeriodo(index, "periodo", e.target.value)
-                      }
-                      error={erros.periodosPorIndice?.[index]?.periodo}
-                      required
-                    />
-
-                    <Input
-                      label="Vagas totais"
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={item.vagasTotais}
-                      onChange={(e) =>
-                        atualizarPeriodo(index, "vagasTotais", e.target.value)
-                      }
-                      error={erros.periodosPorIndice?.[index]?.vagasTotais}
-                      required
-                    />
-                  </div>
-
-                  <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm text-text-primary">
-                    <input
-                      type="checkbox"
-                      checked={item.matriculaAtiva}
-                      onChange={(e) =>
-                        atualizarPeriodo(
-                          index,
-                          "matriculaAtiva",
-                          e.target.checked,
-                        )
-                      }
-                    />
-                    Matrícula disponível para este período
-                  </label>
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="font-medium text-text-primary">
+                    Período {index + 1}
+                  </h4>
+                  {periodos.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      onClick={() => removerPeriodo(item.chave)}
+                      leftIcon={<FiTrash2 />}
+                      disabled={salvando}
+                    >
+                      Remover
+                    </Button>
+                  )}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
 
-        <footer className="flex justify-end gap-3 border-t border-border pt-5">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onFechar}
-            disabled={salvando}
-          >
-            Cancelar
-          </Button>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Select
+                    label="Período"
+                    placeholder="Selecione o período"
+                    options={opcoesPeriodo(item.periodo)}
+                    value={item.periodo}
+                    onChange={(e) =>
+                      atualizarPeriodo(item.chave, "periodo", e.target.value)
+                    }
+                    error={item.erros.periodo}
+                    disabled={salvando}
+                    required
+                  />
 
-          <Button type="submit" loading={salvando}>
-            {emEdicao ? "Salvar alterações" : "Salvar curso"}
-          </Button>
-        </footer>
-      </form>
+                  <Input
+                    label="Vagas totais"
+                    type="number"
+                    min="1"
+                    max={VAGAS_MAXIMAS_PERIODO}
+                    step="1"
+                    placeholder="Ex.: 40"
+                    onKeyDown={bloquearTeclasNaoInteiras}
+                    value={item.vagasTotais}
+                    onChange={(e) =>
+                      atualizarPeriodo(
+                        item.chave,
+                        "vagasTotais",
+                        e.target.value,
+                      )
+                    }
+                    error={item.erros.vagasTotais}
+                    disabled={salvando}
+                    required
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <Toggle
+                    size="sm"
+                    checked={item.matriculaAtiva}
+                    onChange={(valor) =>
+                      atualizarPeriodo(item.chave, "matriculaAtiva", valor)
+                    }
+                    label="Matrícula aberta para este período"
+                    disabled={salvando}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <footer className="flex justify-end gap-3 border-t border-border pt-5">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onFechar}
+          disabled={salvando}
+        >
+          Cancelar
+        </Button>
+
+        <Button type="submit" loading={salvando}>
+          {emEdicao ? "Salvar alterações" : "Salvar curso"}
+        </Button>
+      </footer>
+    </form>
   );
 };
 
@@ -258,7 +294,6 @@ const CursoModal = ({
       onFechar={() => !salvando && onFechar()}
       titulo={curso ? "Editar curso" : "Adicionar curso"}
       largura="max-w-xl"
-      conteudoRolavel={false}
     >
       {aberto && (
         <CursoModalForm

@@ -26,6 +26,8 @@ import * as alunoService from "../services/alunoService";
 import { useAlunos } from "../hooks/useAlunos";
 import { useCursos } from "../hooks/useCursos";
 import { useToast } from "../../../context/toastContext";
+import { formatarPeriodo } from "../../../utils/formatters";
+import { bloquearTeclasNaoInteiras } from "../../../utils/formHelpers";
 
 const OPCOES_STATUS_ALUNO = [
   { valor: "ATIVO", label: "Ativos" },
@@ -323,8 +325,8 @@ const AlunosPage = () => {
                   {cursoItem.nome || "—"}
                 </p>
                 {cursoItem.periodo && (
-                  <p className="text-xs capitalize text-text-secondary">
-                    Período: {cursoItem.periodo.toLowerCase()}
+                  <p className="text-xs text-text-secondary">
+                    Período: {formatarPeriodo(cursoItem.periodo)}
                   </p>
                 )}
               </div>
@@ -681,6 +683,7 @@ const AlunosPage = () => {
               <Input
                 type="number"
                 label="Ano do processo"
+                onKeyDown={bloquearTeclasNaoInteiras}
                 value={anoProcesso}
                 onChange={(e) => setAnoProcesso(e.target.value)}
                 min={2000}

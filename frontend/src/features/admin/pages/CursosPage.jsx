@@ -6,6 +6,7 @@ import {
   FiRotateCcw,
   FiArchive,
   FiSearch,
+  FiTrash2,
 } from "react-icons/fi";
 
 import Alert from "../../../components/ui/Alert";
@@ -20,10 +21,11 @@ import CursoModal from "../components/cursos/CursoModal";
 import PeriodoModal from "../components/cursos/PeriodoModal";
 import PeriodoResumo from "../components/cursos/PeriodoResumo";
 
+import { PERIODOS_CURSO } from "../../../constants/cursoOptions";
 import { useCursos } from "../hooks/useCursos";
 import * as cursoService from "../services/cursoService";
-import { useAuth } from "../../../context/authContext";
 import { useToast } from "../../../context/toastContext";
+import { formatarPeriodo } from "../../../utils/formatters";
 
 const OPCOES_STATUS_CURSO = [
   { valor: false, label: "Ativos" },
@@ -32,8 +34,6 @@ const OPCOES_STATUS_CURSO = [
 
 const CursosPage = () => {
   const toast = useToast();
-  const { usuario: usuarioLogado } = useAuth();
-  const ehAdmin = usuarioLogado?.tipo === "admin";
 
   const [busca, setBusca] = React.useState("");
   const [arquivado, setArquivado] = React.useState(false);
@@ -51,7 +51,9 @@ const CursosPage = () => {
     setSalvando(true);
 
     try {
-      if (modalAtivo?.curso) {
+      const emEdicao = Boolean(modalAtivo?.curso);
+
+      if (emEdicao) {
         await cursoService.atualizarCurso(modalAtivo.curso.id, {
           nome: dados.nome,
         });
@@ -59,8 +61,13 @@ const CursosPage = () => {
         await cursoService.criarCurso(dados);
       }
 
+      toast.sucesso(
+        emEdicao
+          ? "Curso atualizado com sucesso!"
+          : "Curso cadastrado com sucesso!",
+      );
       setModalAtivo(null);
-      await recarregar();
+      await recarregar({ silencioso: true });
     } catch (err) {
       toast.erro(err.message);
     } finally {
@@ -81,8 +88,13 @@ const CursosPage = () => {
         await cursoService.criarPeriodo(curso.id, dados);
       }
 
+      toast.sucesso(
+        periodo
+          ? "Período atualizado com sucesso!"
+          : "Período adicionado com sucesso!",
+      );
       setModalAtivo(null);
-      await recarregar();
+      await recarregar({ silencioso: true });
     } catch (err) {
       toast.erro(err.message);
     } finally {
@@ -90,18 +102,69 @@ const CursosPage = () => {
     }
   };
 
-  const confirmarArquivamento = async () => {
-    if (!modalAtivo?.curso) return;
+  const obterConfirmacao = () => {
+    const curso = modalAtivo?.curso;
+    const periodo = modalAtivo?.periodo;
+
+    if (modalAtivo?.tipo === "arquivar" && curso) {
+      return curso.arquivado
+        ? {
+            titulo: "Desarquivar curso",
+            mensagem: `Deseja desarquivar o curso ${curso.nome}? Os períodos permanecerão fechados até que sejam reabertos.`,
+            textoConfirmar: "Desarquivar",
+            variante: "success",
+            sucesso: "Curso desarquivado com sucesso!",
+            acao: () =>
+              cursoService.atualizarCurso(curso.id, { arquivado: false }),
+          }
+        : {
+            titulo: "Arquivar curso",
+            mensagem: `Deseja arquivar o curso ${curso.nome}? As matrículas dos períodos serão fechadas.`,
+            textoConfirmar: "Arquivar",
+            variante: "danger",
+            sucesso: "Curso arquivado com sucesso!",
+            acao: () =>
+              cursoService.atualizarCurso(curso.id, { arquivado: true }),
+          };
+    }
+
+    if (modalAtivo?.tipo === "excluirCurso" && curso) {
+      return {
+        titulo: "Excluir curso",
+        mensagem: `Deseja excluir permanentemente o curso ${curso.nome}? Essa ação não pode ser desfeita.`,
+        textoConfirmar: "Excluir",
+        variante: "danger",
+        sucesso: "Curso excluído com sucesso!",
+        acao: () => cursoService.excluirCurso(curso.id),
+      };
+    }
+
+    if (modalAtivo?.tipo === "excluirPeriodo" && curso && periodo) {
+      return {
+        titulo: "Excluir período",
+        mensagem: `Deseja excluir o período ${formatarPeriodo(periodo.periodo)} do curso ${curso.nome}?`,
+        textoConfirmar: "Excluir",
+        variante: "danger",
+        sucesso: "Período excluído com sucesso!",
+        acao: () => cursoService.excluirPeriodo(curso.id, periodo.id),
+      };
+    }
+
+    return null;
+  };
+
+  const confirmacaoAtiva = obterConfirmacao();
+
+  const handleConfirmarAcao = async () => {
+    if (!confirmacaoAtiva) return;
 
     setSalvando(true);
 
     try {
-      await cursoService.atualizarCurso(modalAtivo.curso.id, {
-        arquivado: !modalAtivo.curso.arquivado,
-      });
-
+      await confirmacaoAtiva.acao();
+      toast.sucesso(confirmacaoAtiva.sucesso);
       setModalAtivo(null);
-      await recarregar();
+      await recarregar({ silencioso: true });
     } catch (err) {
       toast.erro(err.message);
     } finally {
@@ -130,67 +193,55 @@ const CursosPage = () => {
       ),
     },
     {
-      key: "vagasTotais",
-      label: "Total de Vagas",
-      headerClassName: "text-center",
-      cellClassName: "text-center",
-      render: (curso) => {
-        const totalVagas = (curso.periodos ?? []).reduce(
-          (acc, p) => acc + (p.vagasTotais ?? 0),
-          0,
-        );
-        return (
-          <span className="font-semibold text-text-primary">
-            {totalVagas} {totalVagas === 1 ? "vaga" : "vagas"}
-          </span>
-        );
-      },
-    },
-    {
       key: "periodos",
       label: "Períodos",
       render: (curso) => {
         const periodos = curso.periodos || [];
-        const primeiroPeriodo = periodos[0];
-        const periodosRestantes = periodos.slice(1);
+
+        if (periodos.length === 0) {
+          return (
+            <p className="text-xs text-text-secondary">
+              Nenhum período cadastrado
+            </p>
+          );
+        }
+
         const expandido = cursoExpandido === curso.id;
+        const periodosRestantes = periodos.length - 1;
+        const periodosVisiveis = expandido ? periodos : periodos.slice(0, 1);
 
-        return primeiroPeriodo ? (
+        return (
           <div className="space-y-1.5">
-            <PeriodoResumo
-              periodoCurso={primeiroPeriodo}
-              onEditar={
-                curso.arquivado || !ehAdmin
-                  ? null
-                  : () =>
-                      setModalAtivo({
-                        tipo: "periodo",
-                        curso,
-                        periodo: primeiroPeriodo,
-                      })
-              }
-            />
+            {periodosVisiveis.map((periodoCurso) => (
+              <PeriodoResumo
+                key={periodoCurso.id}
+                periodoCurso={periodoCurso}
+                onEditar={
+                  curso.arquivado
+                    ? null
+                    : () =>
+                        setModalAtivo({
+                          tipo: "periodo",
+                          curso,
+                          periodo: periodoCurso,
+                        })
+                }
+                onExcluir={
+                  curso.arquivado ||
+                  periodoCurso.possuiVinculos ||
+                  periodos.length <= 1
+                    ? null
+                    : () =>
+                        setModalAtivo({
+                          tipo: "excluirPeriodo",
+                          curso,
+                          periodo: periodoCurso,
+                        })
+                }
+              />
+            ))}
 
-            {expandido &&
-              periodosRestantes.map((periodoCurso) => (
-                <div key={periodoCurso.id} className="pt-1">
-                  <PeriodoResumo
-                    periodoCurso={periodoCurso}
-                    onEditar={
-                      curso.arquivado || !ehAdmin
-                        ? null
-                        : () =>
-                            setModalAtivo({
-                              tipo: "periodo",
-                              curso,
-                              periodo: periodoCurso,
-                            })
-                    }
-                  />
-                </div>
-              ))}
-
-            {periodosRestantes.length > 0 && (
+            {periodosRestantes > 0 && (
               <button
                 type="button"
                 onClick={() => alternarPeriodos(curso.id)}
@@ -199,8 +250,8 @@ const CursosPage = () => {
               >
                 {expandido
                   ? "Ver menos"
-                  : `Ver mais ${periodosRestantes.length} período${
-                      periodosRestantes.length === 1 ? "" : "s"
+                  : `Ver mais ${periodosRestantes} período${
+                      periodosRestantes === 1 ? "" : "s"
                     }`}
                 <FiChevronDown
                   size={14}
@@ -211,10 +262,6 @@ const CursosPage = () => {
               </button>
             )}
           </div>
-        ) : (
-          <p className="text-xs text-text-secondary">
-            Nenhum período cadastrado
-          </p>
         );
       },
     },
@@ -224,13 +271,15 @@ const CursosPage = () => {
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (curso) => {
-        if (!ehAdmin) return null;
+        const periodos = curso.periodos || [];
+        const podeAdicionarPeriodo =
+          !curso.arquivado && periodos.length < PERIODOS_CURSO.length;
 
         return (
           <TableMenuActions
             label={`Ações do curso ${curso.nome}`}
             itens={[
-              !curso.arquivado && {
+              podeAdicionarPeriodo && {
                 label: "Adicionar período",
                 icone: FiPlus,
                 onClick: () => setModalAtivo({ tipo: "periodo", curso }),
@@ -246,6 +295,14 @@ const CursosPage = () => {
                 onClick: () => setModalAtivo({ tipo: "arquivar", curso }),
                 variante: curso.arquivado ? "success" : "danger",
               },
+              curso.arquivado &&
+                !curso.possuiVinculos && {
+                  label: "Excluir curso",
+                  icone: FiTrash2,
+                  onClick: () =>
+                    setModalAtivo({ tipo: "excluirCurso", curso }),
+                  variante: "danger",
+                },
             ]}
           />
         );
@@ -278,6 +335,7 @@ const CursosPage = () => {
           value={busca}
           onChange={(event) => setBusca(event.target.value)}
           placeholder="Pesquisar por nome do curso..."
+          maxLength={100}
           icon={<FiSearch />}
           size="md"
           className="max-w-xl"
@@ -316,27 +374,22 @@ const CursosPage = () => {
       <PeriodoModal
         aberto={modalAtivo?.tipo === "periodo"}
         periodo={modalAtivo?.periodo}
+        periodosExistentes={(modalAtivo?.curso?.periodos ?? []).map(
+          (p) => p.periodo,
+        )}
         onFechar={() => setModalAtivo(null)}
         onSalvar={handleSalvarPeriodo}
         salvando={salvando}
       />
 
       <ConfirmarModal
-        aberto={modalAtivo?.tipo === "arquivar"}
+        aberto={Boolean(confirmacaoAtiva)}
         onFechar={() => setModalAtivo(null)}
-        onConfirmar={confirmarArquivamento}
-        titulo={
-          modalAtivo?.curso?.arquivado ? "Desarquivar curso" : "Arquivar curso"
-        }
-        mensagem={
-          modalAtivo?.curso?.arquivado
-            ? `Deseja desarquivar o curso ${modalAtivo?.curso?.nome}?`
-            : `Deseja arquivar o curso ${modalAtivo?.curso?.nome}? As matrículas dos períodos serão fechadas.`
-        }
-        textoConfirmar={
-          modalAtivo?.curso?.arquivado ? "Desarquivar" : "Arquivar"
-        }
-        variante={modalAtivo?.curso?.arquivado ? "success" : "danger"}
+        onConfirmar={handleConfirmarAcao}
+        titulo={confirmacaoAtiva?.titulo ?? ""}
+        mensagem={confirmacaoAtiva?.mensagem ?? ""}
+        textoConfirmar={confirmacaoAtiva?.textoConfirmar}
+        variante={confirmacaoAtiva?.variante}
         salvando={salvando}
       />
     </section>
