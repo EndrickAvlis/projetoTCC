@@ -2,8 +2,6 @@ import { triggerAsyncId } from "node:async_hooks";
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
 import BaseService from "./baseService.js";
-import { stripTypeScriptTypes } from "node:module";
-import { threadCpuUsage } from "node:process";
 
 export default class PostosService extends BaseService {
     async ListarFilas() {
@@ -321,9 +319,11 @@ export default class PostosService extends BaseService {
                     where: {
                         statusSenha: "finalizada",
                         dataHoraInicioSenha: {
-                            gte: intervalo.dataInicio
+                            gte: intervalo.dataInicio,
+                            lte: intervalo.dataFim
                         },
                         dataHoraFimSenha: {
+                            gte: intervalo.dataInicio,
                             lte: intervalo.dataFim
                         }
                     }
@@ -333,9 +333,11 @@ export default class PostosService extends BaseService {
                     where: {
                         statusSenha: "cancelada",
                         dataHoraInicioSenha: {
-                            gte: intervalo.dataInicio
+                            gte: intervalo.dataInicio,
+                            lte: intervalo.dataFim
                         },
                         dataHoraFimSenha: {
+                            gte: intervalo.dataInicio,
                             lte: intervalo.dataFim
                         }
                     }
@@ -344,9 +346,11 @@ export default class PostosService extends BaseService {
                 const senhasEmitidas = await tx.senha.count({
                     where: {
                         dataHoraInicioSenha: {
-                            gte: intervalo.dataInicio
+                            gte: intervalo.dataInicio,
+                            lte: intervalo.dataFim
                         },
                         dataHoraFimSenha: {
+                            gte: intervalo.dataInicio,
                             lte: intervalo.dataFim
                         }
                     }
@@ -356,9 +360,11 @@ export default class PostosService extends BaseService {
                     where: {
                         statusSenha: "finalizada",
                         dataHoraInicioSenha: {
-                            gte: intervalo.dataInicio
+                            gte: intervalo.dataInicio,
+                            lte: intervalo.dataFim
                         },
                         dataHoraFimSenha: {
+                            gte: intervalo.dataInicio,
                             lte: intervalo.dataFim
                         }
                     },
@@ -375,6 +381,8 @@ export default class PostosService extends BaseService {
 
                         return total + (fim - inicio);
                     }, 0) / senhas.length / 1000 / 60;
+
+                    tma = Math.trunc(tma);
                 }
 
                 const finalizadasPorHora = await obterFinalizadasPorHora(intervalo.dataInicio, intervalo.dataFim, tx);
@@ -386,7 +394,9 @@ export default class PostosService extends BaseService {
                     },
                     include: {
                         periodos: {
-                            periodo: periodoCurso
+                            where: {
+                                periodo: periodoCurso
+                            }
                         },
                         cursosAluno: true
                     }
@@ -440,9 +450,11 @@ export default class PostosService extends BaseService {
                             in: (status? [status] : ["finalizada", "cancelada"])
                         },
                         dataHoraInicioSenha: {
-                            gte: intervalo.dataInicio
+                            gte: intervalo.dataInicio,
+                            lte: intervalo.dataFim
                         },
                         dataHoraFimSenha: {
+                            gte: intervalo.dataInicio,
                             lte: intervalo.dataFim
                         },
                         OR: [

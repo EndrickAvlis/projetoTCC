@@ -5,7 +5,7 @@ const postosService = new PostosService();
 export const listarTodasAsFilas = async (req, res) => {
     const resultado = await postosService.ListarFilas();
 
-    res.status(200).json(resultado).send();
+    res.status(200).json(resultado);
 }
 
 export const listarAtendimento = async (req, res) => {
@@ -16,7 +16,7 @@ export const listarAtendimento = async (req, res) => {
     const periodoCurso = req.validado.query.periodoCurso;
     const resultado = await postosService.listarAtendimento(tipoPeriodo, dataInicio, dataFim, cursoId, periodoCurso);
 
-    res.status(200).json(resultado).send();
+    res.status(200).json(resultado);
 }
 
 export const listarAuditoria = async (req, res) => {
@@ -30,7 +30,7 @@ export const listarAuditoria = async (req, res) => {
 
     const resultado = await postosService.listarAuditoria(busca, status, tipoPeriodo, dataInicio, dataFim, pagina, limite);
 
-    res.status(200).json(resultado).send();
+    res.status(200).json(resultado);
 }
 
 export const trocarDePosto = async (req, res) => {
@@ -39,7 +39,7 @@ export const trocarDePosto = async (req, res) => {
 
     const resultado = await postosService.trocarDePosto(idSenha, postoDestino);
 
-    res.status(200).json(resultado).send();
+    res.status(200).json(resultado);
 }
 
 export const cancelarSenha = async (req, res) => {
@@ -47,5 +47,5 @@ export const cancelarSenha = async (req, res) => {
 
     const resultado = await postosService.cancelarSenha(idSenha);
 
-    res.status(200).json(resultado).send();
+    res.status(200).json(resultado);
 }

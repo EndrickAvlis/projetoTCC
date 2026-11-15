@@ -6,7 +6,7 @@ import * as validatorPostos from "../schemas/SchemaPostos.js";
 
 const postosRoutes = Router();
 
-//postosRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor"]));
+postosRoutes.use(auth.accessValidator, auth.validarRole(["admin", "supervisor"]));
 
 postosRoutes.get("/filas",
     postosController.listarTodasAsFilas
