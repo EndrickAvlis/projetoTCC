@@ -63,7 +63,7 @@ const RelatoriosPage = () => {
     setCarregandoDetalhes(true);
     try {
       const res = await detalheVenda(idVenda);
-      setVendaSelecionada(res?.venda ?? null);
+      setVendaSelecionada(res.venda);
     } catch (err) {
       setVendaSelecionada(null);
       toast.erro(err.message);
@@ -268,7 +268,7 @@ const RelatoriosPage = () => {
         </div>
       </section>
 
-      {erro && <Alert type="error" message={erro} />}
+      {erro && <Alert type="warning" message={erro} />}
 
       <PainelReceita
         resumoReceita={resumoReceita}

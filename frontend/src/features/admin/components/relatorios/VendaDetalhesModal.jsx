@@ -1,27 +1,19 @@
-import * as React from "react";
 import Modal from "../../../../components/ui/Modal";
-import Badge from "../../../../components/ui/Badge";
-import Button from "../../../../components/ui/Button";
-import { formatarMoeda, formatarDataHora } from "../../../../utils/formatters";
+import {
+  formatarMoeda,
+  formatarDataHora,
+  formatarPeriodo,
+} from "../../../../utils/formatters";
 
-const formatarPeriodo = (periodo) => {
-  switch (periodo) {
-    case "manha":
-      return "Manhã";
-    case "tarde":
-      return "Tarde";
-    case "noite":
-      return "Noite";
-    case "integral":
-      return "Integral";
-    case "online":
-      return "EAD - Online";
-    default:
-      return "Não Informado";
-  }
+const LABELS_PAGAMENTO = {
+  dinheiro: "Dinheiro",
+  pix: "Pix",
+  debito: "Cartão de Débito",
+  credito: "Cartão de Crédito",
 };
+
 const formatarItem = (item) => {
-  if (item === "Armário") {
+  if (item === "Armário Individual") {
     return item;
   } else {
     return `Uniforme ${item}`;
@@ -41,36 +33,8 @@ const VendaDetalhesModal = ({
       aberto={aberto}
       onFechar={onFechar}
       titulo="Detalhe da Venda"
-      largura="max-w-xl"
+      largura="max-w-180"
       conteudoRolavel={false}
-      footer={
-        venda ? (
-          <div className="flex items-center justify-between w-full gap-3">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-md text-text-secondary font-semibold">
-                Total:
-              </span>
-              <span className="text-xl font-extrabold text-primary">
-                {formatarMoeda(venda.precoTotal)}
-              </span>
-              <Badge variant="neutral" className="text-xs">
-                {venda.formaPagamento
-                  ? `Pago via ${venda.formaPagamento.replace(",", " & ")}`
-                  : "Não informado"}
-              </Badge>
-            </div>
-            <Button variant="secondary" onClick={onFechar}>
-              Fechar
-            </Button>
-          </div>
-        ) : (
-          <div className="flex justify-end w-full">
-            <Button variant="secondary" onClick={onFechar}>
-              Fechar
-            </Button>
-          </div>
-        )
-      }
     >
       {carregando ? (
         <div className="py-12 flex flex-col items-center justify-center gap-3 text-text-secondary">
@@ -93,8 +57,15 @@ const VendaDetalhesModal = ({
               </p>
             </div>
 
+            <div>
+              <p className="text-xs uppercase font-semibold text-text-secondary">Atendente</p>
+              <p className="font-semibold text-text-primary">
+                {venda.atendente}
+              </p>
+            </div>
+
             <div className="text-right">
-              <p className="text-xs text-text-secondary">Data e Hora</p>
+              <p className="text-xs text-text-secondary">Data/Hora da venda</p>
               <p className="font-medium text-text-primary">
                 {formatarDataHora(venda.dataHora)}
               </p>
@@ -102,34 +73,29 @@ const VendaDetalhesModal = ({
           </div>
 
           <div className="flex justify-between p-3">
-            <div className="max-w-50">
-              <p className="text-xs text-text-secondary font-medium">Aluno</p>
+            <div className="max-w-55">
+              <p className="text-sm text-text-secondary">Aluno</p>
               <p className="font-semibold text-text-primary">
                 {venda.aluno || "Não informado"}
               </p>
             </div>
+
             <div>
-              <p className="text-xs text-text-secondary font-medium">
-                Curso / Período
-              </p>
+              <p className="text-sm text-text-secondary">Curso</p>
               <p className="font-semibold text-text-primary">
                 {venda.curso || "Não informado"}
               </p>
-              <p className="font-semibold capitalize text-text-primary">
-                {formatarPeriodo(venda.periodo)}
-              </p>
             </div>
+
             <div>
-              <p className="text-xs text-text-secondary font-medium">
-                Atendente
-              </p>
-              <p className="font-semibold text-text-primary">
-                {venda.atendente || "Não informado"}
+              <p className="text-sm text-text-secondary">Período</p>
+              <p className="font-semibold capitalize text-text-primary">
+                {formatarPeriodo(venda.periodo) || "Não informado"}
               </p>
             </div>
           </div>
           <div>
-            <p className="text-md font-semibold tracking-wider text-text-secondary mb-2">
+            <p className="text-sm font-semibold text-text-secondary mb-2">
               Itens da Compra
             </p>
             <div className="rounded-lg border border-border max-h-52 overflow-y-auto">
@@ -181,6 +147,38 @@ const VendaDetalhesModal = ({
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-text-secondary mb-2">
+              Formas de pagamento
+            </p>
+            <div className="rounded-xl border border-border divide-y divide-border overflow-hidden">
+              {venda.pagamentos?.length > 0 && (
+                <div className="divide-y divide-border text-xs">
+                  {venda.pagamentos.map((pagamento, idx) => (
+                    <div
+                      key={`${pagamento.tipo}-${idx}`}
+                      className="flex items-center justify-between px-4 py-2.5"
+                    >
+                      <span className="font-medium text-text-secondary">
+                        {LABELS_PAGAMENTO[pagamento.tipo] ?? pagamento.tipo}
+                      </span>
+                      <span className="font-semibold text-text-primary">
+                        {formatarMoeda(pagamento.valor)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center justify-between bg-surface-muted/60 px-4 py-3">
+                <span className="text-sm font-semibold text-text-secondary">
+                  Total da Venda
+                </span>
+                <span className="text-xl font-extrabold text-primary">
+                  {formatarMoeda(venda.precoTotal)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
