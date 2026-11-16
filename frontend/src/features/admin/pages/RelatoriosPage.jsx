@@ -4,9 +4,8 @@ import { FiEye, FiDownload, FiRotateCcw } from "react-icons/fi";
 import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import DataTable from "../../../components/ui/DataTable";
-import Input from "../../../components/ui/Input";
+import FiltroPeriodo from "../../../components/ui/FiltroPeriodo";
 import Select from "../../../components/ui/Select";
-import TableFiltro from "../../../components/ui/TableFiltro";
 import PainelReceita from "../components/relatorios/PainelReceita";
 import VendaDetalhesModal from "../components/relatorios/VendaDetalhesModal";
 import { useCursos } from "../hooks/useCursos";
@@ -15,14 +14,6 @@ import { useRelatorios } from "../hooks/useRelatorios";
 import { exportarRelatorio, detalheVenda } from "../services/relatorioService";
 import { formatarMoeda, formatarDataHora } from "../../../utils/formatters";
 import { useToast } from "../../../context/toastContext";
-
-const OPCOES_PERIODO = [
-  { valor: "TODO", label: "Todo o período" },
-  { valor: "HOJE", label: "Hoje" },
-  { valor: "SEMANA", label: "Esta semana" },
-  { valor: "MES", label: "Este mês" },
-  { valor: "PERSONALIZADO", label: "Personalizado" },
-];
 
 const OPCOES_FORMA_PAGAMENTO = [
   { value: "pix", label: "Pix" },
@@ -63,7 +54,7 @@ const RelatoriosPage = () => {
     setCarregandoDetalhes(true);
     try {
       const res = await detalheVenda(idVenda);
-      setVendaSelecionada(res?.venda ?? null);
+      setVendaSelecionada(res.venda);
     } catch (err) {
       setVendaSelecionada(null);
       toast.erro(err.message);
@@ -186,33 +177,16 @@ const RelatoriosPage = () => {
       </header>
 
       <section className="space-y-4 rounded-xl border border-border bg-surface p-5">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
-          <TableFiltro
-            options={OPCOES_PERIODO}
-            value={filtros.periodo}
-            onChange={(valor) => alterarFiltro("periodo", valor)}
+        <div className="border-b border-border pb-4">
+          <FiltroPeriodo
+            periodo={filtros.periodo}
+            dataInicio={filtros.dataInicio}
+            dataFim={filtros.dataFim}
+            onPeriodoChange={(valor) => alterarFiltro("periodo", valor)}
+            onDataInicioChange={(valor) => alterarFiltro("dataInicio", valor)}
+            onDataFimChange={(valor) => alterarFiltro("dataFim", valor)}
             ariaLabel="Período do relatório"
           />
-
-          {filtros.periodo === "PERSONALIZADO" && (
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                size="sm"
-                value={filtros.dataInicio}
-                onChange={(e) => alterarFiltro("dataInicio", e.target.value)}
-                ariaLabel="Data de início"
-              />
-              <span className="text-sm text-text-secondary">até</span>
-              <Input
-                type="date"
-                size="sm"
-                value={filtros.dataFim}
-                onChange={(e) => alterarFiltro("dataFim", e.target.value)}
-                ariaLabel="Data de fim"
-              />
-            </div>
-          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -268,7 +242,7 @@ const RelatoriosPage = () => {
         </div>
       </section>
 
-      {erro && <Alert type="error" message={erro} />}
+      {erro && <Alert type="warning" message={erro} />}
 
       <PainelReceita
         resumoReceita={resumoReceita}

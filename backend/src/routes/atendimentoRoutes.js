@@ -14,8 +14,6 @@ atendimentoRoutes.post("/iniciar",
     AtendimentoController.iniciarAtendimento
 );
 
-atendimentoRoutes.get("/ativo", AtendimentoController.recuperarAtendimento);
-
 atendimentoRoutes.get("/recuperar/:etapa",
     validarRequisicao(ValidatorAtendimento.recuperarAtendimentoSchema),
     AtendimentoController.recuperarAtendimento

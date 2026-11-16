@@ -73,7 +73,7 @@ export const parsearCsv = (texto, delimitador = ";") => {
   // Remove BOM (\uFEFF) do primeiro cabeçalho se houver
   const cabecalhos = linhas
     .shift()
-    .map((c) => c.replace(/^\uFEFF/, "").trim().toUpperCase());
+    .map((c) => normalizarTexto(c.replace(/^\uFEFF/, "")));
 
   // Validação das colunas obrigatórias
   const colunasFaltantes = CABECALHOS_OBRIGATORIOS.filter(
@@ -133,6 +133,29 @@ const normalizarNomeComparacao = (nome) => {
     .trim();
 };
 
+export const sugerirAssociacoesCursos = (
+  gruposCursos = [],
+  cursosExistentes = [],
+) => {
+  return gruposCursos.map((grupo) => {
+    if (grupo.idCurso) return grupo;
+
+    const nomeGrupo = normalizarNomeComparacao(grupo.nomeCsv);
+    const correspondencias = cursosExistentes.filter(
+      (c) => normalizarNomeComparacao(c.nome) === nomeGrupo,
+    );
+    const matchNome =
+      correspondencias.find((c) => !c.arquivado) ?? correspondencias[0];
+
+    if (!matchNome) return grupo;
+
+    return {
+      ...grupo,
+      idCurso: String(matchNome.id),
+    };
+  });
+};
+
 // 4. Análise e aplicação das regras de negócio do CSV
 export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
   const candidatosValidos = [];
@@ -157,9 +180,7 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
     }
 
     const escolaridadeValida =
-      escolaridadeTxt === "SIM" ||
-      escolaridadeTxt === "NAO" ||
-      escolaridadeTxt === "NÃO";
+      escolaridadeTxt === "SIM" || escolaridadeTxt === "NAO";
 
     const classificacaoValida =
       classificacao === null || (Number.isInteger(classificacao) && classificacao > 0);
@@ -208,22 +229,15 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
     }
   });
 
-  const gruposCursos = Array.from(mapaCursos.values()).map((grupo) => {
-    const matchNome = cursosExistentes.find(
-      (c) =>
-        normalizarNomeComparacao(c.nome) ===
-        normalizarNomeComparacao(grupo.nomeCsv),
-    );
+  const gruposBase = Array.from(mapaCursos.values()).map((grupo) => ({
+    chave: grupo.chave,
+    nomeCsv: grupo.nomeCsv,
+    periodos: Array.from(grupo.periodos),
+    totalCandidatos: grupo.totalCandidatos,
+    idCurso: "",
+  }));
 
-    return {
-      chave: grupo.chave,
-      nomeCsv: grupo.nomeCsv,
-      periodos: Array.from(grupo.periodos),
-      totalCandidatos: grupo.totalCandidatos,
-      idCurso: matchNome ? String(matchNome.id) : "",
-      tipoAssociacao: matchNome ? "SUGESTAO" : "PENDENTE",
-    };
-  });
+  const gruposCursos = sugerirAssociacoesCursos(gruposBase, cursosExistentes);
 
   return {
     totalLinhas: registros.length,

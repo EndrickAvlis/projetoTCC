@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Alert from "../../../components/ui/Alert";
 import Button from "../../../components/ui/Button";
 import FilaGrid from "../components/fila/FilaGrid";
 import HistoricoGrid from "../components/fila/HistoricoGrid";
@@ -15,8 +16,25 @@ const SidePostos = ({ etapa }) => {
   const { senhaAtual, chamarSenha, alterarPrioridadeSenha, carregando } =
     useAtendimento();
 
-  const { senhasAguardando, senhasChamadasHoje, carregandoFila, carregarFila } =
-    useFila(etapa);
+  const {
+    senhasAguardando,
+    senhasChamadasHoje,
+    carregandoFila,
+    erro,
+    carregarFila,
+  } = useFila(etapa);
+
+  const senhaAnteriorIdRef = useRef(senhaAtual?.id ?? null);
+
+  useEffect(() => {
+    const senhaAnteriorId = senhaAnteriorIdRef.current;
+    const senhaAtualId = senhaAtual?.id ?? null;
+    senhaAnteriorIdRef.current = senhaAtualId;
+
+    if (senhaAnteriorId && !senhaAtualId) {
+      carregarFila({ silencioso: true });
+    }
+  }, [senhaAtual?.id, carregarFila]);
 
   const handleChamarSenha = async (senha) => {
     try {
@@ -79,6 +97,12 @@ const SidePostos = ({ etapa }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
+        {erro && (
+          <div className="mb-3">
+            <Alert type="error" message={erro} />
+          </div>
+        )}
+
         {!exibindoHistorico && (
           <SenhaAtualCard
             senha={senhaAtual}

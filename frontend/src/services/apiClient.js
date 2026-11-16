@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = (
+export const API_URL = (
   import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:3000`
 ).replace(/\/+$/, "");
 
@@ -37,25 +37,38 @@ apiClient.interceptors.response.use(
         erro.response?.data?.code === "USUARIO_DESATIVADO" ||
         erro.response?.data?.code === "PERMISSAO_ALTERADA"
       ) {
-        sessionStorage.setItem("alerta_sessao", erro.response.data.message);
-        window.dispatchEvent(new Event("auth:unauthorized"));
+        window.dispatchEvent(
+          new CustomEvent("auth:unauthorized", {
+            detail: { message: erro.response.data.message },
+          }),
+        );
         return Promise.reject(erro);
       }
 
       if (!promiseRefresh) {
         promiseRefresh = apiClient
           .post("/auth/refresh")
-          .catch((falhouReq) => {
-            if (
-              falhouReq.response?.data?.code === "USUARIO_DESATIVADO" ||
-              falhouReq.response?.data?.code === "CREDENCIAIS_INSUFICIENTES"
-            ) {
-              sessionStorage.setItem(
-                "alerta_sessao",
-                falhouReq.response.data.message,
+          .then((res) => {
+            if (res?.data) {
+              window.dispatchEvent(
+                new CustomEvent("auth:refreshed", { detail: res.data }),
               );
             }
-            window.dispatchEvent(new Event("auth:unauthorized"));
+            return res;
+          })
+          .catch((falhouReq) => {
+            const code = falhouReq.response?.data?.code;
+            const message =
+              code === "USUARIO_DESATIVADO" ||
+              code === "CREDENCIAIS_INSUFICIENTES"
+                ? falhouReq.response.data.message
+                : "";
+
+            window.dispatchEvent(
+              new CustomEvent("auth:unauthorized", {
+                detail: message ? { message } : undefined,
+              }),
+            );
             return Promise.reject(falhouReq);
           })
           .finally(() => {

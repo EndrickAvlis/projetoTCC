@@ -126,23 +126,39 @@ export const AtendimentoActions = ({
         )}
 
         {fase === "iniciada" && (
-          <Button
-            variant="success"
-            size="md"
-            leftIcon={<FiCheck />}
-            onClick={onFinalizar}
-            disabled={!podeFinalizar || carregando}
-          >
-            {textoFinalizar}
-          </Button>
+          <>
+            <Button
+              variant="danger"
+              size="md"
+              leftIcon={<FiX />}
+              onClick={() => setModalCancelarAberto(true)}
+              disabled={carregando}
+            >
+              Cancelar
+            </Button>
+
+            <Button
+              variant="success"
+              size="md"
+              leftIcon={<FiCheck />}
+              onClick={onFinalizar}
+              disabled={!podeFinalizar || carregando}
+            >
+              {textoFinalizar}
+            </Button>
+          </>
         )}
       </div>
       <ConfirmarModal
-        aberto={modalCancelarAberto}
+        aberto={modalCancelarAberto && Boolean(senhaAtual)}
         onFechar={() => setModalCancelarAberto(false)}
         onConfirmar={handleConfirmarCancelamento}
         titulo="Cancelar Senha"
-        mensagem={`Tem certeza de que deseja cancelar a Senha ${formatarSenha(senhaAtual?.codigo)} por não comparecimento? Esta ação é definitiva.`}
+        mensagem={
+          fase === "iniciada"
+            ? `Tem certeza de que deseja cancelar o atendimento da Senha ${formatarSenha(senhaAtual?.codigo)}? Esta ação é definitiva.`
+            : `Tem certeza de que deseja cancelar a Senha ${formatarSenha(senhaAtual?.codigo)} por não comparecimento? Esta ação é definitiva.`
+        }
         textoConfirmar="Sim, cancelar"
         textoCancelar="Voltar"
         variante="danger"

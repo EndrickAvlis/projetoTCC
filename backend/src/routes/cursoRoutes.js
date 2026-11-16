@@ -25,6 +25,12 @@ cursoRoutes.patch(
   validarRequisicao(cursos.atualizarCursoSchema),
   cursoController.atualizarCurso,
 );
+cursoRoutes.delete(
+  "/:cursoId",
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(cursos.excluirCursoSchema),
+  cursoController.excluirCurso,
+);
 cursoRoutes.post(
   "/:cursoId/periodos",
   auth.validarRole(["admin", "supervisor"]),
@@ -36,6 +42,12 @@ cursoRoutes.patch(
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(cursos.atualizarPeriodoSchema),
   cursoController.atualizarPeriodo,
+);
+cursoRoutes.delete(
+  "/:cursoId/periodos/:periodoId",
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(cursos.excluirPeriodoSchema),
+  cursoController.excluirPeriodo,
 );
 
 export default cursoRoutes;

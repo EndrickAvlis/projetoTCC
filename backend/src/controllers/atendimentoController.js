@@ -14,80 +14,97 @@ export const iniciarAtendimento = async (req, res) => {
   const etapaUsuario = req.usuario.tela;
   const idSenha = req.validado.body.senhaId;
 
-  const senha = await senhaService.buscarPorId(idSenha);
+  const resultado = await prisma.$transaction(async (transacao) => {
+    const senha = await transacao.senha.findUnique({
+      where: { idSenha },
+    });
 
-  if (!senha) {
-    throw senhaNaoEncontrada();
-  }
+    if (!senha) {
+      throw senhaNaoEncontrada();
+    }
 
-  if (senha.statusSenha !== "chamada") {
-    throw new AppError(
-      "A senha precisa estar com o status chamada para que o atendimento seja iniciado.",
-      {
-        status: 400,
-        code: "SENHA_NAO_CHAMADA",
-      },
-    );
-  }
+    if (senha.statusSenha !== "chamada") {
+      throw new AppError(
+        "A senha precisa estar com o status chamada para que o atendimento seja iniciado.",
+        {
+          status: 400,
+          code: "SENHA_NAO_CHAMADA",
+        },
+      );
+    }
 
-  if (senha.etapaSenha !== etapaUsuario) {
-    throw etapasDiferentes();
-  }
+    if (senha.etapaSenha !== etapaUsuario) {
+      throw etapasDiferentes();
+    }
 
-  const atendimentoAberto =
-    await historicoSenhaService.listarAtendimentoAbertoComSenha(
-      idUsuario,
+    const atendimentoAberto = await buscarAtendimentoAberto(
+      transacao,
       senha.idSenha,
+      idUsuario,
       senha.etapaSenha,
     );
 
-  if (!atendimentoAberto) {
-    throw atendimentoAbertoError();
-  }
-
-  const agora = new Date();
-
-  await senhaService.atualizar(senha.idSenha, {
-    statusSenha: "em_atendimento",
-  });
-
-  await historicoSenhaService.atualizar(atendimentoAberto.idHistorico, {
-    dataHoraInicioHistorico: agora,
-  });
-
-  let alunoResposta = null;
-
-  if (senha.etapaSenha !== "triagem") {
-    if (!senha.codAluno) {
-      throw alunoNaoCadastrado();
+    if (!atendimentoAberto) {
+      throw atendimentoNaoEncontrado();
     }
 
-    const aluno = await alunoService.buscarPorId(senha.codAluno, {
-      include: {
-        cursosAluno: {
-          include: {
-            curso: true,
+    let alunoResposta = null;
+
+    if (senha.etapaSenha !== "triagem") {
+      if (!senha.codAluno) {
+        throw alunoNaoCadastrado();
+      }
+
+      const aluno = await transacao.aluno.findUnique({
+        where: { idAluno: senha.codAluno },
+        include: {
+          cursosAluno: {
+            include: {
+              curso: true,
+            },
           },
         },
+      });
+
+      if (!aluno) {
+        throw alunoNaoCadastrado();
+      }
+
+      alunoResposta = mapearAluno(aluno);
+    }
+
+    const agora = new Date();
+
+    await transacao.senha.update({
+      where: { idSenha: senha.idSenha },
+      data: {
+        statusSenha: "em_atendimento",
       },
     });
 
-    alunoResposta = mapearAluno(aluno);
-  }
+    await transacao.historicoSenha.update({
+      where: { idHistorico: atendimentoAberto.idHistorico },
+      data: {
+        dataHoraInicioHistorico: agora,
+      },
+    });
 
-  res.status(201).json({
-    mensagem: "Atendimento iniciado com sucesso.",
-    atendimento: {
-      idHistorico: atendimentoAberto.idHistorico,
-      iniciadoEm: agora,
-    },
-    aluno: alunoResposta,
+    return {
+      mensagem: "Atendimento iniciado com sucesso.",
+      atendimento: {
+        idHistorico: atendimentoAberto.idHistorico,
+        iniciadoEm: agora,
+      },
+      aluno: alunoResposta,
+    };
   });
+
+  res.status(201).json(resultado);
 };
 
 export const recuperarAtendimento = async (req, res) => {
   const idUsuario = req.usuario.id;
-  const etapa = req.validado?.params?.etapa ?? req.usuario.tela;
+  const etapa = req.validado.params.etapa;
 
   const atendimentoAberto = await historicoSenhaService.listarAtendimentoAberto(
     idUsuario,
@@ -127,6 +144,7 @@ export const recuperarAtendimento = async (req, res) => {
       etapa: senha.etapaSenha,
       status: senha.statusSenha,
       aluno: alunoResposta,
+      documentos: senha.documentosPendentes?.documentos ?? [],
     },
     atendimento: {
       idHistorico: atendimentoAberto.idHistorico,
@@ -137,6 +155,7 @@ export const recuperarAtendimento = async (req, res) => {
 
 export const finalizarAtendimento = async (req, res) => {
   const idUsuario = req.usuario.id;
+  const etapaUsuario = req.usuario.tela;
   const idSenha = req.validado.body.senhaId;
 
   const resultado = await prisma.$transaction(async (transacao) => {
@@ -146,25 +165,27 @@ export const finalizarAtendimento = async (req, res) => {
 
     if (!senha) throw senhaNaoEncontrada();
     if (senha.statusSenha !== "em_atendimento") throw senhaNaoEmAtendimento();
+    if (senha.etapaSenha !== etapaUsuario) throw etapasDiferentes();
 
-    if (senha.etapaSenha === "triagem" && !senha.codAluno) {
-      throw new AppError(
-        "Vincule um aluno à senha antes de finalizar a triagem.",
-        {
-          status: 409,
-          code: "ALUNO_NAO_VINCULADO",
-        },
-      );
+    if (!senha.codAluno) {
+      if (senha.etapaSenha === "triagem") {
+        throw new AppError(
+          "Vincule um aluno à senha antes de finalizar a triagem.",
+          {
+            status: 409,
+            code: "ALUNO_NAO_VINCULADO",
+          },
+        );
+      }
+      throw alunoNaoCadastrado();
     }
 
-    const atendimento = await transacao.historicoSenha.findFirst({
-      where: {
-        codSenha: idSenha,
-        codVoluntario: idUsuario,
-        etapaHistorico: senha.etapaSenha,
-        dataHoraFimHistorico: null,
-      },
-    });
+    const atendimento = await buscarAtendimentoAberto(
+      transacao,
+      idSenha,
+      idUsuario,
+      senha.etapaSenha,
+    );
 
     if (!atendimento) throw atendimentoNaoEncontrado();
 
@@ -196,7 +217,10 @@ export const finalizarAtendimento = async (req, res) => {
       });
 
       await transacao.cursoAluno.updateMany({
-        where: { codAluno: senha.codAluno },
+        where: {
+          codAluno: senha.codAluno,
+          statusMatricula: "PENDENTE",
+        },
         data: { statusMatricula: "ATIVA" },
       });
     }
@@ -212,50 +236,76 @@ export const finalizarAtendimento = async (req, res) => {
 
 export const cancelarAtendimento = async (req, res) => {
   const idUsuario = req.usuario.id;
+  const etapaUsuario = req.usuario.tela;
   const idSenha = req.validado.body.senhaId;
-  const agora = new Date();
 
-  const senha = await senhaService.buscarPorId(idSenha);
+  await prisma.$transaction(async (transacao) => {
+    const senha = await transacao.senha.findUnique({
+      where: { idSenha },
+    });
 
-  if (!senha) {
-    throw senhaNaoEncontrada();
-  }
+    if (!senha) {
+      throw senhaNaoEncontrada();
+    }
 
-  if (
-    senha.statusSenha !== "chamada" &&
-    senha.statusSenha !== "em_atendimento"
-  ) {
-    throw new AppError(
-      "Apenas senhas chamadas ou em atendimento podem ser canceladas.",
-      {
-        status: 400,
-        code: "STATUS_INVALIDO",
-      },
-    );
-  }
+    if (
+      senha.statusSenha !== "chamada" &&
+      senha.statusSenha !== "em_atendimento"
+    ) {
+      throw new AppError(
+        "Apenas senhas chamadas ou em atendimento podem ser canceladas.",
+        {
+          status: 400,
+          code: "STATUS_INVALIDO",
+        },
+      );
+    }
 
-  const atendimentoAberto =
-    await historicoSenhaService.listarAtendimentoAbertoComSenha(
-      idUsuario,
+    if (senha.etapaSenha !== etapaUsuario) {
+      throw etapasDiferentes();
+    }
+
+    const atendimentoAberto = await buscarAtendimentoAberto(
+      transacao,
       senha.idSenha,
+      idUsuario,
       senha.etapaSenha,
     );
 
-  if (atendimentoAberto) {
-    await historicoSenhaService.atualizar(atendimentoAberto.idHistorico, {
-      dataHoraFimHistorico: agora,
-    });
-  }
+    if (!atendimentoAberto) {
+      throw atendimentoNaoEncontrado();
+    }
 
-  await senhaService.atualizar(senha.idSenha, {
-    statusSenha: "cancelada",
-    dataHoraFimSenha: agora,
+    const agora = new Date();
+
+    await transacao.historicoSenha.update({
+      where: { idHistorico: atendimentoAberto.idHistorico },
+      data: { dataHoraFimHistorico: agora },
+    });
+
+    await transacao.senha.update({
+      where: { idSenha: senha.idSenha },
+      data: {
+        statusSenha: "cancelada",
+        dataHoraFimSenha: agora,
+      },
+    });
   });
 
   res.status(200).json({
     mensagem: "Atendimento cancelado com sucesso",
   });
 };
+
+const buscarAtendimentoAberto = (transacao, idSenha, idUsuario, etapa) =>
+  transacao.historicoSenha.findFirst({
+    where: {
+      codSenha: idSenha,
+      codVoluntario: idUsuario,
+      etapaHistorico: etapa,
+      dataHoraFimHistorico: null,
+    },
+  });
 
 const senhaNaoEncontrada = () =>
   new AppError("Senha não encontrada.", {
@@ -275,22 +325,10 @@ const etapasDiferentes = () =>
     code: "ETAPAS_DIFERENTES",
   });
 
-const usuarioNaoEncontrado = () =>
-  new AppError("Usuário não encontrado.", {
-    status: 404,
-    code: "USUARIO_NAO_ENCONTRADO",
-  });
-
 const atendimentoNaoEncontrado = () =>
   new AppError("Nenhum atendimento aberto com essa senha nessa etapa", {
     status: 404,
     code: "ATENDIMENTO_NAO_ENCONTRADO",
-  });
-
-const atendimentoAbertoError = () =>
-  new AppError("Usuário com atendimento aberto nessa etapa", {
-    status: 409,
-    code: "ATENDIMENTO_ABERTO",
   });
 
 const alunoNaoCadastrado = () =>

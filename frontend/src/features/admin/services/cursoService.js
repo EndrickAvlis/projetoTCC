@@ -15,6 +15,11 @@ export const atualizarCurso = (cursoId, dados) =>
     body: dados,
   });
 
+export const excluirCurso = (cursoId) =>
+  requisitarApi(`/cursos/${cursoId}`, {
+    method: "DELETE",
+  });
+
 export const criarPeriodo = (cursoId, dados) =>
   requisitarApi(`/cursos/${cursoId}/periodos`, {
     method: "POST",
@@ -25,6 +30,11 @@ export const atualizarPeriodo = (cursoId, periodoId, dados) =>
   requisitarApi(`/cursos/${cursoId}/periodos/${periodoId}`, {
     method: "PATCH",
     body: dados,
+  });
+
+export const excluirPeriodo = (cursoId, periodoId) =>
+  requisitarApi(`/cursos/${cursoId}/periodos/${periodoId}`, {
+    method: "DELETE",
   });
 
 

@@ -14,13 +14,37 @@ alunoRoutes.get(
   alunoController.listarAlunos,
 );
 
-alunoRoutes.get("/cidades", alunoController.listarCidades);
+alunoRoutes.get(
+  "/cidades",
+  validarRequisicao(alunos.listarCidadesSchema),
+  alunoController.listarCidades,
+);
+
+alunoRoutes.patch(
+  "/arquivar",
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(alunos.arquivarCandidatosSchema),
+  alunoController.arquivarAlunos,
+);
 
 alunoRoutes.patch(
   "/:id",
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(alunos.atualizarAlunoSchema),
   alunoController.atualizarAluno,
+);
+
+alunoRoutes.delete(
+  "/",
+  auth.validarRole(["admin", "supervisor"]),
+  alunoController.excluirAlunos,
+);
+
+alunoRoutes.delete(
+  "/:id",
+  auth.validarRole(["admin", "supervisor"]),
+  validarRequisicao(alunos.excluirAlunoSchema),
+  alunoController.excluirAluno,
 );
 
 alunoRoutes.post(

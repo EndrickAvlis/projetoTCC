@@ -75,14 +75,28 @@ export default class TriagemService {
         });
         if (!existente)
           throw erro("Aluno não encontrado.", 404, "ALUNO_NAO_ENCONTRADO");
+        if (existente.statusAluno === "ARQUIVADO")
+          throw erro(
+            "Aluno arquivado não pode ser vinculado.",
+            409,
+            "ALUNO_ARQUIVADO",
+          );
       }
+
+      const agora = new Date();
+      const processoAtual = {
+        anoProcesso: agora.getFullYear(),
+        semestreProcesso: agora.getMonth() < 6 ? 1 : 2,
+      };
 
       const aluno = alunoId
         ? await transacao.aluno.update({
             where: { idAluno: alunoId },
             data: dados,
           })
-        : await transacao.aluno.create({ data: dados });
+        : await transacao.aluno.create({
+            data: { ...dados, ...processoAtual },
+          });
 
       await transacao.cursoAluno.deleteMany({
         where: {
@@ -249,6 +263,7 @@ export default class TriagemService {
           etapa,
           status: "em_atendimento",
           aluno: mapearAluno(senha.aluno),
+          documentos: senha.documentosPendentes?.documentos ?? [],
         },
         documentos: senha.documentosPendentes?.documentos ?? [],
         atendimento: {

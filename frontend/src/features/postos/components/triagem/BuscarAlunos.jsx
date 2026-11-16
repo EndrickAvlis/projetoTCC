@@ -7,6 +7,7 @@ import Input from "../../../../components/ui/Input";
 export const BuscarAlunos = ({
   onSelecionarAluno,
   onNovoAluno,
+  label = "",
   disabled = false,
   className = "",
 }) => {
@@ -64,8 +65,15 @@ export const BuscarAlunos = ({
   };
 
   return (
-    <div className={`flex w-full items-center gap-3 ${className}`}>
-      <div ref={containerRef} className="relative flex-1">
+    <div className={`w-full ${className}`}>
+      {label && (
+        <label className="block text-sm font-medium text-primary mb-1.5">
+          {label}
+        </label>
+      )}
+
+      <div className="flex w-full items-center gap-3">
+        <div ref={containerRef} className="relative flex-1">
         <div className="relative flex items-center">
           <Input
             icon={<FiSearch />}
@@ -120,7 +128,10 @@ export const BuscarAlunos = ({
             {!erro && (
               <div className="divide-y divide-border/60">
                 {alunos.map((aluno, index) => {
-                  const curso = aluno.curso;
+                  const curso =
+                    aluno.cursos?.length > 0
+                      ? aluno.cursos.map((c) => c.nome).filter(Boolean).join(" • ")
+                      : aluno.curso;
                   return (
                     <div
                       key={aluno.id}
@@ -162,6 +173,7 @@ export const BuscarAlunos = ({
           Cadastrar novo aluno
         </Button>
       )}
+      </div>
     </div>
   );
 };

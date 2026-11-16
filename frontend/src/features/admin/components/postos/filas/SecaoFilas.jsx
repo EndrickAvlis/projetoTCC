@@ -150,9 +150,6 @@ const SecaoFilas = () => {
                           <span className="text-sm font-bold text-text-primary tabular-nums leading-tight">
                             {formatarSenha(senha.codigo)}
                           </span>
-                          <span className="text-xs text-text-secondary leading-tight">
-                            Guichê {senha.guiche}
-                          </span>
                         </button>
                       ))}
                     </div>

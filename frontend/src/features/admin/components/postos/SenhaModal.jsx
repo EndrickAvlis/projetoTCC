@@ -115,15 +115,6 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
             </div>
           )}
 
-          {senha.guiche && (
-            <div>
-              <span className="text-xs text-text-secondary block">Guichê</span>
-              <span className="font-medium text-text-primary">
-                Guichê {senha.guiche}
-              </span>
-            </div>
-          )}
-
           {senha.emitidaEm && (
             <div>
               <span className="text-xs text-text-secondary block">

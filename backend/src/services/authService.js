@@ -12,7 +12,10 @@ export default class AuthClass {
   async login(dados) {
     const usuario = await prisma.voluntario.findFirst({
       where: {
-        nomeVoluntario: dados.nome,
+        nomeVoluntario: {
+          equals: dados.nome,
+          mode: "insensitive",
+        },
       },
     });
 
@@ -24,7 +27,7 @@ export default class AuthClass {
     }
 
     if (!usuario.statusVoluntario) {
-      throw new AppError("Usuario desativado.", {
+      throw new AppError("Sua conta foi inativada pelo administrador.", {
         status: 401,
         code: "USUARIO_DESATIVADO",
       });
@@ -43,8 +46,8 @@ export default class AuthClass {
     }
 
     if (!verificarPermissaoTela(usuario.tipoVoluntario, dados.tela)) {
-      throw new AppError("Acesso negado.", {
-        status: 401,
+      throw new AppError("Seu perfil não tem permissão para acessar esta tela.", {
+        status: 403,
         code: "CREDENCIAIS_INSUFICIENTES",
       });
     }
@@ -104,8 +107,8 @@ export default class AuthClass {
     }
 
     if (!verificarPermissaoTela(usuario.tipoVoluntario, payload.tela)) {
-      throw new AppError("Acesso negado.", {
-        status: 401,
+      throw new AppError("Seu perfil não tem permissão para acessar esta tela.", {
+        status: 403,
         code: "CREDENCIAIS_INSUFICIENTES",
       });
     }
@@ -121,7 +124,7 @@ export default class AuthClass {
     const accessToken = jwt.sign(accessPayload, ACCESS_SECRET, {
       expiresIn: ACCESS_EXPIRES_IN,
     });
-    return accessToken;
+    return { accessToken, usuario: accessPayload };
   }
 }
 

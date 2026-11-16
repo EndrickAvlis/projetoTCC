@@ -38,13 +38,35 @@ export default class UsuarioService extends BaseService {
     );
   }
 
-  async criar({ nome, senha, tipo, status = true }, autor) {
-    if (autor?.tipo === "supervisor" && tipo === "admin") {
-      throw new AppError("Supervisores não podem cadastrar usuários administradores.", {
-        status: 403,
-        code: "ACESSO_NEGADO",
+  async validarNomeDisponivel(nome, idIgnorado) {
+    const existente = await prisma.voluntario.findFirst({
+      where: {
+        nomeVoluntario: { equals: nome, mode: "insensitive" },
+        ...(idIgnorado ? { idVoluntario: { not: idIgnorado } } : {}),
+      },
+      select: { idVoluntario: true },
+    });
+
+    if (existente) {
+      throw new AppError("Já existe um usuário cadastrado com este nome.", {
+        status: 409,
+        code: "USUARIO_JA_CADASTRADO",
       });
     }
+  }
+
+  async criar({ nome, senha, tipo, status = true }, autor) {
+    if (autor?.tipo === "supervisor" && tipo !== "atendente") {
+      throw new AppError(
+        "Supervisores só podem cadastrar usuários com perfil de atendente.",
+        {
+          status: 403,
+          code: "ACESSO_NEGADO",
+        },
+      );
+    }
+
+    await this.validarNomeDisponivel(nome);
 
     const senhaHash = await bcrypt.hash(senha, 12);
 
@@ -68,23 +90,29 @@ export default class UsuarioService extends BaseService {
       throw usuarioNaoEncontrado();
     }
 
-    if (autor?.tipo === "supervisor") {
-      if (usuario.tipoVoluntario === "admin") {
-        throw new AppError("Supervisores não têm permissão para alterar contas de administrador.", {
-          status: 403,
-          code: "ACESSO_NEGADO",
-        });
+    const ehProprioUsuario = autor?.id === id;
+
+    if (autor?.tipo === "supervisor" && !ehProprioUsuario) {
+      if (usuario.tipoVoluntario !== "atendente") {
+        throw new AppError(
+          "Supervisores só podem alterar contas de atendente ou a própria conta.",
+          {
+            status: 403,
+            code: "ACESSO_NEGADO",
+          },
+        );
       }
 
-      if (tipo === "admin") {
-        throw new AppError("Supervisores não têm permissão para promover usuários a administrador.", {
-          status: 403,
-          code: "ACESSO_NEGADO",
-        });
+      if (tipo && tipo !== "atendente") {
+        throw new AppError(
+          "Supervisores não têm permissão para alterar o perfil para administrador ou supervisor.",
+          {
+            status: 403,
+            code: "ACESSO_NEGADO",
+          },
+        );
       }
     }
-
-    const ehProprioUsuario = autor?.id === id;
 
     if (ehProprioUsuario) {
       if (status === false) {
@@ -104,6 +132,7 @@ export default class UsuarioService extends BaseService {
 
     if (
       usuario.tipoVoluntario === "admin" &&
+      usuario.statusVoluntario &&
       (status === false || (tipo && tipo !== "admin"))
     ) {
       const adminsAtivos = await prisma.voluntario.count({
@@ -111,11 +140,18 @@ export default class UsuarioService extends BaseService {
       });
 
       if (adminsAtivos <= 1) {
-        throw new AppError("Não é possível alterar ou inativar o único administrador ativo do sistema.", {
-          status: 400,
-          code: "ULTIMO_ADMIN",
-        });
+        throw new AppError(
+          "Não é possível alterar ou inativar o único administrador ativo do sistema.",
+          {
+            status: 400,
+            code: "ULTIMO_ADMIN",
+          },
+        );
       }
+    }
+
+    if (nome !== undefined) {
+      await this.validarNomeDisponivel(nome, id);
     }
 
     return super.atualizar(

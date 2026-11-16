@@ -2,6 +2,20 @@ import prisma from "../config/prisma.js";
 import BaseService from "./baseService.js";
 import AppError from "../errors/AppError.js";
 
+const ORDEM_PERIODOS = {
+  manha: 0,
+  tarde: 1,
+  noite: 2,
+  integral: 3,
+  online: 4,
+};
+
+const ordenarPeriodos = (periodos = []) =>
+  [...periodos].sort(
+    (a, b) =>
+      (ORDEM_PERIODOS[a.periodo] ?? 99) - (ORDEM_PERIODOS[b.periodo] ?? 99),
+  );
+
 const periodoSelect = {
   idPeriodo: true,
   periodo: true,
@@ -13,11 +27,13 @@ const cursoSelect = {
   idCurso: true,
   nomeCurso: true,
   arquivado: true,
+  _count: {
+    select: {
+      cursosAluno: true,
+    },
+  },
   periodos: {
     select: periodoSelect,
-    orderBy: {
-      vagasTotais: "desc",
-    },
   },
 };
 
@@ -27,12 +43,12 @@ export default class CursoService extends BaseService {
     this.periodoCurso = prisma.periodoCurso;
   }
 
-  async listarCursos({ busca = "", arquivado = false } = {}) {
+  async listar({ busca = "", arquivado = false } = {}) {
     const buscaLimpa = busca.trim();
 
-    return super.listar(
+    const cursos = await super.listar(
       {
-        arquivado,
+        ...(arquivado !== null && { arquivado }),
         ...(buscaLimpa && {
           nomeCurso: {
             contains: buscaLimpa,
@@ -42,162 +58,312 @@ export default class CursoService extends BaseService {
       },
       {
         select: cursoSelect,
-        orderBy: {
-          nomeCurso: "asc",
-        },
+        orderBy: { nomeCurso: "asc" },
       },
     );
+
+    return this.anexarVinculosPeriodos(cursos);
   }
 
-  async criarCurso({ nome, periodos }) {
-    return super.criar(
+  async criar({ nome, periodos }) {
+    await this.validarNomeDisponivel(nome);
+
+    const curso = await super.criar(
       {
         nomeCurso: nome,
         periodos: {
-          create: periodos.map((periodoCurso) => ({
-            periodo: periodoCurso.periodo,
-            vagasTotais: periodoCurso.vagasTotais,
-            matriculaAtiva: periodoCurso.matriculaAtiva,
+          create: periodos.map(({ periodo, vagasTotais, matriculaAtiva }) => ({
+            periodo,
+            vagasTotais,
+            matriculaAtiva,
           })),
         },
       },
-      {
-        select: cursoSelect,
-      },
+      { select: cursoSelect },
     );
+
+    return {
+      ...curso,
+      periodos: ordenarPeriodos(curso.periodos).map((periodoCurso) => ({
+        ...periodoCurso,
+        possuiVinculos: false,
+      })),
+    };
   }
 
-  async atualizarCurso(cursoId, dados) {
+  async atualizar(cursoId, dados) {
     const cursoExistente = await super.buscarPorId(cursoId, {
       select: { idCurso: true },
     });
 
     if (!cursoExistente) {
-      throw cursoNaoEncontrado();
+      throw erroNaoEncontrado("Curso não encontrado.", "CURSO_NAO_ENCONTRADO");
+    }
+
+    if (dados.nome !== undefined) {
+      await this.validarNomeDisponivel(dados.nome, cursoId);
     }
 
     const data = {
-      nomeCurso: dados.nome,
-      arquivado: dados.arquivado,
+      ...(dados.nome !== undefined && { nomeCurso: dados.nome }),
+      ...(dados.arquivado !== undefined && { arquivado: dados.arquivado }),
     };
 
-    if (dados.arquivado) {
-      return prisma.$transaction(async (transacao) => {
-        await transacao.curso.update({
+    const cursoAtualizado = dados.arquivado
+      ? await prisma.$transaction(async (transacao) => {
+          await transacao.periodoCurso.updateMany({
+            where: { codCurso: cursoId },
+            data: { matriculaAtiva: false },
+          });
+
+          return transacao.curso.update({
+            where: { idCurso: cursoId },
+            data,
+            select: cursoSelect,
+          });
+        })
+      : await this.model.update({
           where: { idCurso: cursoId },
           data,
-        });
-
-        await transacao.periodoCurso.updateMany({
-          where: { codCurso: cursoId },
-          data: { matriculaAtiva: false },
-        });
-
-        return transacao.curso.findUnique({
-          where: { idCurso: cursoId },
           select: cursoSelect,
         });
-      });
+
+    const [cursoMapeado] = await this.anexarVinculosPeriodos([cursoAtualizado]);
+    return cursoMapeado;
+  }
+
+  async excluir(cursoId) {
+    const curso = await super.buscarPorId(cursoId, {
+      select: {
+        idCurso: true,
+        arquivado: true,
+        _count: {
+          select: { cursosAluno: true },
+        },
+      },
+    });
+
+    if (!curso) {
+      throw erroNaoEncontrado("Curso não encontrado.", "CURSO_NAO_ENCONTRADO");
     }
 
-    return super.atualizar(cursoId, data, {
-      select: cursoSelect,
+    if (!curso.arquivado) {
+      throw erroConflito(
+        "Apenas cursos arquivados podem ser excluídos.",
+        "CURSO_NAO_ARQUIVADO",
+      );
+    }
+
+    if (curso._count.cursosAluno > 0) {
+      throw erroConflito(
+        "Não é possível excluir um curso com alunos ou candidatos vinculados.",
+        "CURSO_COM_VINCULOS",
+      );
+    }
+
+    await prisma.$transaction(async (transacao) => {
+      await transacao.periodoCurso.deleteMany({
+        where: { codCurso: cursoId },
+      });
+
+      await transacao.curso.delete({
+        where: { idCurso: cursoId },
+      });
     });
   }
 
-  async criarPeriodo(cursoId, periodoCurso) {
+  async criarPeriodo(cursoId, { periodo, vagasTotais, matriculaAtiva }) {
     await this.obterCursoAtivo(cursoId);
 
     try {
-      return await this.periodoCurso.create({
+      const novoPeriodo = await this.periodoCurso.create({
         data: {
           codCurso: cursoId,
-          periodo: periodoCurso.periodo,
-          vagasTotais: periodoCurso.vagasTotais,
-          matriculaAtiva: periodoCurso.matriculaAtiva,
+          periodo,
+          vagasTotais,
+          matriculaAtiva,
         },
         select: periodoSelect,
       });
+
+      return { ...novoPeriodo, possuiVinculos: false };
     } catch (error) {
       if (error.code === "P2002") {
-        throw periodoDuplicado();
+        throw erroConflito(
+          "Este período já existe para este curso.",
+          "PERIODO_DUPLICADO",
+        );
       }
 
       throw error;
     }
   }
 
-  async atualizarPeriodo(cursoId, periodoId, periodoCurso) {
-    await this.obterCursoAtivo(cursoId);
+  async atualizarPeriodo(cursoId, periodoId, dados) {
+    await this.obterPeriodoDoCurso(cursoId, periodoId);
 
-    try {
-      const { count } = await this.periodoCurso.updateMany({
-        where: {
-          idPeriodo: periodoId,
-          codCurso: cursoId,
+    const atualizado = await this.periodoCurso.update({
+      where: { idPeriodo: periodoId },
+      data: {
+        ...(dados.vagasTotais !== undefined && {
+          vagasTotais: dados.vagasTotais,
+        }),
+        ...(dados.matriculaAtiva !== undefined && {
+          matriculaAtiva: dados.matriculaAtiva,
+        }),
+      },
+      select: periodoSelect,
+    });
+
+    return {
+      ...atualizado,
+      possuiVinculos: await this.periodoPossuiVinculos(
+        cursoId,
+        atualizado.periodo,
+      ),
+    };
+  }
+
+  async excluirPeriodo(cursoId, periodoId) {
+    const periodo = await this.obterPeriodoDoCurso(cursoId, periodoId);
+
+    const totalPeriodos = await this.periodoCurso.count({
+      where: { codCurso: cursoId },
+    });
+
+    if (totalPeriodos <= 1) {
+      throw erroConflito(
+        "Não é possível excluir o único período do curso.",
+        "ULTIMO_PERIODO",
+      );
+    }
+
+    if (await this.periodoPossuiVinculos(cursoId, periodo.periodo)) {
+      throw erroConflito(
+        "Não é possível excluir um período com alunos ou candidatos vinculados.",
+        "PERIODO_COM_VINCULOS",
+      );
+    }
+
+    await this.periodoCurso.delete({
+      where: { idPeriodo: periodoId },
+    });
+  }
+
+  async validarNomeDisponivel(nome, cursoIdIgnorado) {
+    const existente = await this.model.findFirst({
+      where: {
+        nomeCurso: {
+          equals: nome,
+          mode: "insensitive",
         },
-        data: {
-          periodo: periodoCurso.periodo,
-          vagasTotais: periodoCurso.vagasTotais,
-          matriculaAtiva: periodoCurso.matriculaAtiva,
-        },
-      });
+        ...(cursoIdIgnorado !== undefined && {
+          idCurso: { not: cursoIdIgnorado },
+        }),
+      },
+      select: { idCurso: true, arquivado: true },
+    });
 
-      if (count === 0) {
-        throw new AppError("Período não encontrado para este curso.", {
-          status: 404,
-          code: "PERIODO_NAO_ENCONTRADO",
-        });
-      }
-
-      return this.periodoCurso.findUnique({
-        where: {
-          idPeriodo: periodoId,
-        },
-        select: periodoSelect,
-      });
-    } catch (error) {
-      if (error.code === "P2002") {
-        throw periodoDuplicado();
-      }
-
-      throw error;
+    if (existente) {
+      throw erroConflito(
+        existente.arquivado
+          ? "Já existe um curso arquivado com este nome. Desarquive-o na aba Arquivados."
+          : "Já existe um curso cadastrado com este nome.",
+        "CURSO_JA_CADASTRADO",
+      );
     }
   }
 
   async obterCursoAtivo(cursoId) {
     const curso = await super.buscarPorId(cursoId, {
-      select: {
-        arquivado: true,
-      },
+      select: { idCurso: true, arquivado: true },
     });
 
     if (!curso) {
-      throw cursoNaoEncontrado();
+      throw erroNaoEncontrado("Curso não encontrado.", "CURSO_NAO_ENCONTRADO");
     }
 
     if (curso.arquivado) {
-      throw new AppError(
+      throw erroConflito(
         "Não é possível gerenciar períodos de um curso arquivado.",
-        {
-          status: 409,
-          code: "CURSO_ARQUIVADO",
-        },
+        "CURSO_ARQUIVADO",
       );
     }
 
     return curso;
   }
+
+  async obterPeriodoDoCurso(cursoId, periodoId) {
+    await this.obterCursoAtivo(cursoId);
+
+    const periodo = await this.periodoCurso.findFirst({
+      where: {
+        idPeriodo: periodoId,
+        codCurso: cursoId,
+      },
+      select: {
+        idPeriodo: true,
+        periodo: true,
+      },
+    });
+
+    if (!periodo) {
+      throw erroNaoEncontrado(
+        "Período não encontrado para este curso.",
+        "PERIODO_NAO_ENCONTRADO",
+      );
+    }
+
+    return periodo;
+  }
+
+  async periodoPossuiVinculos(cursoId, periodo) {
+    const vinculos = await prisma.cursoAluno.count({
+      where: {
+        codCurso: cursoId,
+        periodo,
+      },
+    });
+
+    return vinculos > 0;
+  }
+
+  async anexarVinculosPeriodos(cursos) {
+    if (cursos.length === 0) return [];
+
+    const idsComVinculos = cursos
+      .filter((curso) => curso._count?.cursosAluno > 0)
+      .map((curso) => curso.idCurso);
+
+    const vinculosSet = new Set();
+
+    if (idsComVinculos.length > 0) {
+      const vinculos = await prisma.cursoAluno.groupBy({
+        by: ["codCurso", "periodo"],
+        where: {
+          codCurso: { in: idsComVinculos },
+          periodo: { not: null },
+        },
+        _count: { _all: true },
+      });
+
+      vinculos.forEach((v) => vinculosSet.add(`${v.codCurso}:${v.periodo}`));
+    }
+
+    return cursos.map((curso) => ({
+      ...curso,
+      periodos: ordenarPeriodos(curso.periodos).map((periodoCurso) => ({
+        ...periodoCurso,
+        possuiVinculos: vinculosSet.has(
+          `${curso.idCurso}:${periodoCurso.periodo}`,
+        ),
+      })),
+    }));
+  }
 }
 
-const cursoNaoEncontrado = () =>
-  new AppError("Curso não encontrado.", {
-    status: 404,
-    code: "CURSO_NAO_ENCONTRADO",
-  });
+const erroNaoEncontrado = (mensagem, code) =>
+  new AppError(mensagem, { status: 404, code });
 
-const periodoDuplicado = () =>
-  new AppError("Este período já existe para este curso.", {
-    status: 409,
-    code: "PERIODO_DUPLICADO",
-  });
+const erroConflito = (mensagem, code) =>
+  new AppError(mensagem, { status: 409, code });

@@ -1,7 +1,7 @@
-// src/components/ui/ActionMenu.jsx
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { FiMoreVertical } from "react-icons/fi";
+import Button from "./Button";
 
 const ActionMenu = ({ itens = [], label = "Ações" }) => {
   const [aberto, setAberto] = React.useState(false);
@@ -51,6 +51,38 @@ const ActionMenu = ({ itens = [], label = "Ações" }) => {
       document.removeEventListener("scroll", fecharNoScroll, true);
     };
   }, [aberto]);
+
+  const itensValidos = itens.filter(Boolean);
+
+  if (itensValidos.length === 0) {
+    return null;
+  }
+
+  if (itensValidos.length === 1) {
+    const [itemUnico] = itensValidos;
+    const varianteBotao =
+      itemUnico.variante === "danger" || itemUnico.variante === "success"
+        ? itemUnico.variante
+        : "primary";
+
+    return (
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          size="sm"
+          variant={varianteBotao}
+          onClick={(evento) => {
+            evento.stopPropagation();
+            itemUnico.onClick();
+          }}
+          className="whitespace-nowrap"
+        >
+          {itemUnico.label}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex justify-end">
       <button
@@ -78,7 +110,7 @@ const ActionMenu = ({ itens = [], label = "Ações" }) => {
                 : undefined,
             }}
           >
-            {itens.filter(Boolean).map((item, index) => {
+            {itensValidos.map((item, index) => {
               const Icone = item.icone;
               const corTexto =
                 item.variante === "danger"

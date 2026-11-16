@@ -15,6 +15,7 @@ const Alert = ({
 
   return (
     <div
+      role={type === "error" ? "alert" : "status"}
       className={`w-full border px-4 py-3 rounded-md flex items-center justify-between ${styles[type]}`}
     >
       <span className="text-sm font-medium">{message}</span>

@@ -1,4 +1,5 @@
-// Valores fixos do domínio, reutilizáveis na Triagem e no cadastro de cursos.
+export const VAGAS_MAXIMAS_PERIODO = 9999;
+
 export const ANOS_CURSO = [
   { value: "1", label: "1º" },
   { value: "2", label: "2º" },
@@ -11,4 +12,9 @@ export const PERIODOS_CURSO = [
   { value: "noite", label: "Noite" },
   { value: "integral", label: "Integral" },
   { value: "online", label: "Online" },
+];
+
+export const OPCOES_SEMESTRE = [
+  { value: "1", label: "1º Semestre" },
+  { value: "2", label: "2º Semestre" },
 ];

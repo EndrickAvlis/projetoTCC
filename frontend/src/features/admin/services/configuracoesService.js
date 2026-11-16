@@ -5,5 +5,4 @@ export const reiniciarSequenciaSenhas = () =>
     method: "POST",
   });
 
-export const buscarUltimaSenha = () =>
-  requisitarApi("/senhas/ultima");
+export { buscarUltimaSenha } from "../../postos/services/filaService";

@@ -24,6 +24,18 @@ const statusAluno = z
     }),
   );
 
+const anoProcesso = z.coerce
+  .number()
+  .int("Informe um ano válido.")
+  .min(2000, "Informe um ano válido.")
+  .max(2100, "Informe um ano válido.");
+
+const semestreProcesso = z.coerce
+  .number()
+  .int("Informe um semestre válido.")
+  .min(1, "O semestre deve ser 1 ou 2.")
+  .max(2, "O semestre deve ser 1 ou 2.");
+
 export const listarAlunosSchema = z.object({
   query: z.object({
     nome: z.string().trim().optional().default(""),
@@ -36,8 +48,21 @@ export const listarAlunosSchema = z.object({
       (v) => (v === "" ? undefined : v),
       statusAluno.optional(),
     ),
+    ignorarArquivados: z.preprocess(
+      (v) => (v === "true" ? true : v === "false" ? false : v),
+      z.boolean().optional().default(false),
+    ),
     pagina: z.coerce.number().int().positive().optional().default(1),
     limite: z.coerce.number().int().positive().optional().default(10),
+  }),
+});
+
+export const listarCidadesSchema = z.object({
+  query: z.object({
+    status: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      statusAluno.optional(),
+    ),
   }),
 });
 
@@ -51,6 +76,27 @@ export const atualizarAlunoSchema = z.object({
   }),
 });
 
+export const arquivarCandidatosSchema = z.object({
+  body: z
+    .object({
+      anoProcesso: anoProcesso.optional(),
+      semestreProcesso: semestreProcesso.optional(),
+    })
+    .refine(
+      (body) => (body.anoProcesso == null) === (body.semestreProcesso == null),
+      {
+        message:
+          "Informe o ano e o semestre juntos para filtrar por processo seletivo.",
+      },
+    ),
+});
+
+export const excluirAlunoSchema = z.object({
+  params: z.object({
+    id: id,
+  }),
+});
+
 const candidatoImportacao = z.object({
   nome: nomeAluno,
   escolaridadePublica: z.boolean().default(false),
@@ -58,23 +104,17 @@ const candidatoImportacao = z.object({
   sexo: z.string().trim().max(20).optional().nullable(),
   classificacao: z.number().int().positive().optional().nullable(),
   periodo: z
-    .string()
+    .string({ error: "Informe um período válido." })
     .trim()
     .toLowerCase()
-    .pipe(z.enum(periodosValidos, { error: "Informe um período válido." }))
-    .optional()
-    .nullable(),
+    .pipe(z.enum(periodosValidos, { error: "Informe um período válido." })),
   cursoId: id,
 });
 
 export const importarAlunosSchema = z.object({
   body: z.object({
-    anoProcesso: z.coerce.number().int().positive("Informe um ano válido."),
-    semestreProcesso: z.coerce
-      .number()
-      .int()
-      .min(1)
-      .max(2, "O semestre deve ser 1 ou 2."),
+    anoProcesso,
+    semestreProcesso,
     candidatos: z
       .array(candidatoImportacao)
       .min(1, "A lista de candidatos não pode estar vazia."),

@@ -1,12 +1,14 @@
 import { z } from "zod";
+import { formatarNome } from "../utils/formatarNome.js";
 
 const nome = z
-  .string()
-  .trim()
-  .min(1, "O nome do voluntário é obrigatório.")
-  .max(100, "O nome deve ter no máximo 100 caracteres.")
-  .transform((n) =>
-    n.toLowerCase().replace(/\b\p{L}/gu, (letra) => letra.toUpperCase()),
+  .string({ error: "O nome de usuário é obrigatório." })
+  .transform(formatarNome)
+  .pipe(
+    z
+      .string()
+      .min(1, "O nome de usuário é obrigatório.")
+      .max(100, "O nome deve ter no máximo 100 caracteres."),
   );
 
 const senha = z
@@ -30,12 +32,16 @@ const dadosCriarUsuario = z.object({
   status: status.default(true),
 });
 
-const dadosAtualizarUsuario = z.object({
-  nome: nome.optional(),
-  senha: senha.optional(),
-  tipo: tipo.optional(),
-  status: status.optional(),
-});
+const dadosAtualizarUsuario = z
+  .object({
+    nome: nome.optional(),
+    senha: senha.optional(),
+    tipo: tipo.optional(),
+    status: status.optional(),
+  })
+  .refine((dados) => Object.values(dados).some((v) => v !== undefined), {
+    message: "Informe ao menos um campo para atualização.",
+  });
 
 const id = z.coerce
   .number()

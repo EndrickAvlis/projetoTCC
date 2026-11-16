@@ -44,3 +44,5 @@ export const emitirSenha = async () => {
   });
   return res.senha;
 };
+
+export const buscarUltimaSenha = () => requisitarApi("/senhas/ultima");

@@ -12,6 +12,7 @@ const TELAS_GERAIS = {
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = React.useState(null);
   const [validandoSessao, setValidandoSessao] = React.useState(true);
+  const [alertaSessao, setAlertaSessao] = React.useState("");
 
   React.useEffect(() => {
     let ativo = true;
@@ -35,15 +36,34 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   React.useEffect(() => {
-    const tratarNaoAutorizado = () => setUsuario(null);
+    const tratarNaoAutorizado = (event) => {
+      setUsuario(null);
+      if (event?.detail?.message) {
+        setAlertaSessao(event.detail.message);
+      }
+    };
+
+    const tratarSessaoRenovada = (event) => {
+      if (event?.detail) {
+        setUsuario(event.detail);
+      }
+    };
 
     window.addEventListener("auth:unauthorized", tratarNaoAutorizado);
-    return () =>
+    window.addEventListener("auth:refreshed", tratarSessaoRenovada);
+    return () => {
       window.removeEventListener("auth:unauthorized", tratarNaoAutorizado);
+      window.removeEventListener("auth:refreshed", tratarSessaoRenovada);
+    };
+  }, []);
+
+  const limparAlertaSessao = React.useCallback(() => {
+    setAlertaSessao("");
   }, []);
 
   const login = React.useCallback(async (credenciais) => {
     const dados = await authService.logar(credenciais);
+    setAlertaSessao("");
     setUsuario(dados);
     return dados;
   }, []);
@@ -54,6 +74,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUsuario(null);
     }
+  }, []);
+
+  const recarregarSessao = React.useCallback(async () => {
+    const dados = await authService.renovarSessao();
+    setUsuario(dados);
+    return dados;
   }, []);
 
   const temAcessoATela = React.useCallback(
@@ -72,11 +98,23 @@ export const AuthProvider = ({ children }) => {
       usuario,
       estaAutenticado: Boolean(usuario),
       validandoSessao,
+      alertaSessao,
+      limparAlertaSessao,
       login,
       logout,
+      recarregarSessao,
       temAcessoATela,
     }),
-    [usuario, validandoSessao, login, logout, temAcessoATela],
+    [
+      usuario,
+      validandoSessao,
+      alertaSessao,
+      limparAlertaSessao,
+      login,
+      logout,
+      recarregarSessao,
+      temAcessoATela,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

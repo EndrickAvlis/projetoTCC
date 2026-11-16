@@ -32,7 +32,7 @@ export const login = async (req, res, next) => {
 
 export const renovarAccessToken = async (req, res, next) => {
   try {
-    const accessToken = await authService.renovarAccessToken(
+    const { accessToken, usuario } = await authService.renovarAccessToken(
       req.cookies.refreshToken,
     );
 
@@ -44,7 +44,7 @@ export const renovarAccessToken = async (req, res, next) => {
       maxAge: 15 * 60 * 1000, // Tempo de vida: 15 minutos (em milissegundos)
     });
 
-    res.status(200).send();
+    res.status(200).json(usuario);
   } catch (erro) {
     res.clearCookie("accessToken", {
       path: "/",

@@ -4,6 +4,7 @@ import Toast from "../components/ui/Toast";
 const ToastContext = React.createContext(null);
 
 const DURACAO_PADRAO_MS = 4000;
+const DURACAO_CONFIRMACAO_MS = 3000;
 
 export const ToastProvider = ({ children }) => {
   const [toastAtivo, setToastAtivo] = React.useState(null);
@@ -17,20 +18,23 @@ export const ToastProvider = ({ children }) => {
     setToastAtivo(null);
   }, []);
 
-  const exibirToast = (tipo, mensagem, duracao = DURACAO_PADRAO_MS) => {
-    if (!mensagem) return;
+  const exibirToast = React.useCallback(
+    (tipo, mensagem, duracao = DURACAO_PADRAO_MS, fechavel = true) => {
+      if (!mensagem) return;
 
-    if (temporizadorRef.current) {
-      clearTimeout(temporizadorRef.current);
-    }
+      if (temporizadorRef.current) {
+        clearTimeout(temporizadorRef.current);
+      }
 
-    setToastAtivo({ tipo, mensagem });
+      setToastAtivo({ tipo, mensagem, fechavel });
 
-    temporizadorRef.current = setTimeout(() => {
-      setToastAtivo(null);
-      temporizadorRef.current = null;
-    }, duracao);
-  };
+      temporizadorRef.current = setTimeout(() => {
+        setToastAtivo(null);
+        temporizadorRef.current = null;
+      }, duracao);
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const escutarLegado = (evento) => {
@@ -48,15 +52,20 @@ export const ToastProvider = ({ children }) => {
     };
   }, [exibirToast]);
 
-  const toast = () => ({
-    erro: (mensagem) => exibirToast("error", mensagem),
-    sucesso: (mensagem) => exibirToast("success", mensagem),
-    alerta: (mensagem) => exibirToast("warning", mensagem),
-    info: (mensagem) => exibirToast("info", mensagem),
-    fechar: fecharToast,
-    error: (mensagem) => exibirToast("error", mensagem),
-    success: (mensagem) => exibirToast("success", mensagem),
-  });
+  const toast = React.useMemo(
+    () => ({
+      erro: (mensagem) => exibirToast("error", mensagem),
+      sucesso: (mensagem) => exibirToast("success", mensagem),
+      alerta: (mensagem) => exibirToast("warning", mensagem),
+      info: (mensagem) => exibirToast("info", mensagem),
+      confirmacao: (mensagem) =>
+        exibirToast("success", mensagem, DURACAO_CONFIRMACAO_MS, false),
+      fechar: fecharToast,
+      error: (mensagem) => exibirToast("error", mensagem),
+      success: (mensagem) => exibirToast("success", mensagem),
+    }),
+    [exibirToast, fecharToast],
+  );
 
   return (
     <ToastContext.Provider value={{ toast, toastAtivo, fecharToast }}>

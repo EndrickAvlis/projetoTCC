@@ -7,7 +7,7 @@ const TableFiltro = ({
 }) => {
   return (
     <div
-      className={`flex rounded-btn border border-border p-1 bg-surface ${className}`}
+      className={`flex flex-wrap gap-1 rounded-btn border border-border p-1 bg-surface ${className}`}
       aria-label={ariaLabel}
     >
       {options.map((opcao) => {

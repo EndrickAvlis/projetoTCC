@@ -1,5 +1,6 @@
 import CardRetratil from "../../../../../components/ui/CardRetratil";
 import Badge from "../../../../../components/ui/Badge";
+import { formatarPeriodo } from "../../../../../utils/formatters";
 
 const CursosAtivos = ({ cursos = [] }) => {
   return (
@@ -29,9 +30,9 @@ const CursosAtivos = ({ cursos = [] }) => {
                   {curso.periodos.map((periodo) => (
                     <span
                       key={periodo}
-                      className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-primary/10 text-primary capitalize"
+                      className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-primary/10 text-primary"
                     >
-                      {periodo}
+                      {formatarPeriodo(periodo)}
                     </span>
                   ))}
                 </div>

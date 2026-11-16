@@ -9,7 +9,7 @@ const CARDS_PADRAO = {
 };
 
 export const useAtendimento = ({
-  tipoPeriodo = "hoje",
+  tipoPeriodo = "HOJE",
   dataInicio,
   dataFim,
   cursoId,
@@ -22,6 +22,14 @@ export const useAtendimento = ({
   const [erro, setErro] = React.useState(null);
 
   const carregar = React.useCallback(async (silencioso = false) => {
+    if (tipoPeriodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
+      if (!silencioso) {
+        setErro(null);
+        setCarregando(false);
+      }
+      return;
+    }
+
     if (!silencioso) {
       setCarregando(true);
       setErro(null);
@@ -47,7 +55,7 @@ export const useAtendimento = ({
   }, [tipoPeriodo, dataInicio, dataFim, cursoId, periodoCurso]);
 
   React.useEffect(() => {
-    carregar();
+    void Promise.resolve().then(() => carregar());
 
     const intervalo = window.setInterval(() => {
       carregar(true);

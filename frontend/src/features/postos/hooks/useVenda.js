@@ -2,87 +2,61 @@ import * as React from "react";
 import * as ApmService from "../services/apmService";
 
 const FORMAS_PAGAMENTO = ["pix", "dinheiro", "debito", "credito"];
-
-const VALORES_INICIAIS = {
-  pix: 0,
-  dinheiro: 0,
-  debito: 0,
-  credito: 0,
-};
+const PAGAMENTOS_ZERADOS = { pix: 0, dinheiro: 0, debito: 0, credito: 0 };
 
 export const useVenda = () => {
-  const [carregando, setCarregando] = React.useState(false);
+  const [carregando, setCarregando] = React.useState(true);
   const [erro, setErro] = React.useState(null);
-  const [uniformes, setUniformes] = React.useState([]);
+  const [uniformesDisponiveis, setUniformesDisponiveis] = React.useState([]);
   const [configArmario, setConfigArmario] = React.useState(null);
 
-  const [items, setItems] = React.useState([]);
+  const [uniformesSelecionados, setUniformesSelecionados] = React.useState([]);
   const [armarioIncluido, setArmarioIncluido] = React.useState(false);
   const [contribuicao, setContribuicao] = React.useState(0);
-  const [pagamentosSelecionados, setPagamentosSelecionados] = React.useState(
-    [],
-  );
-  const [valores, setValores] = React.useState(VALORES_INICIAIS);
+  const [pagamentosSelecionados, setPagamentosSelecionados] = React.useState([]);
+  const [valoresPagamento, setValoresPagamento] = React.useState(PAGAMENTOS_ZERADOS);
 
-  const listarProdutos = React.useCallback(async () => {
+  const carregarProdutos = React.useCallback(async ({ silencioso = false } = {}) => {
+    if (!silencioso) setCarregando(true);
+    setErro(null);
+
     try {
-      setCarregando(true);
-      setErro(null);
-
       const dados = await ApmService.listarProdutos();
-      setUniformes(dados.uniformes || []);
+      setUniformesDisponiveis(dados.uniformes || []);
       setConfigArmario(dados.armario || null);
-    } catch (error) {
-      setErro(error.message);
+    } catch (err) {
+      setUniformesDisponiveis([]);
+      setConfigArmario(null);
+      setErro(err.message);
     } finally {
-      setCarregando(false);
+      if (!silencioso) setCarregando(false);
     }
   }, []);
 
   React.useEffect(() => {
-    listarProdutos();
-  }, [listarProdutos]);
-
-  const armarioDisponivel = Boolean(
-    configArmario &&
-    configArmario.status === true &&
-    configArmario.quantidade > 0,
-  );
-
-  const armario = {
-    preco: configArmario ? Number(configArmario.preco) : 0,
-    estoque: configArmario ? configArmario.quantidade : 0,
-    disponivel: armarioDisponivel,
-    incluido: armarioDisponivel && armarioIncluido,
-  };
+    carregarProdutos();
+  }, [carregarProdutos]);
 
   const adicionarUniforme = (idUniforme) => {
     const id = Number(idUniforme);
-    const produto = uniformes.find((uniform) => uniform.id === id);
+    const produto = uniformesDisponiveis.find((u) => u.id === id);
     if (!produto) return;
 
-    setItems((prevs) => {
-      const index = prevs.findIndex((item) => item.id === id);
+    setUniformesSelecionados((atuais) => {
+      const jaExiste = atuais.find((item) => item.id === id);
 
-      if (index >= 0) {
-        return prevs.map((item, idx) => {
-          if (idx !== index) return item;
+      if (jaExiste) {
+        return atuais.map((item) => {
+          if (item.id !== id) return item;
           const novaComprada = item.quantidadeComprada + 1;
-          const novaRetirada =
-            item.quantidadeRetirada < item.estoque
-              ? item.quantidadeRetirada + 1
-              : item.quantidadeRetirada;
-          return {
-            ...item,
-            quantidadeComprada: novaComprada,
-            quantidadeRetirada: novaRetirada,
-          };
+          const novaRetirada = item.quantidadeRetirada < item.estoque ? item.quantidadeRetirada + 1 : item.quantidadeRetirada;
+          return { ...item, quantidadeComprada: novaComprada, quantidadeRetirada: novaRetirada };
         });
       }
 
       const estoque = produto.quantidade || 0;
       return [
-        ...prevs,
+        ...atuais,
         {
           id: produto.id,
           tamanho: produto.nome,
@@ -95,132 +69,147 @@ export const useVenda = () => {
     });
   };
 
-  const alterarQuantidadeComprada = (idUniforme, mudanca) => {
-    setItems((prevs) =>
-      prevs.map((item) => {
-        if (item.id !== idUniforme) return item;
-        const novaComprada = Math.max(1, item.quantidadeComprada + mudanca);
+  const alterarComprada = (id, delta) => {
+    setUniformesSelecionados((atuais) =>
+      atuais.map((item) => {
+        if (item.id !== id) return item;
+        const novaComprada = Math.max(1, item.quantidadeComprada + delta);
         const novaRetirada = Math.min(item.quantidadeRetirada, novaComprada);
-        return {
-          ...item,
-          quantidadeComprada: novaComprada,
-          quantidadeRetirada: novaRetirada,
-        };
-      }),
+        return { ...item, quantidadeComprada: novaComprada, quantidadeRetirada: novaRetirada };
+      })
     );
   };
 
-  const alterarQuantidadeRetirada = (idUniforme, mudanca) => {
-    setItems((prevs) =>
-      prevs.map((item) => {
-        if (item.id !== idUniforme) return item;
-        const limiteMaximo = Math.min(item.quantidadeComprada, item.estoque);
-        const novaRetirada = Math.max(
-          0,
-          Math.min(limiteMaximo, item.quantidadeRetirada + mudanca),
-        );
+  const alterarRetirada = (id, delta) => {
+    setUniformesSelecionados((atuais) =>
+      atuais.map((item) => {
+        if (item.id !== id) return item;
+        const limite = Math.min(item.quantidadeComprada, item.estoque);
+        const novaRetirada = Math.max(0, Math.min(limite, item.quantidadeRetirada + delta));
         return { ...item, quantidadeRetirada: novaRetirada };
-      }),
+      })
     );
   };
 
-  const excluirUniforme = (idUniforme) => {
-    setItems((prevs) => prevs.filter((item) => item.id !== idUniforme));
+  const removerUniforme = (id) => {
+    setUniformesSelecionados((atuais) => atuais.filter((item) => item.id !== id));
   };
 
-  const alterarFormaPagamento = (forma) => {
-    setPagamentosSelecionados((prevs) => {
-      const existe = prevs.includes(forma);
+  const alternarFormaPagamento = (forma) => {
+    setPagamentosSelecionados((atuais) => {
+      const existe = atuais.includes(forma);
       if (existe) {
-        setValores((value) => ({ ...value, [forma]: 0 }));
-        return prevs.filter((formaPag) => formaPag !== forma);
+        setValoresPagamento((v) => ({ ...v, [forma]: 0 }));
+        return atuais.filter((f) => f !== forma);
       }
-      return [...prevs, forma];
+      return [...atuais, forma];
     });
   };
 
   const alterarValorPagamento = (forma, valor) => {
-    setValores((prevs) => ({
-      ...prevs,
+    setValoresPagamento((v) => ({
+      ...v,
       [forma]: Math.max(0, Number(valor) || 0),
     }));
   };
 
-  const totalUniformes = items.reduce(
-    (cont, item) => cont + item.preco * item.quantidadeComprada,
-    0,
+  const totalUniformes = uniformesSelecionados.reduce(
+    (acc, item) => acc + item.preco * item.quantidadeComprada,
+    0
   );
 
-  const totalCompra =
-    Math.round(
-      (totalUniformes +
-        (armario.incluido ? armario.preco : 0) +
-        (Number(contribuicao) || 0)) *
-        100,
-    ) / 100;
+  const armarioDisponivel = Boolean(configArmario && configArmario.status && configArmario.quantidade > 0);
+  const precoArmario = configArmario ? Number(configArmario.preco) : 0;
+  const valorArmario = armarioDisponivel && armarioIncluido ? precoArmario : 0;
+  const valorContribuicao = Math.max(0, Number(contribuicao) || 0);
 
-  const totalPago =
-    Math.round(
-      pagamentosSelecionados.reduce(
-        (cont, forma) => cont + (valores[forma] || 0),
-        0,
-      ) * 100,
-    ) / 100;
+  const totalCompra = Math.round((totalUniformes + valorArmario + valorContribuicao) * 100) / 100;
+
+  const totalPago = Math.round(
+    pagamentosSelecionados.reduce((acc, forma) => acc + (valoresPagamento[forma] || 0), 0) * 100
+  ) / 100;
 
   const diferencaPagamento = Math.round((totalCompra - totalPago) * 100) / 100;
-
   const podeFinalizar = totalCompra === 0 || diferencaPagamento === 0;
 
   const limparVenda = () => {
-    setItems([]);
+    setUniformesSelecionados([]);
     setArmarioIncluido(false);
     setContribuicao(0);
     setPagamentosSelecionados([]);
-    setValores(VALORES_INICIAIS);
+    setValoresPagamento(PAGAMENTOS_ZERADOS);
   };
 
-  const payload = () => ({
-    itens: items.map((item) => ({
+  const gerarPayload = () => {
+    const itens = uniformesSelecionados.map((item) => ({
       produtoId: item.id,
       quantidade: item.quantidadeComprada,
       quantidadeRetirada: item.quantidadeRetirada,
       precoUnitario: item.preco,
-    })),
-    armario: armario.incluido,
-    valorContribuicao: Number(contribuicao) || 0,
-    pagamentos: pagamentosSelecionados.map((forma) => ({
-      tipo: forma,
-      valor: valores[forma] || 0,
-    })),
-    valorTotal: totalCompra,
-  });
+    }));
+
+    if (armarioDisponivel && armarioIncluido && configArmario?.id) {
+      itens.push({
+        produtoId: configArmario.id,
+        quantidade: 1,
+        quantidadeRetirada: 1,
+        precoUnitario: precoArmario,
+      });
+    }
+
+    return {
+      itens,
+      valorContribuicao,
+      pagamentos: pagamentosSelecionados
+        .filter((forma) => (valoresPagamento[forma] || 0) > 0)
+        .map((forma) => ({
+          tipo: forma,
+          valor: valoresPagamento[forma],
+        })),
+      valorTotal: totalCompra,
+    };
+  };
 
   return {
-    carregando,
-    erro,
-    uniformes,
-    armario,
-    armarioDisponivel,
-    setArmarioIncluido,
-    contribuicao,
-    setContribuicao,
-    items,
-    adicionarUniforme,
-    alterarQuantidadeComprada,
-    alterarQuantidadeRetirada,
-    excluirUniforme,
-    formasPagamento: FORMAS_PAGAMENTO,
-    pagamentosSelecionados,
-    valores,
-    alterarFormaPagamento,
-    alterarValorPagamento,
-    totalCompra,
-    totalPago,
-    diferencaPagamento,
-    podeFinalizar,
+    catalogo: {
+      carregando,
+      erro,
+      carregarProdutos,
+    },
+    uniformes: {
+      disponiveis: uniformesDisponiveis,
+      selecionados: uniformesSelecionados,
+      total: totalUniformes,
+      adicionar: adicionarUniforme,
+      alterarComprada,
+      alterarRetirada,
+      remover: removerUniforme,
+    },
+    armario: {
+      id: configArmario?.id ?? null,
+      preco: precoArmario,
+      estoque: configArmario?.quantidade ?? 0,
+      disponivel: armarioDisponivel,
+      incluido: armarioDisponivel && armarioIncluido,
+      setIncluido: setArmarioIncluido,
+    },
+    contribuicao: {
+      valor: contribuicao,
+      setValor: setContribuicao,
+    },
+    pagamento: {
+      formas: FORMAS_PAGAMENTO,
+      selecionados: pagamentosSelecionados,
+      valores: valoresPagamento,
+      total: totalCompra,
+      totalPago,
+      diferenca: diferencaPagamento,
+      podeFinalizar,
+      alternarForma: alternarFormaPagamento,
+      alterarValor: alterarValorPagamento,
+    },
     limparVenda,
-    payload,
-    listarProdutos,
+    gerarPayload,
   };
 };
 

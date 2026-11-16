@@ -44,7 +44,7 @@ export const atualizarEstoque = async (req, res) => {
   const { produtoId } = req.validado.params;
   const { operacao, quantidade } = req.validado.body;
 
-  const produto = await produtoService.alterarEstoque(
+  const produto = await produtoService.atualizarEstoque(
     produtoId,
     operacao,
     quantidade,

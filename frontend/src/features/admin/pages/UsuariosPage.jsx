@@ -6,7 +6,6 @@ import {
   FiPlus,
   FiSearch,
 } from "react-icons/fi";
-
 import Alert from "../../../components/ui/Alert";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
@@ -23,22 +22,20 @@ import * as usuarioService from "../services/usuarioService";
 import { useAuth } from "../../../context/authContext";
 import { useToast } from "../../../context/toastContext";
 
-const OPCOES_FILTRO_TIPO = [
-  { value: "", label: "Todos os perfis" },
+const OPCOES_FILTRO = [
   { value: "admin", label: "Administradores" },
   { value: "supervisor", label: "Supervisores" },
   { value: "atendente", label: "Atendentes" },
 ];
 
-const OPCOES_STATUS_USUARIO = [
+const OPCOES_STATUS = [
   { valor: true, label: "Ativos" },
   { valor: false, label: "Inativos" },
 ];
 
 const UsuariosPage = () => {
   const toast = useToast();
-  const { usuario: usuarioLogado } = useAuth();
-  const ehSupervisor = usuarioLogado?.tipo === "supervisor";
+  const { usuario: usuarioLogado, recarregarSessao } = useAuth();
   const ehAdmin = usuarioLogado?.tipo === "admin";
 
   const [busca, setBusca] = React.useState("");
@@ -50,21 +47,58 @@ const UsuariosPage = () => {
 
   const { usuarios, carregando, erro, recarregar } = useUsuarios({
     busca,
-    tipo: ehSupervisor ? "" : tipoFiltro,
+    tipo: ehAdmin ? tipoFiltro : "",
     status: statusAtivo,
   });
 
-  const handleSalvarUsuario = async (dados, id = modalAtivo?.usuario?.id) => {
+  const handleSalvarUsuario = async (dados) => {
+    const id = modalAtivo.usuario?.id;
     setSalvando(true);
 
     try {
       if (id) {
-        await usuarioService.atualizarUsuario(id, dados);
+        const res = await usuarioService.atualizarUsuario(id, dados);
+        if (
+          id === usuarioLogado?.id &&
+          res.usuario.nome !== usuarioLogado?.nome
+        ) {
+          await recarregarSessao();
+        }
+        toast.sucesso("Usuário atualizado com sucesso.");
       } else {
         await usuarioService.criarUsuario(dados);
+        toast.sucesso("Usuário cadastrado com sucesso.");
       }
 
       setModalAtivo(null);
+
+      if (!id && !statusAtivo) {
+        setStatusAtivo(true);
+      } else {
+        await recarregar();
+      }
+    } catch (err) {
+      toast.erro(err.message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleAlterarStatus = async () => {
+    const usuario = modalAtivo?.usuario;
+    if (!usuario) return;
+
+    const novoStatus = !usuario.status;
+    setSalvando(true);
+
+    try {
+      await usuarioService.atualizarUsuario(usuario.id, { status: novoStatus });
+      setModalAtivo(null);
+      toast.sucesso(
+        novoStatus
+          ? "Usuário ativado com sucesso."
+          : "Usuário inativado com sucesso.",
+      );
       await recarregar();
     } catch (err) {
       toast.erro(err.message);
@@ -73,11 +107,11 @@ const UsuariosPage = () => {
     }
   };
 
-  const listaFiltrada = ehSupervisor
-    ? usuarios.filter(
+  const listaFiltrada = ehAdmin
+    ? usuarios
+    : usuarios.filter(
         (u) => u.tipo === "atendente" || u.id === usuarioLogado?.id,
-      )
-    : usuarios;
+      );
 
   const usuariosOrdenados = usuarioLogado
     ? [...listaFiltrada].sort((a, b) => {
@@ -110,7 +144,7 @@ const UsuariosPage = () => {
           <div className="flex items-center gap-2">
             <span className="font-semibold text-text-primary">{u.nome}</span>
             {ehProprioUsuario && (
-              <Badge variant="primary" size="sm">
+              <Badge variant="info" size="sm">
                 Você
               </Badge>
             )}
@@ -120,7 +154,7 @@ const UsuariosPage = () => {
     },
     {
       key: "tipo",
-      label: "Tipo",
+      label: "Função",
       render: (u) => renderBadgeTipo(u.tipo),
     },
     {
@@ -171,12 +205,19 @@ const UsuariosPage = () => {
     },
   ];
 
+  const usuarioStatus =
+    modalAtivo?.tipo === "status" ? modalAtivo.usuario : null;
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mt-1 text-text-secondary">
-            {usuariosOrdenados.length} {usuariosOrdenados.length === 1 ? "usuário" : "usuários"} {statusAtivo ? "ativo" : "inativo"}{usuariosOrdenados.length === 1 ? "" : "s"} encontrado{usuariosOrdenados.length === 1 ? "" : "s"}.
+            {usuariosOrdenados.length}{" "}
+            {usuariosOrdenados.length === 1 ? "usuário" : "usuários"}{" "}
+            {statusAtivo ? "ativo" : "inativo"}
+            {usuariosOrdenados.length === 1 ? "" : "s"} encontrado
+            {usuariosOrdenados.length === 1 ? "" : "s"}.
           </p>
         </div>
 
@@ -195,25 +236,28 @@ const UsuariosPage = () => {
             value={busca}
             onChange={(event) => setBusca(event.target.value)}
             placeholder="Pesquisar por nome de usuário..."
+            aria-label="Pesquisar por nome de usuário"
+            maxLength={100}
             icon={<FiSearch />}
             size="md"
             className="w-full sm:max-w-md"
           />
 
-          {!ehSupervisor && (
+          {ehAdmin && (
             <div className="w-full sm:w-56">
               <Select
                 value={tipoFiltro}
                 onChange={(event) => setTipoFiltro(event.target.value)}
-                options={OPCOES_FILTRO_TIPO}
-                placeholder=""
+                options={OPCOES_FILTRO}
+                placeholder="Todos os perfis"
+                aria-label="Filtrar por perfil"
               />
             </div>
           )}
         </div>
 
         <TableFiltro
-          options={OPCOES_STATUS_USUARIO}
+          options={OPCOES_STATUS}
           value={statusAtivo}
           onChange={setStatusAtivo}
           ariaLabel="Situação dos usuários"
@@ -235,7 +279,9 @@ const UsuariosPage = () => {
       />
 
       <UsuariosModal
-        aberto={modalAtivo?.tipo === "cadastro" || modalAtivo?.tipo === "edicao"}
+        aberto={
+          modalAtivo?.tipo === "cadastro" || modalAtivo?.tipo === "edicao"
+        }
         usuario={modalAtivo?.tipo === "edicao" ? modalAtivo.usuario : null}
         usuarioLogado={usuarioLogado}
         onFechar={() => setModalAtivo(null)}
@@ -244,28 +290,17 @@ const UsuariosPage = () => {
       />
 
       <ConfirmarModal
-        aberto={modalAtivo?.tipo === "status"}
+        aberto={Boolean(usuarioStatus)}
         onFechar={() => setModalAtivo(null)}
-        onConfirmar={() =>
-          handleSalvarUsuario(
-            { status: !modalAtivo?.usuario?.status },
-            modalAtivo?.usuario?.id,
-          )
-        }
-        titulo={
-          modalAtivo?.usuario?.status
-            ? "Inativar usuário"
-            : "Ativar usuário"
-        }
+        onConfirmar={handleAlterarStatus}
+        titulo={usuarioStatus?.status ? "Inativar usuário" : "Ativar usuário"}
         mensagem={
-          modalAtivo?.usuario?.status
-            ? `Deseja realmente inativar o acesso de ${modalAtivo?.usuario?.nome}? O usuário não conseguirá mais entrar no sistema.`
-            : `Deseja reativar o acesso de ${modalAtivo?.usuario?.nome}?`
+          usuarioStatus?.status
+            ? `Deseja realmente inativar o acesso de ${usuarioStatus?.nome}? O usuário não conseguirá mais entrar no sistema.`
+            : `Deseja reativar o acesso de ${usuarioStatus?.nome}?`
         }
-        textoConfirmar={
-          modalAtivo?.usuario?.status ? "Inativar" : "Ativar"
-        }
-        variante={modalAtivo?.usuario?.status ? "danger" : "success"}
+        textoConfirmar={usuarioStatus?.status ? "Inativar" : "Ativar"}
+        variante={usuarioStatus?.status ? "danger" : "success"}
         salvando={salvando}
       />
     </section>

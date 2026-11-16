@@ -6,7 +6,7 @@ const Toast = () => {
   const contexto = React.useContext(ToastContext);
   if (!contexto?.toastAtivo) return null;
 
-  const { tipo, mensagem } = contexto.toastAtivo;
+  const { tipo, mensagem, fechavel } = contexto.toastAtivo;
 
   return (
     <aside
@@ -16,7 +16,7 @@ const Toast = () => {
       <Alert
         type={tipo}
         message={mensagem}
-        onClose={contexto.fecharToast}
+        onClose={fechavel ? contexto.fecharToast : null}
       />
     </aside>
   );
