@@ -4,7 +4,7 @@ import { useDebounce } from "../../../../hooks/useDebounce";
 
 export const useAuditoria = ({
   busca = "",
-  status = "",
+  status = null,
   tipoPeriodo = "hoje",
   dataInicio,
   dataFim,

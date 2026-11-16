@@ -27,7 +27,9 @@ export const listarAuditoriaSchema = z.object({
     query: z.object({
         busca: z
             .string()
-            .optional(),
+            .max(100, "A pesquisa deve ter menos de 100 caracteres")
+            .optional()
+            .default(""),
         status: z
             .enum(["finalizada", "cancelada"])
             .optional(),
