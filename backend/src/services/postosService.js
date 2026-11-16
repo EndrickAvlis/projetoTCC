@@ -341,10 +341,6 @@ export default class PostosService extends BaseService {
         const senhasFinalizadas = await tx.senha.count({
           where: {
             statusSenha: "finalizada",
-            dataHoraInicioSenha: {
-              gte: intervalo.dataInicio,
-              lte: intervalo.dataFim,
-            },
             dataHoraFimSenha: {
               gte: intervalo.dataInicio,
               lte: intervalo.dataFim,
@@ -355,10 +351,6 @@ export default class PostosService extends BaseService {
         const senhasCanceladas = await tx.senha.count({
           where: {
             statusSenha: "cancelada",
-            dataHoraInicioSenha: {
-              gte: intervalo.dataInicio,
-              lte: intervalo.dataFim,
-            },
             dataHoraFimSenha: {
               gte: intervalo.dataInicio,
               lte: intervalo.dataFim,
@@ -371,21 +363,13 @@ export default class PostosService extends BaseService {
             dataHoraInicioSenha: {
               gte: intervalo.dataInicio,
               lte: intervalo.dataFim,
-            },
-            dataHoraFimSenha: {
-              gte: intervalo.dataInicio,
-              lte: intervalo.dataFim,
-            },
+            }
           },
         });
 
         const senhas = await tx.senha.findMany({
           where: {
             statusSenha: "finalizada",
-            dataHoraInicioSenha: {
-              gte: intervalo.dataInicio,
-              lte: intervalo.dataFim,
-            },
             dataHoraFimSenha: {
               gte: intervalo.dataInicio,
               lte: intervalo.dataFim,
@@ -733,7 +717,7 @@ const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
   let dataFim;
 
   switch (tipoPeriodo) {
-    case "hoje":
+    case "HOJE":
       dataInicio = new Date(agora);
       dataInicio.setHours(0, 0, 0, 0);
 
@@ -741,7 +725,7 @@ const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
       dataFim.setHours(23, 59, 59, 999);
       break;
 
-    case "semana":
+    case "SEMANA":
       dataInicio = new Date(agora);
       dataInicio.setDate(agora.getDate() - ((agora.getDay() + 6) % 7));
       dataInicio.setHours(0, 0, 0, 0);
@@ -751,7 +735,7 @@ const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
       dataFim.setHours(23, 59, 59, 999);
       break;
 
-    case "mes":
+    case "MES":
       dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
       dataFim = new Date(
         agora.getFullYear(),
@@ -764,7 +748,7 @@ const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
       );
       break;
 
-    case "personalizado":
+    case "PERSONALIZADO":
       if (!inicio || !fim) {
         dataInicio = new Date(agora);
         dataInicio.setHours(0, 0, 0, 0);
@@ -798,9 +782,6 @@ const obterFinalizadasPorHora = async (dataInicio, dataFim, tx) => {
   const senhas = await tx.senha.findMany({
     where: {
       statusSenha: "finalizada",
-      dataHoraInicioSenha: {
-        gte: dataInicio,
-      },
       dataHoraFimSenha: {
         lte: dataFim,
       },

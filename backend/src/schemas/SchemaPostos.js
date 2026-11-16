@@ -3,9 +3,9 @@ import { z } from "zod";
 export const listarAtendimentoSchema = z.object({
     query: z.object({
         tipoPeriodo: z
-        .enum(["hoje", "semana", "mes", "personalizado"])
+        .enum(["HOJE", "SEMANA", "MES", "PERSONALIZADO"])
         .optional()
-        .default("hoje"),
+        .default("HOJE"),
     dataInicio: z
         .iso.date()
         .optional(),
@@ -34,9 +34,9 @@ export const listarAuditoriaSchema = z.object({
             .enum(["finalizada", "cancelada"])
             .optional(),
         tipoPeriodo: z
-            .enum(["hoje", "semana", "mes", "personalizado"])
+            .enum(["HOJE", "SEMANA", "MES", "PERSONALIZADO"])
             .optional()
-            .default("hoje"),
+            .default("HOJE"),
         dataInicio: z
             .iso.date()
             .optional(),
