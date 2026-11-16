@@ -95,9 +95,9 @@ Retorna os contadores gerais, as senhas em atendimento, as senhas aguardando em 
 Retorna os 4 KPIs de atendimento, o histograma de finalizações por hora (07h às 18h) e os candidatos por curso ativo.
 
 * **Query Params:**
-  * `tipoPeriodo`: `"hoje"` | `"semana"` | `"mes"` | `"personalizado"` (padrão: `"hoje"`)
-  * `dataInicio`: `YYYY-MM-DD` (obrigatório se `tipoPeriodo === "personalizado"`)
-  * `dataFim`: `YYYY-MM-DD` (obrigatório se `tipoPeriodo === "personalizado"`)
+  * `tipoPeriodo`: `"HOJE"` | `"SEMANA"` | `"MES"` | `"PERSONALIZADO"` (padrão: `"HOJE"`)
+  * `dataInicio`: `YYYY-MM-DD` (obrigatório se `tipoPeriodo === "PERSONALIZADO"`)
+  * `dataFim`: `YYYY-MM-DD` (obrigatório se `tipoPeriodo === "PERSONALIZADO"`)
   * `cursoId`: número inteiro (opcional)
   * `periodoCurso`: `"manha"` | `"tarde"` | `"noite"` | `"integral"` | `"online"` (opcional)
 * **Resposta (`200 OK`):**
@@ -142,7 +142,7 @@ Retorna lista paginada das senhas que concluíram (`finalizada`) ou foram interr
 * **Query Params:**
   * `busca`: string livre para pesquisa por código da senha ou nome do aluno (opcional)
   * `status`: `"finalizada"` | `"cancelada"` (opcional; se omitido ou vazio, retorna ambas)
-  * `tipoPeriodo`: `"hoje"` | `"semana"` | `"mes"` | `"personalizado"` (padrão: `"hoje"`)
+  * `tipoPeriodo`: `"HOJE"` | `"SEMANA"` | `"MES"` | `"PERSONALIZADO"` (padrão: `"HOJE"`)
   * `dataInicio`: `YYYY-MM-DD` (opcional)
   * `dataFim`: `YYYY-MM-DD` (opcional)
   * `pagina`: inteiro positivo (padrão: 1)

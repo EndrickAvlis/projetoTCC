@@ -1,17 +1,18 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import * as FiIcons from "react-icons/fi";
-import Alert from "../../../../../components/ui/Alert";
 import Badge from "../../../../../components/ui/Badge";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import Select from "../../../../../components/ui/Select";
 import TableFiltro from "../../../../../components/ui/TableFiltro";
+import { formatarPeriodo } from "../../../../../utils/formatters";
 
-const prioridadeGrupo = (grupo) => {
+const prioridadeGrupo = (grupo, cursoArquivado) => {
   if (!grupo.idCurso) return 0;
-  if (grupo.tipoAssociacao === "SUGESTAO") return 1;
-  return 2;
+  if (cursoArquivado) return 1;
+  if (grupo.tipoAssociacao === "SUGESTAO") return 2;
+  return 3;
 };
 
 const MapeamentoCursos = ({
@@ -19,6 +20,7 @@ const MapeamentoCursos = ({
   cursosExistentes = [],
   onAtualizarAssociacao,
   onCriarCurso,
+  onDesarquivarCurso,
   onVoltar,
   onConfirmar,
   onRecarregarCursos,
@@ -28,18 +30,38 @@ const MapeamentoCursos = ({
   const [filtroStatus, setFiltroStatus] = React.useState("TODOS");
   const [busca, setBusca] = React.useState("");
 
+  const cursosPorId = React.useMemo(
+    () => new Map(cursosExistentes.map((c) => [String(c.id), c])),
+    [cursosExistentes],
+  );
+
   const opcoesCursos = React.useMemo(
     () =>
       [...cursosExistentes]
-        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+        .sort((a, b) => {
+          if (Boolean(a.arquivado) !== Boolean(b.arquivado)) {
+            return a.arquivado ? 1 : -1;
+          }
+          return a.nome.localeCompare(b.nome, "pt-BR");
+        })
         .map((curso) => ({
           value: String(curso.id),
-          label: curso.nome,
+          label: curso.arquivado ? `${curso.nome} (Arquivado)` : curso.nome,
         })),
     [cursosExistentes],
   );
 
-  const totalPendentes = gruposCursos.filter((grupo) => !grupo.idCurso).length;
+  const obterCursoGrupo = React.useCallback(
+    (grupo) =>
+      grupo.idCurso ? cursosPorId.get(String(grupo.idCurso)) ?? null : null,
+    [cursosPorId],
+  );
+
+  const totalSemCurso = gruposCursos.filter((grupo) => !grupo.idCurso).length;
+  const totalArquivados = gruposCursos.filter((grupo) =>
+    Boolean(obterCursoGrupo(grupo)?.arquivado),
+  ).length;
+  const totalPendentes = totalSemCurso + totalArquivados;
   const totalAssociados = gruposCursos.length - totalPendentes;
   const temPendencias = totalPendentes > 0;
   const totalCandidatos = gruposCursos.reduce(
@@ -58,19 +80,24 @@ const MapeamentoCursos = ({
 
     return gruposCursos
       .filter((grupo) => {
-        if (filtroStatus === "PENDENTES" && grupo.idCurso) return false;
-        if (filtroStatus === "ASSOCIADOS" && !grupo.idCurso) return false;
+        const arquivado = Boolean(obterCursoGrupo(grupo)?.arquivado);
+        const pendente = !grupo.idCurso || arquivado;
+
+        if (filtroStatus === "PENDENTES" && !pendente) return false;
+        if (filtroStatus === "ASSOCIADOS" && pendente) return false;
         if (termo && !grupo.nomeCsv.toLowerCase().includes(termo)) return false;
         return true;
       })
       .sort((a, b) => {
-        const diffPrioridade = prioridadeGrupo(a) - prioridadeGrupo(b);
+        const diffPrioridade =
+          prioridadeGrupo(a, Boolean(obterCursoGrupo(a)?.arquivado)) -
+          prioridadeGrupo(b, Boolean(obterCursoGrupo(b)?.arquivado));
         if (diffPrioridade !== 0) return diffPrioridade;
         return a.nomeCsv.localeCompare(b.nomeCsv, "pt-BR");
       });
-  }, [gruposCursos, filtroStatus, busca]);
+  }, [gruposCursos, filtroStatus, busca, obterCursoGrupo]);
 
-  const renderBadgeAssociacao = (grupo) => {
+  const renderBadgeAssociacao = (grupo, cursoArquivado) => {
     if (!grupo.idCurso) {
       return (
         <Badge
@@ -79,6 +106,18 @@ const MapeamentoCursos = ({
           icon={<FiIcons.FiAlertTriangle size={12} />}
         >
           Pendente
+        </Badge>
+      );
+    }
+
+    if (cursoArquivado) {
+      return (
+        <Badge
+          variant="warning"
+          size="sm"
+          icon={<FiIcons.FiArchive size={12} />}
+        >
+          Arquivado
         </Badge>
       );
     }
@@ -123,8 +162,7 @@ const MapeamentoCursos = ({
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-status-warning">
             <FiIcons.FiAlertCircle size={15} />
             {totalPendentes}{" "}
-            {totalPendentes === 1 ? "curso precisa" : "cursos precisam"} de
-            associação
+            {totalPendentes === 1 ? "curso pendente" : "cursos pendentes"}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-status-success">
@@ -133,13 +171,6 @@ const MapeamentoCursos = ({
           </span>
         )}
       </div>
-
-      {temPendencias && (
-        <Alert
-          type="warning"
-          message="Cursos sem associação, selecione ou cadastre os cursos que faltam.."
-        />
-      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TableFiltro
@@ -167,11 +198,15 @@ const MapeamentoCursos = ({
         ) : (
           gruposFiltrados.map((grupo) => {
             const associado = Boolean(grupo.idCurso);
+            const cursoSelecionado = obterCursoGrupo(grupo);
+            const cursoArquivado = Boolean(cursoSelecionado?.arquivado);
+            const precisaAcao = !associado || cursoArquivado;
+
             return (
               <div
                 key={grupo.chave}
                 className={`rounded-xl border px-3.5 py-2.5 transition-colors ${
-                  !associado
+                  precisaAcao
                     ? "border-status-warning/60 bg-status-warning-bg/10"
                     : "border-border bg-surface hover:border-primary/30"
                 }`}
@@ -179,10 +214,10 @@ const MapeamentoCursos = ({
                 <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-sm font-semibold text-text-primary break-words">
+                      <h4 className="text-sm font-semibold text-text-primary">
                         {grupo.nomeCsv}
                       </h4>
-                      {renderBadgeAssociacao(grupo)}
+                      {renderBadgeAssociacao(grupo, cursoArquivado)}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary">
@@ -190,8 +225,10 @@ const MapeamentoCursos = ({
                         <>
                           <span>
                             Período{grupo.periodos.length > 1 ? "s" : ""}:{" "}
-                            <strong className="text-text-primary uppercase">
-                              {grupo.periodos.join(", ")}
+                            <strong className="text-text-primary">
+                              {grupo.periodos
+                                .map((p) => formatarPeriodo(p) || p)
+                                .join(", ")}
                             </strong>
                           </span>
                           <span>•</span>
@@ -206,7 +243,7 @@ const MapeamentoCursos = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:w-[340px] shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Select
                       aria-label={`Associar curso ${grupo.nomeCsv}`}
                       placeholder="Selecione um curso..."
@@ -217,7 +254,7 @@ const MapeamentoCursos = ({
                       options={opcoesCursos}
                       size="sm"
                       selectClassName={
-                        !associado
+                        precisaAcao
                           ? "border-status-warning focus:ring-status-warning"
                           : ""
                       }
@@ -234,6 +271,25 @@ const MapeamentoCursos = ({
                         title="Cadastrar este curso no sistema"
                       >
                         Criar
+                      </Button>
+                    )}
+
+                    {cursoArquivado && onDesarquivarCurso && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          onDesarquivarCurso({
+                            chave: grupo.chave,
+                            curso: cursoSelecionado,
+                          })
+                        }
+                        leftIcon={<FiIcons.FiRotateCcw size={14} />}
+                        className="shrink-0"
+                        title="Desarquivar este curso no sistema"
+                      >
+                        Desarquivar
                       </Button>
                     )}
                   </div>

@@ -29,6 +29,8 @@ export const useRelatorios = ({
 
   const carregarRelatorios = React.useCallback(async () => {
     if (periodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
+      setErro(null);
+      setCarregando(false);
       return;
     }
 
@@ -70,7 +72,7 @@ export const useRelatorios = ({
   ]);
 
   React.useEffect(() => {
-    carregarRelatorios();
+    void Promise.resolve().then(carregarRelatorios);
   }, [carregarRelatorios]);
 
   return {

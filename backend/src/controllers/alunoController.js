@@ -15,7 +15,7 @@ export const listarAlunos = async (req, res) => {
 };
 
 export const listarCidades = async (req, res) => {
-  const cidades = await alunoService.listarCidades();
+  const cidades = await alunoService.listarCidades(req.validado.query);
   return res.json({ cidades });
 };
 

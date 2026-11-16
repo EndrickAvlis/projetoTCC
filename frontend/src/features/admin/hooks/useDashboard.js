@@ -21,34 +21,59 @@ export const useDashboard = ({
   const [carregando, setCarregando] = React.useState(true);
   const [erro, setErro] = React.useState(null);
 
-  const carregarDashboard = React.useCallback(async () => {
-    if (periodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
-      return;
-    }
-    setCarregando(true);
-    setErro(null);
+  const carregarDashboard = React.useCallback(
+    async (estaAtivo = () => true) => {
+      if (periodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
+        setErro(null);
+        setCarregando(false);
+        return;
+      }
 
-    try {
-      const res = await obterDashboard({
-        periodo,
-        dataInicio: periodo === "PERSONALIZADO" ? dataInicio : undefined,
-        dataFim: periodo === "PERSONALIZADO" ? dataFim : undefined,
-      });
+      setCarregando(true);
+      setErro(null);
 
-      setTotais(res.totais);
-      setCategorias(res.categorias);
-      setProdutos(res.produtos);
-      setCursos(res.cursos);
-    } catch (err) {
-      setErro(err.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, [periodo, dataInicio, dataFim]);
+      try {
+        const res = await obterDashboard({
+          periodo,
+          dataInicio: periodo === "PERSONALIZADO" ? dataInicio : undefined,
+          dataFim: periodo === "PERSONALIZADO" ? dataFim : undefined,
+        });
+
+        if (!estaAtivo()) return;
+
+        setTotais(res.totais);
+        setCategorias(res.categorias);
+        setProdutos(res.produtos);
+        setCursos(res.cursos);
+      } catch (err) {
+        if (!estaAtivo()) return;
+        setTotais(TOTAIS_INICIAIS);
+        setCategorias(CATEGORIAS_INICIAIS);
+        setProdutos([]);
+        setCursos([]);
+        setErro(err.message);
+      } finally {
+        if (estaAtivo()) {
+          setCarregando(false);
+        }
+      }
+    },
+    [periodo, dataInicio, dataFim],
+  );
 
   React.useEffect(() => {
-    carregarDashboard();
+    let ativo = true;
+    void Promise.resolve().then(() => carregarDashboard(() => ativo));
+
+    return () => {
+      ativo = false;
+    };
   }, [carregarDashboard]);
+
+  const recarregar = React.useCallback(
+    () => carregarDashboard(),
+    [carregarDashboard],
+  );
 
   return {
     totais,
@@ -57,7 +82,7 @@ export const useDashboard = ({
     cursos,
     carregando,
     erro,
-    recarregar: carregarDashboard,
+    recarregar,
   };
 };
 

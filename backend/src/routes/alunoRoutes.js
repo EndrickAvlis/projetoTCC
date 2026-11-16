@@ -14,7 +14,11 @@ alunoRoutes.get(
   alunoController.listarAlunos,
 );
 
-alunoRoutes.get("/cidades", alunoController.listarCidades);
+alunoRoutes.get(
+  "/cidades",
+  validarRequisicao(alunos.listarCidadesSchema),
+  alunoController.listarCidades,
+);
 
 alunoRoutes.patch(
   "/arquivar",

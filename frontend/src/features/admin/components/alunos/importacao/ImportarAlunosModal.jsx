@@ -1,5 +1,6 @@
 import * as React from "react";
 import Modal from "../../../../../components/ui/Modal";
+import ConfirmarModal from "../../../../../components/ui/ConfirmarModal";
 import { useCursos } from "../../../hooks/useCursos";
 import * as AlunosService from "../../../services/alunoService";
 import * as cursoService from "../../../services/cursoService";
@@ -16,37 +17,50 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
   const [anoProcesso, setAnoProcesso] = React.useState(
     new Date().getFullYear(),
   );
-  const [semestreProcesso, setSemestreProcesso] = React.useState("1");
+  const [semestreProcesso, setSemestreProcesso] = React.useState(() =>
+    new Date().getMonth() < 6 ? "1" : "2",
+  );
+  const [arquivo, setArquivo] = React.useState(null);
   const [dadosArquivo, setDadosArquivo] = React.useState(null);
   const [gruposCursos, setGruposCursos] = React.useState([]);
   const [resultadoFinal, setResultadoFinal] = React.useState(null);
   const [carregando, setCarregando] = React.useState(false);
   const [cursoParaCriar, setCursoParaCriar] = React.useState(null);
   const [salvandoCurso, setSalvandoCurso] = React.useState(false);
+  const [cursoParaDesarquivar, setCursoParaDesarquivar] = React.useState(null);
+  const [desarquivandoCurso, setDesarquivandoCurso] = React.useState(false);
 
   const {
     cursos: cursosExistentes,
     recarregar: recarregarCursos,
     carregando: carregandoCursos,
-  } = useCursos({ arquivado: false });
+  } = useCursos({ arquivado: "todos" });
 
-  const handleRecarregarCursos = async () => {
-    const listaAtualizada = await recarregarCursos();
-    if (listaAtualizada?.length > 0) {
-      setGruposCursos((atuais) =>
-        atuais.length > 0
-          ? sugerirAssociacoesCursos(atuais, listaAtualizada)
-          : atuais,
-      );
+  const handleRecarregarCursos = async ({ silencioso = false } = {}) => {
+    const listaAtualizada = await recarregarCursos({ silencioso });
+    if (listaAtualizada) {
+      const idsDisponiveis = new Set(listaAtualizada.map((c) => String(c.id)));
+      setGruposCursos((atuais) => {
+        if (atuais.length === 0) return atuais;
+        const limpos = atuais.map((g) =>
+          g.idCurso && !idsDisponiveis.has(String(g.idCurso))
+            ? { ...g, idCurso: "", tipoAssociacao: "PENDENTE" }
+            : g,
+        );
+        return sugerirAssociacoesCursos(limpos, listaAtualizada);
+      });
     }
   };
 
   const handleFechar = () => {
+    if (carregando || salvandoCurso || desarquivandoCurso) return;
     setEtapa(1);
+    setArquivo(null);
     setDadosArquivo(null);
     setGruposCursos([]);
     setResultadoFinal(null);
     setCursoParaCriar(null);
+    setCursoParaDesarquivar(null);
     onFechar();
   };
 
@@ -81,13 +95,37 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
         handleAtualizarAssociacao(cursoParaCriar.chave, novoCursoId);
       }
 
-      await handleRecarregarCursos();
+      await handleRecarregarCursos({ silencioso: true });
       toast.sucesso("Curso cadastrado e associado com sucesso.");
       setCursoParaCriar(null);
     } catch (err) {
       toast.erro(err.message);
     } finally {
       setSalvandoCurso(false);
+    }
+  };
+
+  const handleDesarquivarCurso = async () => {
+    if (!cursoParaDesarquivar) return;
+
+    setDesarquivandoCurso(true);
+    try {
+      await cursoService.atualizarCurso(cursoParaDesarquivar.curso.id, {
+        arquivado: false,
+      });
+      handleAtualizarAssociacao(
+        cursoParaDesarquivar.chave,
+        String(cursoParaDesarquivar.curso.id),
+      );
+      await handleRecarregarCursos({ silencioso: true });
+      toast.sucesso(
+        "Curso desarquivado e associado! Confira os períodos e vagas na tela de Cursos.",
+      );
+      setCursoParaDesarquivar(null);
+    } catch (err) {
+      toast.erro(err.message);
+    } finally {
+      setDesarquivandoCurso(false);
     }
   };
 
@@ -175,6 +213,8 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
 
       {etapa === 1 && (
         <UploadCsv
+          arquivo={arquivo}
+          onAlterarArquivo={setArquivo}
           anoProcesso={anoProcesso}
           onAlterarAno={setAnoProcesso}
           semestreProcesso={semestreProcesso}
@@ -192,10 +232,11 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
             cursosExistentes={cursosExistentes}
             onAtualizarAssociacao={handleAtualizarAssociacao}
             onCriarCurso={setCursoParaCriar}
-          onVoltar={() => setEtapa(1)}
-          onConfirmar={handleConfirmarImportacao}
-          onRecarregarCursos={handleRecarregarCursos}
-          carregandoCursos={carregandoCursos}
+            onDesarquivarCurso={setCursoParaDesarquivar}
+            onVoltar={() => setEtapa(1)}
+            onConfirmar={handleConfirmarImportacao}
+            onRecarregarCursos={() => handleRecarregarCursos()}
+            carregandoCursos={carregandoCursos}
             carregando={carregando}
           />
         )}
@@ -211,6 +252,7 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
             onConcluir={handleConcluir}
             onReiniciar={() => {
               setEtapa(1);
+              setArquivo(null);
               setDadosArquivo(null);
               setGruposCursos([]);
               setResultadoFinal(null);
@@ -229,6 +271,21 @@ const ImportarAlunosModal = ({ aberto, onFechar, onSucesso }) => {
         onFechar={() => setCursoParaCriar(null)}
         onSalvar={handleSalvarNovoCurso}
         salvando={salvandoCurso}
+      />
+
+      <ConfirmarModal
+        aberto={Boolean(cursoParaDesarquivar)}
+        onFechar={() => !desarquivandoCurso && setCursoParaDesarquivar(null)}
+        onConfirmar={handleDesarquivarCurso}
+        titulo="Desarquivar curso"
+        mensagem={
+          cursoParaDesarquivar
+            ? `Deseja desarquivar o curso ${cursoParaDesarquivar.curso.nome} e associá-lo à importação? Os períodos permanecerão fechados até que sejam reabertos em Cursos.`
+            : ""
+        }
+        textoConfirmar="Desarquivar"
+        variante="success"
+        salvando={desarquivandoCurso}
       />
     </>
   );

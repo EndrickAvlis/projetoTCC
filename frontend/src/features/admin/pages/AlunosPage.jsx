@@ -20,6 +20,7 @@ import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import TableFiltro from "../../../components/ui/TableFiltro";
 import TableMenuActions from "../../../components/ui/TableMenuActions";
+import ArquivarCandidatosModal from "../components/alunos/ArquivarCandidatosModal";
 import ImportarAlunosModal from "../components/alunos/importacao/ImportarAlunosModal";
 
 import * as alunoService from "../services/alunoService";
@@ -27,7 +28,6 @@ import { useAlunos } from "../hooks/useAlunos";
 import { useCursos } from "../hooks/useCursos";
 import { useToast } from "../../../context/toastContext";
 import { formatarPeriodo } from "../../../utils/formatters";
-import { bloquearTeclasNaoInteiras } from "../../../utils/formHelpers";
 
 const OPCOES_STATUS_ALUNO = [
   { valor: "ATIVO", label: "Ativos" },
@@ -35,102 +35,145 @@ const OPCOES_STATUS_ALUNO = [
   { valor: "ARQUIVADO", label: "Arquivados" },
 ];
 
-const OPCOES_SEMESTRE = [
-  { value: "1", label: "1º Semestre" },
-  { value: "2", label: "2º Semestre" },
-];
+const ROTULO_STATUS_ALUNO = {
+  ATIVO: "ativo",
+  CANDIDATO: "candidato",
+  ARQUIVADO: "arquivado",
+};
 
-const CONFIG_STATUS_ALUNO = {
-  ativar: {
-    titulo: "Ativar aluno",
-    textoConfirmar: "Ativar",
-    variante: "success",
-    sucesso: "Aluno ativado com sucesso.",
-    mensagem: (aluno) =>
-      `Deseja ativar o aluno "${aluno.nome}" manualmente sem concluir o fluxo de matrícula?`,
-  },
-  arquivar: {
-    titulo: "Arquivar aluno",
-    textoConfirmar: "Arquivar",
-    variante: "danger",
-    sucesso: "Aluno arquivado com sucesso.",
-    mensagem: (aluno) =>
-      `Deseja arquivar o aluno "${aluno.nome}"? Ele deixará de aparecer nas buscas de atendimento.`,
-  },
-  reativar: {
-    titulo: "Reativar aluno",
-    textoConfirmar: "Reativar",
-    variante: "success",
-    sucesso: "Aluno reativado com sucesso.",
-    mensagem: (aluno, novoStatus) =>
-      `Deseja reativar o aluno "${aluno.nome}" como ${novoStatus === "ATIVO" ? "ativo" : "candidato"}?`,
-  },
+const FILTROS_INICIAIS = {
+  busca: "",
+  cursoId: "",
+  cidade: "",
+  status: "ATIVO",
 };
 
 const ITENS_POR_PAGINA = 8;
 
+const renderBadgeStatusMatricula = (statusMatricula) => {
+  if (statusMatricula === "ATIVA") {
+    return (
+      <Badge variant="success" icon={<FiCheck size={12} />}>
+        Ativa
+      </Badge>
+    );
+  }
+
+  if (statusMatricula === "PENDENTE") {
+    return (
+      <Badge variant="warning" icon={<FiClock size={12} />}>
+        Pendente
+      </Badge>
+    );
+  }
+
+  return <span className="text-xs text-text-secondary">—</span>;
+};
+
+const obterConfirmacao = (modalAtivo, toast) => {
+  const aluno = modalAtivo?.aluno;
+
+  if (modalAtivo?.tipo === "ativar" && aluno) {
+    return {
+      titulo: "Ativar aluno",
+      mensagem: `Deseja ativar o aluno "${aluno.nome}" manualmente sem concluir o fluxo de matrícula?`,
+      textoConfirmar: "Ativar",
+      variante: "success",
+      sucesso: "Aluno ativado com sucesso.",
+      mudouLista: true,
+      acao: () => alunoService.atualizarAluno(aluno.id, { status: "ATIVO" }),
+    };
+  }
+
+  if (modalAtivo?.tipo === "arquivar" && aluno) {
+    return {
+      titulo: "Arquivar aluno",
+      mensagem: `Deseja arquivar o aluno "${aluno.nome}"? Ele deixará de aparecer nas buscas de atendimento.`,
+      textoConfirmar: "Arquivar",
+      variante: "danger",
+      sucesso: "Aluno arquivado com sucesso.",
+      mudouLista: true,
+      acao: () =>
+        alunoService.atualizarAluno(aluno.id, { status: "ARQUIVADO" }),
+    };
+  }
+
+  if (modalAtivo?.tipo === "reativar" && aluno) {
+    const novoStatus =
+      aluno.cursos?.some((c) => c.statusMatricula === "ATIVA") ||
+      aluno.statusMatricula === "ATIVA"
+        ? "ATIVO"
+        : "CANDIDATO";
+
+    return {
+      titulo: "Reativar aluno",
+      mensagem: `Deseja reativar o aluno "${aluno.nome}" como ${novoStatus === "ATIVO" ? "ativo" : "candidato"}?`,
+      textoConfirmar: "Reativar",
+      variante: "success",
+      sucesso: "Aluno reativado com sucesso.",
+      mudouLista: true,
+      acao: () => alunoService.atualizarAluno(aluno.id, { status: novoStatus }),
+    };
+  }
+
+  if (modalAtivo?.tipo === "excluirAluno" && aluno) {
+    return {
+      titulo: "Excluir aluno",
+      mensagem: `Deseja excluir permanentemente o aluno "${aluno.nome}"? Essa ação não pode ser desfeita.`,
+      textoConfirmar: "Excluir",
+      variante: "danger",
+      sucesso: "Aluno excluído com sucesso.",
+      mudouLista: true,
+      atualizarCidades: true,
+      acao: () => alunoService.excluirAluno(aluno.id),
+    };
+  }
+
+  if (modalAtivo?.tipo === "excluirArquivados") {
+    return {
+      titulo: "Excluir arquivados sem vínculos",
+      mensagem:
+        "Todos os alunos arquivados que não possuem compras, senhas ou histórico de atendimento serão excluídos permanentemente. Deseja continuar?",
+      textoConfirmar: "Excluir elegíveis",
+      variante: "danger",
+      resetarPagina: true,
+      atualizarCidades: true,
+      acao: () => alunoService.excluirAlunos(),
+      notificar: (res) => {
+        if (res.excluidos === 0) {
+          toast.info("Nenhum aluno arquivado sem vínculos para excluir.");
+          return;
+        }
+        const complemento =
+          res.mantidos > 0
+            ? ` ${res.mantidos} mantido${res.mantidos === 1 ? "" : "s"} por possuir vínculos.`
+            : "";
+        toast.sucesso(
+          `${res.excluidos} aluno${res.excluidos === 1 ? "" : "s"} excluído${res.excluidos === 1 ? "" : "s"}.${complemento}`,
+        );
+      },
+    };
+  }
+
+  return null;
+};
+
 const AlunosPage = () => {
   const toast = useToast();
-  const [filtros, setFiltros] = React.useState({
-    busca: "",
-    cursoId: "",
-    cidade: "",
-    status: "ATIVO",
-  });
+  const [filtros, setFiltros] = React.useState(FILTROS_INICIAIS);
   const [pagina, setPagina] = React.useState(1);
   const [modalAtivo, setModalAtivo] = React.useState(null);
-  const [cidades, setCidades] = React.useState([]);
-  const [escopoArquivamento, setEscopoArquivamento] = React.useState("todos");
-  const [anoProcesso, setAnoProcesso] = React.useState(
-    new Date().getFullYear(),
-  );
-  const [semestreProcesso, setSemestreProcesso] = React.useState(
-    new Date().getMonth() < 6 ? "1" : "2",
-  );
   const [processandoModal, setProcessandoModal] = React.useState(false);
   const [alunoExpandido, setAlunoExpandido] = React.useState(null);
-
-  const alterarFiltro = (campo, valor) => {
-    setFiltros((prev) => ({ ...prev, [campo]: valor }));
-    setPagina(1);
-  };
-
-  const alternarCursos = (alunoId) => {
-    setAlunoExpandido((alunoAtual) =>
-      alunoAtual === alunoId ? null : alunoId,
-    );
-  };
-
-  const obterCursosVisiveis = (aluno) => {
-    const todos =
-      aluno.cursos?.length > 0
-        ? aluno.cursos
-        : aluno.curso
-          ? [
-              {
-                id: aluno.cursoId ?? "principal",
-                nome: aluno.curso,
-                periodo: aluno.periodo,
-                classificacao: aluno.classificacao,
-                statusMatricula: aluno.statusMatricula,
-              },
-            ]
-          : [];
-    const expandido = alunoExpandido === aluno.id;
-    return {
-      todos,
-      visiveis: expandido ? todos : todos.slice(0, 1),
-      restantes: todos.slice(1),
-      expandido,
-    };
-  };
 
   const {
     alunos,
     total,
+    cidades,
     carregando,
     erro,
     recarregar: recarregarAlunos,
+    recarregarCidades,
   } = useAlunos({
     busca: filtros.busca,
     cursoId: filtros.cursoId,
@@ -140,20 +183,37 @@ const AlunosPage = () => {
     limite: ITENS_POR_PAGINA,
   });
 
-  const { cursos } = useCursos({ arquivado: false });
+  const { cursos } = useCursos({ arquivado: "todos" });
 
-  const carregarCidades = React.useCallback(async () => {
-    try {
-      const res = await alunoService.listarCidades();
-      setCidades(res?.cidades ?? []);
-    } catch {
-      setCidades([]);
-    }
-  }, []);
+  const opcoesCursos = React.useMemo(
+    () =>
+      [...cursos]
+        .sort((a, b) => {
+          if (Boolean(a.arquivado) !== Boolean(b.arquivado)) {
+            return a.arquivado ? 1 : -1;
+          }
+          return a.nome.localeCompare(b.nome, "pt-BR");
+        })
+        .map((curso) => ({
+          value: String(curso.id),
+          label: curso.arquivado ? `${curso.nome} (Arquivado)` : curso.nome,
+        })),
+    [cursos],
+  );
 
-  React.useEffect(() => {
-    void Promise.resolve().then(carregarCidades);
-  }, [carregarCidades]);
+  const opcoesCidades = React.useMemo(() => {
+    const lista =
+      filtros.cidade && !cidades.includes(filtros.cidade)
+        ? [filtros.cidade, ...cidades]
+        : cidades;
+    return lista.map((cidade) => ({ value: cidade, label: cidade }));
+  }, [cidades, filtros.cidade]);
+
+  const alterarFiltro = (campo, valor) => {
+    setFiltros((prev) => ({ ...prev, [campo]: valor }));
+    setPagina(1);
+    setAlunoExpandido(null);
+  };
 
   const fecharModal = () => {
     if (!processandoModal) {
@@ -161,42 +221,53 @@ const AlunosPage = () => {
     }
   };
 
-  const handleAtualizarStatusAluno = async () => {
-    if (!modalAtivo?.aluno || !modalAtivo?.novoStatus) return;
+  const atualizarLista = async ({
+    resetarPagina = false,
+    mudouLista = false,
+    atualizarCidades = false,
+  } = {}) => {
+    if (atualizarCidades) {
+      void recarregarCidades();
+    }
+
+    if (resetarPagina && pagina !== 1) {
+      setPagina(1);
+      return;
+    }
+
+    if (mudouLista && alunos.length === 1 && pagina > 1) {
+      setPagina(pagina - 1);
+      return;
+    }
+
+    await recarregarAlunos({ silencioso: true });
+  };
+
+  const confirmacaoAtiva = obterConfirmacao(modalAtivo, toast);
+
+  const handleConfirmarAcao = async () => {
+    if (!confirmacaoAtiva) return;
 
     setProcessandoModal(true);
     try {
-      await alunoService.atualizarAluno(modalAtivo.aluno.id, {
-        status: modalAtivo.novoStatus,
-      });
-      toast.sucesso(CONFIG_STATUS_ALUNO[modalAtivo.acao].sucesso);
+      const res = await confirmacaoAtiva.acao();
+      if (confirmacaoAtiva.notificar) {
+        confirmacaoAtiva.notificar(res);
+      } else {
+        toast.sucesso(confirmacaoAtiva.sucesso);
+      }
       setModalAtivo(null);
-      recarregarAlunos();
-    } catch (erro) {
-      toast.erro(erro.message);
+      await atualizarLista(confirmacaoAtiva);
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setProcessandoModal(false);
     }
   };
 
-  const handleArquivarCandidatos = async () => {
-    const porProcesso = escopoArquivamento === "processo";
-    if (
-      porProcesso &&
-      (!anoProcesso || Number(anoProcesso) < 2000 || Number(anoProcesso) > 2100)
-    ) {
-      toast.erro("Informe um ano válido para o processo seletivo.");
-      return;
-    }
-
+  const handleArquivarCandidatos = async (payload) => {
     setProcessandoModal(true);
     try {
-      const payload = porProcesso
-        ? {
-            anoProcesso: Number(anoProcesso),
-            semestreProcesso: Number(semestreProcesso),
-          }
-        : {};
       const res = await alunoService.arquivarCandidatos(payload);
       if (res.arquivados === 0) {
         toast.info("Nenhum candidato encontrado para arquivar.");
@@ -206,87 +277,64 @@ const AlunosPage = () => {
         );
       }
       setModalAtivo(null);
-      setPagina(1);
-      recarregarAlunos();
-    } catch (erro) {
-      toast.erro(erro.message);
+      await atualizarLista({ resetarPagina: true });
+    } catch (err) {
+      toast.erro(err.message);
     } finally {
       setProcessandoModal(false);
     }
   };
 
-  const handleExcluirAluno = async () => {
-    if (!modalAtivo?.aluno) return;
-
-    setProcessandoModal(true);
-    try {
-      await alunoService.excluirAluno(modalAtivo.aluno.id);
-      toast.sucesso("Aluno excluído com sucesso.");
-      setModalAtivo(null);
-      recarregarAlunos();
-      carregarCidades();
-    } catch (erro) {
-      toast.erro(erro.message);
-    } finally {
-      setProcessandoModal(false);
+  const renderColunaCursos = (
+    aluno,
+    renderItem,
+    { mostrarBotao = false } = {},
+  ) => {
+    const todos = aluno.cursos ?? [];
+    if (todos.length === 0) {
+      return <span className="text-text-secondary">—</span>;
     }
+
+    const expandido = alunoExpandido === aluno.id;
+    const visiveis = expandido ? todos : todos.slice(0, 1);
+    const restantes = todos.length - 1;
+
+    return (
+      <div className={mostrarBotao ? "max-w-55 space-y-2" : "space-y-2"}>
+        {visiveis.map((cursoItem) => (
+          <div
+            key={cursoItem.id}
+            className="flex min-h-9 flex-col items-start justify-center"
+          >
+            {renderItem(cursoItem)}
+          </div>
+        ))}
+
+        {mostrarBotao && restantes > 0 && (
+          <button
+            type="button"
+            onClick={() =>
+              setAlunoExpandido((atual) =>
+                atual === aluno.id ? null : aluno.id,
+              )
+            }
+            className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary-hover"
+            aria-expanded={expandido}
+          >
+            {expandido
+              ? "Ver menos"
+              : `Ver mais ${restantes} curso${restantes === 1 ? "" : "s"}`}
+            <FiChevronDown
+              size={14}
+              className={`transition-transform duration-200 ${
+                expandido ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+        )}
+      </div>
+    );
   };
-
-  const handleExcluirAlunos = async () => {
-    setProcessandoModal(true);
-    try {
-      const res = await alunoService.excluirAlunos();
-      if (res.excluidos === 0) {
-        toast.info("Nenhum aluno arquivado sem vínculos para excluir.");
-      } else {
-        const complemento =
-          res.mantidos > 0
-            ? ` ${res.mantidos} mantido${res.mantidos === 1 ? "" : "s"} por possuir vínculos.`
-            : "";
-        toast.sucesso(
-          `${res.excluidos} aluno${res.excluidos === 1 ? "" : "s"} excluído${res.excluidos === 1 ? "" : "s"}.${complemento}`,
-        );
-      }
-      setModalAtivo(null);
-      setPagina(1);
-      recarregarAlunos();
-      carregarCidades();
-    } catch (erro) {
-      toast.erro(erro.message);
-    } finally {
-      setProcessandoModal(false);
-    }
-  };
-
-  const renderBadgeStatusMatricula = (statusMatricula) => {
-    if (statusMatricula === "ATIVA") {
-      return (
-        <Badge variant="success" icon={<FiCheck size={12} />}>
-          Ativa
-        </Badge>
-      );
-    }
-
-    if (statusMatricula === "PENDENTE") {
-      return (
-        <Badge variant="warning" icon={<FiClock size={12} />}>
-          Pendente
-        </Badge>
-      );
-    }
-
-    return <span className="text-xs text-text-secondary">—</span>;
-  };
-
-  const opcoesCursos = cursos.map((curso) => ({
-    value: String(curso.id),
-    label: curso.nome,
-  }));
-
-  const opcoesCidades = cidades.map((c) => ({
-    value: c,
-    label: c,
-  }));
 
   const colunas = [
     {
@@ -305,86 +353,41 @@ const AlunosPage = () => {
       key: "curso",
       label: "Curso",
       cellClassName: "align-top",
-      render: (aluno) => {
-        const { visiveis, restantes, expandido } = obterCursosVisiveis(aluno);
-        if (visiveis.length === 0) {
-          return <span className="text-text-secondary">—</span>;
-        }
-
-        return (
-          <div className="max-w-55 space-y-2">
-            {visiveis.map((cursoItem) => (
-              <div
-                key={cursoItem.id}
-                className="flex min-h-9 flex-col justify-center"
+      render: (aluno) =>
+        renderColunaCursos(
+          aluno,
+          (cursoItem) => (
+            <>
+              <p
+                className="w-full truncate font-medium text-text-primary"
+                title={cursoItem.nome || ""}
               >
-                <p
-                  className="truncate font-medium text-text-primary"
-                  title={cursoItem.nome || ""}
-                >
-                  {cursoItem.nome || "—"}
+                {cursoItem.nome || "—"}
+              </p>
+              {cursoItem.periodo && (
+                <p className="text-xs text-text-secondary">
+                  Período: {formatarPeriodo(cursoItem.periodo)}
                 </p>
-                {cursoItem.periodo && (
-                  <p className="text-xs text-text-secondary">
-                    Período: {formatarPeriodo(cursoItem.periodo)}
-                  </p>
-                )}
-              </div>
-            ))}
-
-            {restantes.length > 0 && (
-              <button
-                type="button"
-                onClick={() => alternarCursos(aluno.id)}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary-hover cursor-pointer"
-                aria-expanded={expandido}
-              >
-                {expandido
-                  ? "Ver menos"
-                  : `Ver mais ${restantes.length} curso${
-                      restantes.length === 1 ? "" : "s"
-                    }`}
-                <FiChevronDown
-                  size={14}
-                  className={`transition-transform duration-200 ${
-                    expandido ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-            )}
-          </div>
-        );
-      },
+              )}
+            </>
+          ),
+          { mostrarBotao: true },
+        ),
     },
     {
       key: "classificacao",
       label: "Classificação",
       cellClassName: "align-top",
-      render: (aluno) => {
-        const { visiveis } = obterCursosVisiveis(aluno);
-        if (visiveis.length === 0) {
-          return <span className="text-text-secondary">-</span>;
-        }
-
-        return (
-          <div className="space-y-2">
-            {visiveis.map((cursoItem) => (
-              <div
-                key={cursoItem.id}
-                className="flex min-h-9 items-center"
-              >
-                {cursoItem.classificacao ? (
-                  <span className="font-semibold text-text-primary">
-                    {cursoItem.classificacao}º
-                  </span>
-                ) : (
-                  <span className="text-text-secondary">-</span>
-                )}
-              </div>
-            ))}
-          </div>
-        );
-      },
+      render: (aluno) =>
+        renderColunaCursos(aluno, (cursoItem) =>
+          cursoItem.classificacao ? (
+            <span className="font-semibold text-text-primary">
+              {cursoItem.classificacao}º
+            </span>
+          ) : (
+            <span className="text-text-secondary">—</span>
+          ),
+        ),
     },
     {
       key: "cidade",
@@ -402,25 +405,10 @@ const AlunosPage = () => {
       key: "statusMatricula",
       label: "Situação da Matrícula",
       cellClassName: "align-top",
-      render: (aluno) => {
-        const { visiveis } = obterCursosVisiveis(aluno);
-        if (visiveis.length === 0) {
-          return renderBadgeStatusMatricula(aluno.statusMatricula);
-        }
-
-        return (
-          <div className="space-y-2">
-            {visiveis.map((cursoItem) => (
-              <div
-                key={cursoItem.id}
-                className="flex min-h-9 items-center"
-              >
-                {renderBadgeStatusMatricula(cursoItem.statusMatricula)}
-              </div>
-            ))}
-          </div>
-        );
-      },
+      render: (aluno) =>
+        renderColunaCursos(aluno, (cursoItem) =>
+          renderBadgeStatusMatricula(cursoItem.statusMatricula),
+        ),
     },
     {
       key: "acoes",
@@ -432,47 +420,25 @@ const AlunosPage = () => {
           label={`Ações do aluno ${aluno.nome}`}
           itens={[
             aluno.status === "CANDIDATO" && {
-              label: "Ativar Aluno",
+              label: "Ativar aluno",
               icone: FiCheckCircle,
-              onClick: () =>
-                setModalAtivo({
-                  tipo: "alterarStatus",
-                  acao: "ativar",
-                  aluno,
-                  novoStatus: "ATIVO",
-                }),
+              onClick: () => setModalAtivo({ tipo: "ativar", aluno }),
             },
             (aluno.status === "ATIVO" || aluno.status === "CANDIDATO") && {
-              label: "Arquivar Aluno",
+              label: "Arquivar aluno",
               icone: FiArchive,
-              onClick: () =>
-                setModalAtivo({
-                  tipo: "alterarStatus",
-                  acao: "arquivar",
-                  aluno,
-                  novoStatus: "ARQUIVADO",
-                }),
+              onClick: () => setModalAtivo({ tipo: "arquivar", aluno }),
               variante: "danger",
             },
             aluno.status === "ARQUIVADO" && {
-              label: "Reativar Aluno",
+              label: "Reativar aluno",
               icone: FiRotateCcw,
-              onClick: () =>
-                setModalAtivo({
-                  tipo: "alterarStatus",
-                  acao: "reativar",
-                  aluno,
-                  novoStatus:
-                    aluno.cursos?.some((c) => c.statusMatricula === "ATIVA") ||
-                    aluno.statusMatricula === "ATIVA"
-                      ? "ATIVO"
-                      : "CANDIDATO",
-                }),
+              onClick: () => setModalAtivo({ tipo: "reativar", aluno }),
               variante: "success",
             },
             aluno.status === "ARQUIVADO" &&
               !aluno.possuiVinculos && {
-                label: "Excluir Aluno",
+                label: "Excluir aluno",
                 icone: FiTrash2,
                 onClick: () => setModalAtivo({ tipo: "excluirAluno", aluno }),
                 variante: "danger",
@@ -483,58 +449,15 @@ const AlunosPage = () => {
     },
   ];
 
-  const obterConfirmacaoSimples = () => {
-    if (modalAtivo?.tipo === "alterarStatus") {
-      const cfg = CONFIG_STATUS_ALUNO[modalAtivo.acao];
-      return {
-        titulo: cfg.titulo,
-        mensagem: cfg.mensagem(modalAtivo.aluno, modalAtivo.novoStatus),
-        textoConfirmar: cfg.textoConfirmar,
-        variante: cfg.variante,
-        onConfirmar: handleAtualizarStatusAluno,
-      };
-    }
-
-    if (modalAtivo?.tipo === "excluirArquivados") {
-      return {
-        titulo: "Excluir arquivados sem vínculos",
-        mensagem:
-          "Todos os alunos arquivados que não possuem compras, senhas ou histórico de atendimento serão excluídos permanentemente. Deseja continuar?",
-        textoConfirmar: "Excluir elegíveis",
-        variante: "danger",
-        onConfirmar: handleExcluirAlunos,
-      };
-    }
-
-    if (modalAtivo?.tipo === "excluirAluno") {
-      return {
-        titulo: "Excluir aluno",
-        mensagem: `Deseja excluir permanentemente o aluno "${modalAtivo.aluno?.nome}"? Essa ação não pode ser desfeita.`,
-        textoConfirmar: "Excluir",
-        variante: "danger",
-        onConfirmar: handleExcluirAluno,
-      };
-    }
-
-    return null;
-  };
-
-  const confirmacaoSimples = obterConfirmacaoSimples();
+  const rotuloStatus = ROTULO_STATUS_ALUNO[filtros.status] ?? "ativo";
 
   return (
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <p className="mt-1 text-text-secondary">
-            {total} {total === 1 ? "aluno" : "alunos"}{" "}
-            {filtros.status === "ATIVO"
-              ? "ativo"
-              : filtros.status === "CANDIDATO"
-                ? "candidato"
-                : "arquivado"}
-            {total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
-          </p>
-        </div>
+        <p className="text-text-secondary">
+          {total} {total === 1 ? "aluno" : "alunos"} {rotuloStatus}
+          {total === 1 ? "" : "s"} encontrado{total === 1 ? "" : "s"}.
+        </p>
 
         <div className="flex flex-wrap items-center gap-3">
           {filtros.status === "CANDIDATO" && (
@@ -542,10 +465,8 @@ const AlunosPage = () => {
               variant="danger"
               leftIcon={<FiArchive size={18} />}
               className="w-full sm:w-auto"
-              onClick={() => {
-                setEscopoArquivamento("todos");
-                setModalAtivo({ tipo: "arquivarCandidatos" });
-              }}
+              disabled={total === 0 || carregando}
+              onClick={() => setModalAtivo({ tipo: "arquivarCandidatos" })}
             >
               Arquivar candidatos
             </Button>
@@ -556,9 +477,10 @@ const AlunosPage = () => {
               variant="danger"
               leftIcon={<FiTrash2 size={18} />}
               className="w-full sm:w-auto"
+              disabled={total === 0 || carregando}
               onClick={() => setModalAtivo({ tipo: "excluirArquivados" })}
             >
-              Excluir Arquivados
+              Excluir arquivados
             </Button>
           )}
 
@@ -585,6 +507,7 @@ const AlunosPage = () => {
 
           <div className="w-full sm:w-64">
             <Select
+              aria-label="Filtrar por curso"
               value={filtros.cursoId}
               onChange={(e) => alterarFiltro("cursoId", e.target.value)}
               placeholder="Todos os cursos"
@@ -595,6 +518,7 @@ const AlunosPage = () => {
 
           <div className="w-full sm:w-56">
             <Select
+              aria-label="Filtrar por cidade"
               value={filtros.cidade}
               onChange={(e) => alterarFiltro("cidade", e.target.value)}
               placeholder="Todas as cidades"
@@ -624,93 +548,49 @@ const AlunosPage = () => {
         pagina={pagina}
         limite={ITENS_POR_PAGINA}
         total={total}
-        onPaginaChange={setPagina}
+        onPaginaChange={(novaPagina) => {
+          setPagina(novaPagina);
+          setAlunoExpandido(null);
+        }}
       />
 
       <ImportarAlunosModal
         aberto={modalAtivo?.tipo === "importacao"}
         onFechar={() => setModalAtivo(null)}
         onSucesso={() => {
-          setModalAtivo(null);
-          alterarFiltro("status", "CANDIDATO");
-          recarregarAlunos();
-          carregarCidades();
+          const jaNaListaCandidatos =
+            !filtros.busca &&
+            !filtros.cursoId &&
+            !filtros.cidade &&
+            filtros.status === "CANDIDATO" &&
+            pagina === 1;
+
+          setFiltros({ ...FILTROS_INICIAIS, status: "CANDIDATO" });
+          setPagina(1);
+          setAlunoExpandido(null);
+          void recarregarCidades();
+
+          if (jaNaListaCandidatos) {
+            void recarregarAlunos({ silencioso: true });
+          }
         }}
       />
 
-      <ConfirmarModal
+      <ArquivarCandidatosModal
         aberto={modalAtivo?.tipo === "arquivarCandidatos"}
         onFechar={fecharModal}
         onConfirmar={handleArquivarCandidatos}
-        titulo="Arquivar candidatos"
-        textoConfirmar="Arquivar"
         salvando={processandoModal}
-      >
-        <div className="space-y-4">
-          <p className="text-text-secondary">
-            Escolha se deseja arquivar todos os alunos candidatos ou apenas os
-            de um processo seletivo específico.
-          </p>
-
-          <div className="space-y-2">
-            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-text-primary">
-              <input
-                type="radio"
-                name="escopoArquivamento"
-                value="todos"
-                checked={escopoArquivamento === "todos"}
-                onChange={(e) => setEscopoArquivamento(e.target.value)}
-                className="accent-primary"
-              />
-              Todos os candidatos
-            </label>
-
-            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-text-primary">
-              <input
-                type="radio"
-                name="escopoArquivamento"
-                value="processo"
-                checked={escopoArquivamento === "processo"}
-                onChange={(e) => setEscopoArquivamento(e.target.value)}
-                className="accent-primary"
-              />
-              Apenas de um processo seletivo específico
-            </label>
-          </div>
-
-          {escopoArquivamento === "processo" && (
-            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-              <Input
-                type="number"
-                label="Ano do processo"
-                onKeyDown={bloquearTeclasNaoInteiras}
-                value={anoProcesso}
-                onChange={(e) => setAnoProcesso(e.target.value)}
-                min={2000}
-                max={2100}
-                size="md"
-              />
-
-              <Select
-                label="Semestre"
-                value={semestreProcesso}
-                onChange={(e) => setSemestreProcesso(e.target.value)}
-                options={OPCOES_SEMESTRE}
-                size="md"
-              />
-            </div>
-          )}
-        </div>
-      </ConfirmarModal>
+      />
 
       <ConfirmarModal
-        aberto={Boolean(confirmacaoSimples)}
+        aberto={Boolean(confirmacaoAtiva)}
         onFechar={fecharModal}
-        onConfirmar={confirmacaoSimples?.onConfirmar}
-        titulo={confirmacaoSimples?.titulo}
-        mensagem={confirmacaoSimples?.mensagem}
-        textoConfirmar={confirmacaoSimples?.textoConfirmar}
-        variante={confirmacaoSimples?.variante}
+        onConfirmar={handleConfirmarAcao}
+        titulo={confirmacaoAtiva?.titulo}
+        mensagem={confirmacaoAtiva?.mensagem}
+        textoConfirmar={confirmacaoAtiva?.textoConfirmar}
+        variante={confirmacaoAtiva?.variante}
         salvando={processandoModal}
       />
     </section>

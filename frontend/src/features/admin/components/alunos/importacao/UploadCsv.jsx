@@ -4,16 +4,13 @@ import Alert from "../../../../../components/ui/Alert";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import Select from "../../../../../components/ui/Select";
+import { OPCOES_SEMESTRE } from "../../../../../constants/cursoOptions";
 import {
   decodificarCsv,
   parsearCsv,
   analisarCsvAlunos,
 } from "./importAluno";
-
-const OPCOES_SEMESTRE = [
-  { value: "1", label: "1º Semestre" },
-  { value: "2", label: "2º Semestre" },
-];
+import { bloquearTeclasNaoInteiras } from "../../../../../utils/formHelpers";
 
 const formatarTamanhoArquivo = (bytes) => {
   if (bytes === 0) return "0 B";
@@ -24,6 +21,8 @@ const formatarTamanhoArquivo = (bytes) => {
 };
 
 const UploadCsv = ({
+  arquivo = null,
+  onAlterarArquivo,
   anoProcesso,
   onAlterarAno,
   semestreProcesso,
@@ -33,7 +32,6 @@ const UploadCsv = ({
   onAvancar,
   onCancelar,
 }) => {
-  const [arquivo, setArquivo] = React.useState(null);
   const [arrastando, setArrastando] = React.useState(false);
   const [analisando, setAnalisando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
@@ -61,7 +59,7 @@ const UploadCsv = ({
 
   const handleArquivoSelecionado = (novoArquivo) => {
     if (validarArquivo(novoArquivo)) {
-      setArquivo(novoArquivo);
+      onAlterarArquivo?.(novoArquivo);
     }
   };
 
@@ -84,7 +82,7 @@ const UploadCsv = ({
   };
 
   const handleRemoverArquivo = () => {
-    setArquivo(null);
+    onAlterarArquivo?.(null);
     setErro(null);
     if (inputArquivoRef.current) {
       inputArquivoRef.current.value = "";
@@ -186,6 +184,7 @@ const UploadCsv = ({
           required
           min="2000"
           max="2100"
+          onKeyDown={bloquearTeclasNaoInteiras}
           value={anoProcesso}
           onChange={(e) => onAlterarAno(e.target.value)}
           placeholder="Digite o ano..."

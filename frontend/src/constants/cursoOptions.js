@@ -13,3 +13,8 @@ export const PERIODOS_CURSO = [
   { value: "integral", label: "Integral" },
   { value: "online", label: "Online" },
 ];
+
+export const OPCOES_SEMESTRE = [
+  { value: "1", label: "1º Semestre" },
+  { value: "2", label: "2º Semestre" },
+];

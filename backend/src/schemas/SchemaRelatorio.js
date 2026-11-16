@@ -1,55 +1,23 @@
 import { z } from "zod";
-
-const vazioParaUndefined = (valor) => (valor === "" ? undefined : valor);
+import {
+  camposPeriodo,
+  validarPeriodoPersonalizado,
+  vazioParaUndefined,
+} from "./SchemaDashboard.js";
 
 const id = z.coerce
   .number({ error: "O ID deve ser um número válido." })
   .int("O ID deve ser um número inteiro.")
   .positive("O ID deve ser maior que zero.");
 
-const data = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Informe uma data no formato YYYY-MM-DD.")
-  .refine((valor) => {
-    const [ano, mes, dia] = valor.split("-").map(Number);
-    const dataValida = new Date(Date.UTC(ano, mes - 1, dia));
-    return (
-      dataValida.getUTCFullYear() === ano &&
-      dataValida.getUTCMonth() === mes - 1 &&
-      dataValida.getUTCDate() === dia
-    );
-  }, "Informe uma data válida.");
-
 const camposFiltro = {
-  periodo: z
-    .enum(["TODO", "HOJE", "SEMANA", "MES", "PERSONALIZADO"])
-    .default("TODO"),
-  dataInicio: z.preprocess(vazioParaUndefined, data.optional()),
-  dataFim: z.preprocess(vazioParaUndefined, data.optional()),
+  ...camposPeriodo,
   cursoId: z.preprocess(vazioParaUndefined, id.optional()),
   formaPagamento: z.preprocess(
     vazioParaUndefined,
     z.enum(["dinheiro", "pix", "debito", "credito"]).optional(),
   ),
   atendenteId: z.preprocess(vazioParaUndefined, id.optional()),
-};
-
-const validarPeriodoPersonalizado = (query, contexto) => {
-  if (query.periodo !== "PERSONALIZADO") return;
-
-  if (!query.dataInicio || !query.dataFim) {
-    contexto.addIssue({
-      code: "custom",
-      path: ["dataInicio"],
-      message: "Informe as datas inicial e final.",
-    });
-  } else if (query.dataInicio > query.dataFim) {
-    contexto.addIssue({
-      code: "custom",
-      path: ["dataFim"],
-      message: "A data inicial deve ser anterior ou igual à data final.",
-    });
-  }
 };
 
 export const obterDadosRelatorioSchema = z.object({

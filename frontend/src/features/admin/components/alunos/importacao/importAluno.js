@@ -73,7 +73,7 @@ export const parsearCsv = (texto, delimitador = ";") => {
   // Remove BOM (\uFEFF) do primeiro cabeçalho se houver
   const cabecalhos = linhas
     .shift()
-    .map((c) => c.replace(/^\uFEFF/, "").trim().toUpperCase());
+    .map((c) => normalizarTexto(c.replace(/^\uFEFF/, "")));
 
   // Validação das colunas obrigatórias
   const colunasFaltantes = CABECALHOS_OBRIGATORIOS.filter(
@@ -140,11 +140,12 @@ export const sugerirAssociacoesCursos = (
   return gruposCursos.map((grupo) => {
     if (grupo.idCurso) return grupo;
 
-    const matchNome = cursosExistentes.find(
-      (c) =>
-        normalizarNomeComparacao(c.nome) ===
-        normalizarNomeComparacao(grupo.nomeCsv),
+    const nomeGrupo = normalizarNomeComparacao(grupo.nomeCsv);
+    const correspondencias = cursosExistentes.filter(
+      (c) => normalizarNomeComparacao(c.nome) === nomeGrupo,
     );
+    const matchNome =
+      correspondencias.find((c) => !c.arquivado) ?? correspondencias[0];
 
     if (!matchNome) return grupo;
 
@@ -180,9 +181,7 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
     }
 
     const escolaridadeValida =
-      escolaridadeTxt === "SIM" ||
-      escolaridadeTxt === "NAO" ||
-      escolaridadeTxt === "NÃO";
+      escolaridadeTxt === "SIM" || escolaridadeTxt === "NAO";
 
     const classificacaoValida =
       classificacao === null || (Number.isInteger(classificacao) && classificacao > 0);

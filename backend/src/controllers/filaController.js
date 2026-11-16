@@ -58,6 +58,7 @@ export const chamarSenha = async (req, res) => {
     codigo: senha.senhaCodigo,
     posto: etapa,
     guiche: req.usuario?.guiche ?? null,
+    prioritaria: Boolean(senha.tipoSenha),
   });
 
   return res.json({
@@ -74,7 +75,10 @@ export const chamarSenha = async (req, res) => {
 
 export const rechamarSenha = async (req, res) => {
   const { senhaId, etapa } = req.validado.body;
-  const guiche = req.usuario.guiche;
+
+  if (etapa !== req.usuario.tela) {
+    throw etapasDiferentes();
+  }
 
   const senha = await senhaService.buscarPorId(senhaId);
 
@@ -97,6 +101,7 @@ export const rechamarSenha = async (req, res) => {
     codigo: senha.senhaCodigo,
     posto: etapa,
     guiche: req.usuario?.guiche ?? null,
+    prioritaria: Boolean(senha.tipoSenha),
   });
 
   return res.status(200).json({

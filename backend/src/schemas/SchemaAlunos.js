@@ -45,6 +45,15 @@ export const listarAlunosSchema = z.object({
   }),
 });
 
+export const listarCidadesSchema = z.object({
+  query: z.object({
+    status: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      statusAluno.optional(),
+    ),
+  }),
+});
+
 export const atualizarAlunoSchema = z.object({
   params: z.object({
     id: id,

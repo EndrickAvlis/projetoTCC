@@ -52,17 +52,20 @@ export const ToastProvider = ({ children }) => {
     };
   }, [exibirToast]);
 
-  const toast = {
-    erro: (mensagem) => exibirToast("error", mensagem),
-    sucesso: (mensagem) => exibirToast("success", mensagem),
-    alerta: (mensagem) => exibirToast("warning", mensagem),
-    info: (mensagem) => exibirToast("info", mensagem),
-    confirmacao: (mensagem) =>
-      exibirToast("success", mensagem, DURACAO_CONFIRMACAO_MS, false),
-    fechar: fecharToast,
-    error: (mensagem) => exibirToast("error", mensagem),
-    success: (mensagem) => exibirToast("success", mensagem),
-  };
+  const toast = React.useMemo(
+    () => ({
+      erro: (mensagem) => exibirToast("error", mensagem),
+      sucesso: (mensagem) => exibirToast("success", mensagem),
+      alerta: (mensagem) => exibirToast("warning", mensagem),
+      info: (mensagem) => exibirToast("info", mensagem),
+      confirmacao: (mensagem) =>
+        exibirToast("success", mensagem, DURACAO_CONFIRMACAO_MS, false),
+      fechar: fecharToast,
+      error: (mensagem) => exibirToast("error", mensagem),
+      success: (mensagem) => exibirToast("success", mensagem),
+    }),
+    [exibirToast, fecharToast],
+  );
 
   return (
     <ToastContext.Provider value={{ toast, toastAtivo, fecharToast }}>

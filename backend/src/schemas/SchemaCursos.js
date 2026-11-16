@@ -66,13 +66,15 @@ export const listarCursosSchema = z.object({
       .optional()
       .default(""),
     arquivado: z
-      .enum(["true", "false"], {
-        error: "O filtro arquivado deve ser true ou false.",
+      .enum(["true", "false", "todos"], {
+        error: "O filtro arquivado deve ser true, false ou todos.",
       })
       .optional()
-      .transform((valor) =>
-        valor === undefined ? undefined : valor === "true",
-      ),
+      .transform((valor) => {
+        if (valor === undefined) return undefined;
+        if (valor === "todos") return null;
+        return valor === "true";
+      }),
   }),
 });
 

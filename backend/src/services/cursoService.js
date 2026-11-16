@@ -48,7 +48,7 @@ export default class CursoService extends BaseService {
 
     const cursos = await super.listar(
       {
-        arquivado,
+        ...(arquivado !== null && { arquivado }),
         ...(buscaLimpa && {
           nomeCurso: {
             contains: buscaLimpa,
@@ -261,12 +261,14 @@ export default class CursoService extends BaseService {
           idCurso: { not: cursoIdIgnorado },
         }),
       },
-      select: { idCurso: true },
+      select: { idCurso: true, arquivado: true },
     });
 
     if (existente) {
       throw erroConflito(
-        "Já existe um curso cadastrado com este nome.",
+        existente.arquivado
+          ? "Já existe um curso arquivado com este nome. Desarquive-o na aba Arquivados."
+          : "Já existe um curso cadastrado com este nome.",
         "CURSO_JA_CADASTRADO",
       );
     }

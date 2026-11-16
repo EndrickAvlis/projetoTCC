@@ -1,40 +1,94 @@
 import prisma from "../config/prisma.js";
 
-const dataLocal = (data) => new Intl.DateTimeFormat("en-CA", {
-  timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit",
-}).format(data);
+const FUSO_HORARIO = "America/Sao_Paulo";
 
-const inicioDia = (dia) => new Date(`${dia}T03:00:00.000Z`);
-const fimDia = (dia) => new Date(new Date(inicioDia(dia)).getTime() + 86400000 - 1);
+const obterDiaLocal = (data = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: FUSO_HORARIO,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(data);
+
+const inicioDiaLocal = (dia) => new Date(`${dia}T00:00:00-03:00`);
+const fimDiaLocal = (dia) => new Date(`${dia}T23:59:59.999-03:00`);
 
 export const intervaloPeriodo = ({ periodo, dataInicio, dataFim }) => {
   if (periodo === "TODO") return undefined;
-  if (periodo === "PERSONALIZADO") return { gte: inicioDia(dataInicio), lte: fimDia(dataFim) };
+  if (periodo === "PERSONALIZADO") {
+    return { gte: inicioDiaLocal(dataInicio), lte: fimDiaLocal(dataFim) };
+  }
 
-  const hoje = dataLocal(new Date());
+  const hoje = obterDiaLocal();
   let primeiroDia = hoje;
+
   if (periodo === "SEMANA") {
-    const data = inicioDia(hoje);
+    const data = new Date(`${hoje}T12:00:00Z`);
     const diaSemana = data.getUTCDay();
     data.setUTCDate(data.getUTCDate() - ((diaSemana + 6) % 7));
     primeiroDia = data.toISOString().slice(0, 10);
   } else if (periodo === "MES") {
     primeiroDia = `${hoje.slice(0, 7)}-01`;
   }
-  return { gte: inicioDia(primeiroDia), lte: fimDia(hoje) };
+
+  return { gte: inicioDiaLocal(primeiroDia), lte: fimDiaLocal(hoje) };
 };
 
+export const arredondarMoeda = (valor) => Math.round(Number(valor) * 100) / 100;
+
 const numero = (valor) => Number(valor ?? 0);
+
+const ordenarUniformes = (a, b) =>
+  b.quantidade - a.quantidade ||
+  b.total - a.total ||
+  a.nome.localeCompare(b.nome, "pt-BR");
+
+const ordenarCursos = (a, b) =>
+  b.total - a.total ||
+  b.quantidade - a.quantidade ||
+  a.nome.localeCompare(b.nome, "pt-BR");
 
 export default class DashboardService {
   async obterDashboard(filtros) {
     const intervalo = intervaloPeriodo(filtros);
     const compras = await prisma.compra.findMany({
       where: intervalo ? { dataHoraCompra: intervalo } : {},
-      include: {
-        itensCompra: { include: { produto: true } },
-        contribuicoes: true,
-        aluno: { include: { cursosAluno: { include: { curso: true }, take: 1 } } },
+      select: {
+        valorCompra: true,
+        itensCompra: {
+          select: {
+            codProduto: true,
+            quantidadeItem: true,
+            precoUnitario: true,
+            produto: {
+              select: {
+                nomeProduto: true,
+                tipoProduto: true,
+              },
+            },
+          },
+        },
+        contribuicoes: {
+          select: {
+            valorContribuicao: true,
+          },
+        },
+        aluno: {
+          select: {
+            cursosAluno: {
+              orderBy: [{ statusMatricula: "asc" }, { codCurso: "asc" }],
+              take: 1,
+              select: {
+                codCurso: true,
+                curso: {
+                  select: {
+                    nomeCurso: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -48,46 +102,63 @@ export default class DashboardService {
     let arrecadado = 0;
 
     for (const compra of compras) {
-      arrecadado += numero(compra.valorCompra);
-      let quantidadeCompra = 0;
+      const valorCompra = numero(compra.valorCompra);
+      arrecadado = arredondarMoeda(arrecadado + valorCompra);
+
       for (const item of compra.itensCompra) {
         const quantidade = item.quantidadeItem;
-        const valor = numero(item.precoUnitario) * quantidade;
-        quantidadeCompra += quantidade;
+        const valor = arredondarMoeda(numero(item.precoUnitario) * quantidade);
         const tipo = item.produto.tipoProduto;
+
         if (tipo === "uniforme" || tipo === "armario") {
-          const categoria = tipo === "uniforme" ? categorias.uniformes : categorias.armarios;
+          const categoria =
+            tipo === "uniforme" ? categorias.uniformes : categorias.armarios;
           categoria.quantidade += quantidade;
-          categoria.valor += valor;
+          categoria.valor = arredondarMoeda(categoria.valor + valor);
         }
+
         if (tipo === "uniforme") {
           const id = item.codProduto;
-          const produto = produtos.get(id) ?? { id, nome: item.produto.nomeProduto, quantidade: 0, total: 0 };
+          const produto = produtos.get(id) ?? {
+            id,
+            nome: item.produto.nomeProduto,
+            quantidade: 0,
+            total: 0,
+          };
           produto.quantidade += quantidade;
-          produto.total += valor;
+          produto.total = arredondarMoeda(produto.total + valor);
           produtos.set(id, produto);
         }
       }
+
       for (const contribuicao of compra.contribuicoes) {
         categorias.contribuicao.quantidade += 1;
-        categorias.contribuicao.valor += numero(contribuicao.valorContribuicao);
+        categorias.contribuicao.valor = arredondarMoeda(
+          categorias.contribuicao.valor +
+            numero(contribuicao.valorContribuicao),
+        );
       }
+
       const matricula = compra.aluno?.cursosAluno?.[0];
-      if (matricula) {
-        const id = matricula.codCurso;
-        const curso = cursos.get(id) ?? { id, nome: matricula.curso.nomeCurso, quantidade: 0, total: 0 };
-        curso.quantidade += quantidadeCompra;
-        curso.total += numero(compra.valorCompra);
-        cursos.set(id, curso);
-      }
+      const cursoId = matricula?.codCurso ?? "sem-curso";
+      const cursoNome =
+        matricula?.curso?.nomeCurso ?? "Sem curso vinculado";
+      const curso = cursos.get(cursoId) ?? {
+        id: cursoId,
+        nome: cursoNome,
+        quantidade: 0,
+        total: 0,
+      };
+      curso.quantidade += 1;
+      curso.total = arredondarMoeda(curso.total + valorCompra);
+      cursos.set(cursoId, curso);
     }
 
-    const ordenar = (a, b) => b.quantidade - a.quantidade;
     return {
       totais: { arrecadado, vendas: compras.length },
       categorias,
-      produtos: [...produtos.values()].sort(ordenar),
-      cursos: [...cursos.values()].sort(ordenar),
+      produtos: [...produtos.values()].sort(ordenarUniformes),
+      cursos: [...cursos.values()].sort(ordenarCursos),
     };
   }
 }

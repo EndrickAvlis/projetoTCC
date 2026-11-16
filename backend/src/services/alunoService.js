@@ -73,9 +73,12 @@ export default class AlunoService extends BaseService {
     };
   }
 
-  async listarCidades() {
+  async listarCidades({ status } = {}) {
     const registros = await prisma.aluno.findMany({
-      where: { cidadeAluno: { not: null } },
+      where: {
+        cidadeAluno: { not: null },
+        ...(status && { statusAluno: status }),
+      },
       select: { cidadeAluno: true },
       distinct: ["cidadeAluno"],
       orderBy: { cidadeAluno: "asc" },
@@ -97,16 +100,26 @@ export default class AlunoService extends BaseService {
       });
     }
 
-    return super.atualizar(
-      id,
-      {
-        nomeAluno: nome ? formatarNome(nome) : undefined,
-        statusAluno: status,
-      },
-      {
+    return prisma.$transaction(async (tx) => {
+      if (status === "ATIVO") {
+        await tx.cursoAluno.updateMany({
+          where: {
+            codAluno: id,
+            statusMatricula: "PENDENTE",
+          },
+          data: { statusMatricula: "ATIVA" },
+        });
+      }
+
+      return tx.aluno.update({
+        where: { idAluno: id },
+        data: {
+          nomeAluno: nome ? formatarNome(nome) : undefined,
+          statusAluno: status,
+        },
         include: alunoInclude,
-      },
-    );
+      });
+    });
   }
 
   async arquivarCandidatos({ anoProcesso, semestreProcesso } = {}) {
@@ -204,6 +217,22 @@ export default class AlunoService extends BaseService {
 
   async importarAlunos({ anoProcesso, semestreProcesso, candidatos }) {
     return prisma.$transaction(async (tx) => {
+      const idsCursos = [...new Set(candidatos.map((c) => c.cursoId))];
+      const cursosAtivos = await tx.curso.findMany({
+        where: { idCurso: { in: idsCursos }, arquivado: false },
+        select: { idCurso: true },
+      });
+
+      if (cursosAtivos.length !== idsCursos.length) {
+        throw new AppError(
+          "Um ou mais cursos selecionados não existem ou estão arquivados.",
+          {
+            status: 409,
+            code: "CURSO_INDISPONIVEL",
+          },
+        );
+      }
+
       const candidatosUnicos = removerDuplicadosLocais(candidatos);
       const duplicadosInternos = candidatos.length - candidatosUnicos.length;
 
