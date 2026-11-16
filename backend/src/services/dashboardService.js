@@ -76,7 +76,7 @@ export default class DashboardService {
         aluno: {
           select: {
             cursosAluno: {
-              orderBy: [{ statusMatricula: "asc" }, { codCurso: "asc" }],
+              orderBy: [{ statusMatricula: "desc" }, { codCurso: "asc" }],
               take: 1,
               select: {
                 codCurso: true,

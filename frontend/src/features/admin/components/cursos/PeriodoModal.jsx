@@ -16,6 +16,7 @@ import { formatarPeriodo } from "../../../../utils/formatters";
 
 const PeriodoModalForm = ({
   periodo = null,
+  periodoInicial = "",
   periodosExistentes = [],
   onFechar,
   onSalvar,
@@ -24,7 +25,8 @@ const PeriodoModalForm = ({
   const emEdicao = Boolean(periodo);
   const periodosExistentesSet = new Set(periodosExistentes);
 
-  const [periodoSelecionado, setPeriodoSelecionado] = React.useState("");
+  const [periodoSelecionado, setPeriodoSelecionado] =
+    React.useState(periodoInicial);
   const [vagasTotais, setVagasTotais] = React.useState(() =>
     periodo?.vagasTotais != null ? String(periodo.vagasTotais) : "",
   );
@@ -152,6 +154,7 @@ const PeriodoModalForm = ({
 const PeriodoModal = ({
   aberto,
   periodo = null,
+  periodoInicial = "",
   periodosExistentes = [],
   onFechar,
   onSalvar,
@@ -170,8 +173,9 @@ const PeriodoModal = ({
     >
       {aberto && (
         <PeriodoModalForm
-          key={periodo ? `edit-${periodo.id}` : "new"}
+          key={periodo ? `edit-${periodo.id}` : `new-${periodoInicial}`}
           periodo={periodo}
+          periodoInicial={periodoInicial}
           periodosExistentes={periodosExistentes}
           onFechar={onFechar}
           onSalvar={onSalvar}

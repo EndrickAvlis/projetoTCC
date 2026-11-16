@@ -152,7 +152,6 @@ export const sugerirAssociacoesCursos = (
     return {
       ...grupo,
       idCurso: String(matchNome.id),
-      tipoAssociacao: "SUGESTAO",
     };
   });
 };
@@ -236,7 +235,6 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
     periodos: Array.from(grupo.periodos),
     totalCandidatos: grupo.totalCandidatos,
     idCurso: "",
-    tipoAssociacao: "PENDENTE",
   }));
 
   const gruposCursos = sugerirAssociacoesCursos(gruposBase, cursosExistentes);

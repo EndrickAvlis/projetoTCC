@@ -8,6 +8,7 @@ const compraDetalhesInclude = {
     include: {
       cursosAluno: {
         include: { curso: true },
+        orderBy: [{ statusMatricula: "desc" }, { codCurso: "asc" }],
         take: 1,
       },
     },

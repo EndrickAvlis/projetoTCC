@@ -183,7 +183,7 @@ const AlunosPage = () => {
     limite: ITENS_POR_PAGINA,
   });
 
-  const { cursos } = useCursos({ arquivado: "todos" });
+  const { cursos, carregando: carregandoCursos, recarregar: recarregarCursos } = useCursos({ arquivado: "todos" });
 
   const opcoesCursos = React.useMemo(
     () =>
@@ -574,6 +574,9 @@ const AlunosPage = () => {
             void recarregarAlunos({ silencioso: true });
           }
         }}
+        cursosExistentes={cursos}
+        carregandoCursos={carregandoCursos}
+        recarregarCursos={recarregarCursos}
       />
 
       <ArquivarCandidatosModal

@@ -24,7 +24,7 @@ alunoRoutes.patch(
   "/arquivar",
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(alunos.arquivarCandidatosSchema),
-  alunoController.arquivarCandidatos,
+  alunoController.arquivarAlunos,
 );
 
 alunoRoutes.patch(
