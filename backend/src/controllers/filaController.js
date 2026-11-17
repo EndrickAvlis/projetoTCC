@@ -34,25 +34,11 @@ export const chamarSenha = async (req, res) => {
     throw etapasDiferentes();
   }
 
-  const atendimentoAberto = await historicoSenhaService.listarAtendimentoAberto(
-    idUsuario,
+  const { senha, historico } = await filaService.chamarSenhaSelecionada(
+    senhaId,
     etapa,
+    idUsuario,
   );
-
-  if (atendimentoAberto) {
-    throw new AppError("Você já possui um atendimento aberto nesta etapa.", {
-      status: 409,
-      code: "ATENDIMENTO_ABERTO",
-    });
-  }
-
-  const senha = await filaService.chamarSenhaSelecionada(senhaId, etapa);
-
-  const historico = await historicoSenhaService.criar({
-    codSenha: senha.idSenha,
-    codVoluntario: idUsuario,
-    etapaHistorico: etapa,
-  });
 
   painelService.mostrarSenhaChamada({
     codigo: senha.senhaCodigo,

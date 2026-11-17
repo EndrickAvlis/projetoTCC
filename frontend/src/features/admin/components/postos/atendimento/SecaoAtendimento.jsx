@@ -1,15 +1,11 @@
 import * as React from "react";
 import Alert from "../../../../../components/ui/Alert";
-import Select from "../../../../../components/ui/Select";
 import Card from "../../../../../components/ui/Card";
 import FiltroPeriodo from "../../../../../components/ui/FiltroPeriodo";
 import { obterRotuloPeriodo } from "../../../../../constants/periodoOptions";
 import { useAtendimento } from "../../../hooks/postos/useAtendimento";
-import { useCursos } from "../../../hooks/useCursos";
 import GraficoFinalizadasHora from "./GraficoFinalizadasHora";
 import CursosAtivos from "./CursosAtivos";
-
-import { PERIODOS_CURSO } from "../../../../../constants/cursoOptions";
 
 const CONFIG_CARDS = [
   {
@@ -44,19 +40,14 @@ const CONFIG_CARDS = [
 ];
 
 const SecaoAtendimento = () => {
-  const [cursoId, setCursoId] = React.useState("");
-  const [periodoCurso, setPeriodoCurso] = React.useState("");
   const [tipoPeriodo, setTipoPeriodo] = React.useState("HOJE");
   const [dataInicio, setDataInicio] = React.useState("");
   const [dataFim, setDataFim] = React.useState("");
 
-  const { cursos } = useCursos();
   const { cards, finalizadasPorHora, cursosAtivos, erro } = useAtendimento({
     tipoPeriodo,
     dataInicio: tipoPeriodo === "PERSONALIZADO" ? dataInicio : undefined,
     dataFim: tipoPeriodo === "PERSONALIZADO" ? dataFim : undefined,
-    cursoId: cursoId ? Number(cursoId) : undefined,
-    periodoCurso: periodoCurso || undefined,
   });
 
   const rotuloPeriodoAtual = obterRotuloPeriodo({
@@ -67,29 +58,7 @@ const SecaoAtendimento = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 border-b border-border pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-56">
-            <Select
-              size="md"
-              value={cursoId}
-              onChange={(e) => setCursoId(e.target.value)}
-              options={cursos.map((c) => ({ value: c.id, label: c.nome }))}
-              placeholder="Todos os cursos"
-            />
-          </div>
-
-          <div className="w-full sm:w-56">
-            <Select
-              size="md"
-              value={periodoCurso}
-              onChange={(e) => setPeriodoCurso(e.target.value)}
-              options={PERIODOS_CURSO}
-              placeholder="Todos os períodos"
-            />
-          </div>
-        </div>
-
+      <div className="border-b border-border pb-4">
         <FiltroPeriodo
           incluirTodo={false}
           periodo={tipoPeriodo}

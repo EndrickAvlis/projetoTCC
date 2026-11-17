@@ -14,9 +14,40 @@ export class ApiError extends Error {
   }
 }
 
+const CHAVE_ACCESS_TOKEN = "siga_access_token";
+const CHAVE_REFRESH_TOKEN = "siga_refresh_token";
+
+export const obterAccessToken = () =>
+  window.sessionStorage.getItem(CHAVE_ACCESS_TOKEN);
+
+export const obterRefreshToken = () =>
+  window.sessionStorage.getItem(CHAVE_REFRESH_TOKEN);
+
+export const salvarTokensSessao = ({ accessToken, refreshToken } = {}) => {
+  if (accessToken) {
+    window.sessionStorage.setItem(CHAVE_ACCESS_TOKEN, accessToken);
+  }
+  if (refreshToken) {
+    window.sessionStorage.setItem(CHAVE_REFRESH_TOKEN, refreshToken);
+  }
+};
+
+export const limparTokensSessao = () => {
+  window.sessionStorage.removeItem(CHAVE_ACCESS_TOKEN);
+  window.sessionStorage.removeItem(CHAVE_REFRESH_TOKEN);
+};
+
 export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = obterAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 let promiseRefresh = null;
@@ -37,6 +68,7 @@ apiClient.interceptors.response.use(
         erro.response?.data?.code === "USUARIO_DESATIVADO" ||
         erro.response?.data?.code === "PERMISSAO_ALTERADA"
       ) {
+        limparTokensSessao();
         window.dispatchEvent(
           new CustomEvent("auth:unauthorized", {
             detail: { message: erro.response.data.message },
@@ -46,17 +78,24 @@ apiClient.interceptors.response.use(
       }
 
       if (!promiseRefresh) {
+        const refreshToken = obterRefreshToken();
         promiseRefresh = apiClient
-          .post("/auth/refresh")
+          .post("/auth/refresh", refreshToken ? { refreshToken } : undefined)
           .then((res) => {
+            if (res?.data?.accessToken) {
+              salvarTokensSessao({ accessToken: res.data.accessToken });
+            }
             if (res?.data) {
+              const usuario = { ...res.data };
+              delete usuario.accessToken;
               window.dispatchEvent(
-                new CustomEvent("auth:refreshed", { detail: res.data }),
+                new CustomEvent("auth:refreshed", { detail: usuario }),
               );
             }
             return res;
           })
           .catch((falhouReq) => {
+            limparTokensSessao();
             const code = falhouReq.response?.data?.code;
             const message =
               code === "USUARIO_DESATIVADO" ||
@@ -77,6 +116,9 @@ apiClient.interceptors.response.use(
       }
 
       await promiseRefresh;
+      if (dadosReq.headers) {
+        delete dadosReq.headers.Authorization;
+      }
       return apiClient(dadosReq);
     }
 

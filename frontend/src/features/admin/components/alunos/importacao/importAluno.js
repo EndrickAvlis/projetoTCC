@@ -109,6 +109,20 @@ const normalizarTexto = (valor) => {
     .replace(/\s+/g, " ");
 };
 
+const normalizarSexo = (valor) => {
+  const texto = normalizarTexto(valor);
+  if (texto === "M" || texto === "MASC" || texto === "MASCULINO") {
+    return "MASCULINO";
+  }
+  if (texto === "F" || texto === "FEM" || texto === "FEMININO") {
+    return "FEMININO";
+  }
+  if (texto === "O" || texto === "OUTRO" || texto === "OUTROS") {
+    return "OUTRO";
+  }
+  return "";
+};
+
 const normalizarPeriodo = (valor) => {
   const normalizado = normalizarTexto(valor)
     .replaceAll("-", "")
@@ -167,7 +181,7 @@ export const analisarCsvAlunos = (registros, cursosExistentes = []) => {
     const nomeAluno = registro.NOME.trim();
     const escolaridadeTxt = normalizarTexto(registro.ESCOLARIDADE);
     const cidadeAluno = registro.CIDADE.trim();
-    const sexoAluno = normalizarTexto(registro.SEXO);
+    const sexoAluno = normalizarSexo(registro.SEXO);
     const habilitacao = registro.HABILITACAO.trim();
     const periodo = normalizarPeriodo(registro.PERIODO);
     const classificacaoTxt = registro.CLASSIFICACAO.trim();

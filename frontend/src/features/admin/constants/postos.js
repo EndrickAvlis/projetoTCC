@@ -8,6 +8,7 @@ export const POSTOS = ["triagem", "apm", "docs"];
 
 export const CORES_STATUS = {
   aguardando: "info",
+  chamada: "primary",
   em_atendimento: "success",
   pendente: "warning",
   finalizada: "neutral",
@@ -15,10 +16,9 @@ export const CORES_STATUS = {
 };
 
 export const NOMES_DOCUMENTOS = {
-  foto_3x4: "Foto 3x4",
-  rg_cin: "RG / CIN",
-  cpf_cin: "CPF / CIN",
-  historico_ensino_fundamental: "Histórico Escolar",
-  comprovante_residencia: "Comprovante de Residência",
-  comprovante_escolaridade_publica: "Comprovante de Escola Pública",
+  RG_CIN: "RG / CIN",
+  CPF_CIN: "CPF / CIN",
+  FOTO: "Foto 3x4",
+  ESCOLARIDADE_PUBLICA: "Comprovante de Escola Pública",
+  HISTORICO_ENSINO_FUNDAMENTAL: "Histórico do Ensino Fundamental",
 };

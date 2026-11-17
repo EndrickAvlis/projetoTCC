@@ -4,6 +4,7 @@ import { useToast } from "../../../../context/toastContext";
 import { useAtendimento } from "../../context/atendimentoContext";
 import { usePendencias } from "../../hooks/usePendencias";
 import * as TriagemService from "../../services/triagemService";
+import { OPCOES_SEXO } from "../../constants/triagem";
 import AtendimentoActions from "../../layout/AtendimentoActions";
 import BuscarAlunos from "./BuscarAlunos";
 import DadosAlunoForm from "./DadosAlunoForm";
@@ -36,6 +37,8 @@ const formPayload = (aluno) => ({
   ano: formatarParaTexto(aluno?.anoEscolar, "1"),
 });
 
+const SEXOS_VALIDOS = new Set(OPCOES_SEXO.map((opcao) => opcao.value));
+
 const validarDadosAluno = (dados, cursos = []) => {
   const cursoSelecionado = cursos.find(
     (curso) => String(curso.id) === String(dados.curso),
@@ -52,7 +55,7 @@ const validarDadosAluno = (dados, cursos = []) => {
       periodoAtivo &&
       dados.ano &&
       typeof dados.escolaridadePublica === "boolean" &&
-      dados.sexo &&
+      SEXOS_VALIDOS.has(dados.sexo) &&
       dados.cidade?.trim() &&
       Number(dados.classificacao) > 0,
   );

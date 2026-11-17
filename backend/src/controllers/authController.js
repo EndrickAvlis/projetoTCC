@@ -24,7 +24,11 @@ export const login = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // Tempo de vida: 7 dias (em milissegundos)
     });
 
-    res.status(200).json(token.usuario);
+    res.status(200).json({
+      ...token.usuario,
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+    });
   } catch (erro) {
     return next(erro);
   }
@@ -32,8 +36,9 @@ export const login = async (req, res, next) => {
 
 export const renovarAccessToken = async (req, res, next) => {
   try {
+    const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
     const { accessToken, usuario } = await authService.renovarAccessToken(
-      req.cookies.refreshToken,
+      refreshToken,
     );
 
     res.cookie("accessToken", accessToken, {
@@ -44,7 +49,10 @@ export const renovarAccessToken = async (req, res, next) => {
       maxAge: 15 * 60 * 1000, // Tempo de vida: 15 minutos (em milissegundos)
     });
 
-    res.status(200).json(usuario);
+    res.status(200).json({
+      ...usuario,
+      accessToken,
+    });
   } catch (erro) {
     res.clearCookie("accessToken", {
       path: "/",

@@ -22,7 +22,9 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
 
   const podeTransferir = senha.status === "aguardando";
   const podeGerenciar = !["finalizada", "cancelada"].includes(senha.status);
-  const postosDestino = POSTOS.filter((p) => p !== senha.posto);
+  const postosDestino = POSTOS.filter(
+    (p) => p !== senha.posto && (p === "triagem" || Boolean(senha.aluno)),
+  );
 
   const handleTransferirPosto = async (novoPosto) => {
     try {
@@ -180,7 +182,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
               {senha.documentos.map((doc) => (
                 <li key={doc} className="flex items-center gap-1.5">
                   <span className="text-status-warning">•</span>
-                  <span>{NOMES_DOCUMENTOS[doc]}</span>
+                  <span>{NOMES_DOCUMENTOS[doc] || doc}</span>
                 </li>
               ))}
             </ul>

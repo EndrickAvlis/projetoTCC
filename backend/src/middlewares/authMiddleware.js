@@ -6,7 +6,13 @@ const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 
 export const accessValidator = async (req, res, next) => {
   try {
-    const verificado = jwt.verify(req.cookies.accessToken, ACCESS_SECRET);
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : null;
+    const token = bearerToken || req.cookies.accessToken;
+
+    const verificado = jwt.verify(token, ACCESS_SECRET);
 
     const voluntario = await prisma.voluntario.findUnique({
       where: { idVoluntario: verificado.id },

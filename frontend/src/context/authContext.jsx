@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as authService from "../services/authService";
+import { limparTokensSessao } from "../services/apiClient";
 
 export const AuthContext = React.createContext(null);
 
@@ -37,6 +38,7 @@ export const AuthProvider = ({ children }) => {
 
   React.useEffect(() => {
     const tratarNaoAutorizado = (event) => {
+      limparTokensSessao();
       setUsuario(null);
       if (event?.detail?.message) {
         setAlertaSessao(event.detail.message);

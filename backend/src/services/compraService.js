@@ -131,14 +131,27 @@ export default class CompraService extends BaseService {
         });
 
         if (item.quantidadeRetirada > 0) {
-          await tx.produto.update({
-            where: { idProduto: produtoDoItem.idProduto },
+          const { count } = await tx.produto.updateMany({
+            where: {
+              idProduto: produtoDoItem.idProduto,
+              quantidadeProduto: { gte: item.quantidadeRetirada },
+            },
             data: {
               quantidadeProduto: {
                 decrement: item.quantidadeRetirada,
               },
             },
           });
+
+          if (count === 0) {
+            throw new AppError(
+              `Estoque insuficiente para o produto ${produtoDoItem.nomeProduto}.`,
+              {
+                status: 400,
+                code: "ESTOQUE_INSUFICIENTE",
+              },
+            );
+          }
         }
       }
 

@@ -130,9 +130,6 @@ export default class SenhaService extends BaseService {
           gte: inicioSequencia,
           lt: fimDia,
         },
-        statusSenha: {
-          not: "cancelada",
-        },
       },
       orderBy: {
         senhaCodigo: "desc",
@@ -213,9 +210,6 @@ export default class SenhaService extends BaseService {
         dataHoraInicioSenha: {
           gte: inicioSequencia,
           lt: fimDia,
-        },
-        statusSenha: {
-          not: "cancelada",
         },
       },
       orderBy: {

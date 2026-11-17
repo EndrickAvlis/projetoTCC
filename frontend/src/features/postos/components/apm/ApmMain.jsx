@@ -19,10 +19,13 @@ const ApmMain = () => {
     useAtendimento();
   const venda = useVenda();
   const [salvando, setSalvando] = React.useState(false);
+  const vendaRegistradaSenhaIdRef = React.useRef(null);
 
   React.useEffect(() => {
     if (!senhaAtual || fase !== "iniciada") {
       venda.limparVenda();
+    } else {
+      void venda.catalogo.carregarProdutos({ silencioso: true });
     }
   }, [senhaAtual?.id, fase]);
 
@@ -36,18 +39,24 @@ const ApmMain = () => {
     !salvando;
 
   const handleFinalizar = async () => {
-    if (!dadosAluno?.id) return;
+    if (!dadosAluno?.id || !senhaAtual?.id) return;
 
     try {
       setSalvando(true);
-      if (venda.pagamento.total > 0) {
+      if (
+        venda.pagamento.total > 0 &&
+        vendaRegistradaSenhaIdRef.current !== senhaAtual.id
+      ) {
         await ApmService.registrarVenda({
           codAluno: dadosAluno.id,
           ...venda.gerarPayload(),
         });
+        vendaRegistradaSenhaIdRef.current = senhaAtual.id;
       }
       await finalizarAtendimento();
       venda.limparVenda();
+      vendaRegistradaSenhaIdRef.current = null;
+      void venda.catalogo.carregarProdutos({ silencioso: true });
     } catch (erro) {
       toast.erro(erro.message);
     } finally {

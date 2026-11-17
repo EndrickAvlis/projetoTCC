@@ -31,41 +31,70 @@ export default class FilaService extends BaseService {
     );
   }
 
-  async chamarSenhaSelecionada(senhaId, etapa) {
-    const { count } = await this.model.updateMany({
-      where: {
-        idSenha: senhaId,
-        etapaSenha: etapa,
-        statusSenha: "aguardando",
-      },
-      data: {
-        statusSenha: "chamada",
-      },
-    });
+  async chamarSenhaSelecionada(senhaId, etapa, idUsuario) {
+    await cancelarSenhas();
 
-    if (count === 0) {
-      throw new AppError(
-        "Esta senha não está mais disponível para atendimento.",
-        {
-          status: 409,
-          code: "SENHA_INDISPONIVEL",
+    return prisma.$transaction(async (tx) => {
+      const atendimentoAberto = await tx.historicoSenha.findFirst({
+        where: {
+          codVoluntario: idUsuario,
+          etapaHistorico: etapa,
+          dataHoraFimHistorico: null,
         },
-      );
-    }
+      });
 
-    return this.model.findUnique({
-      where: {
-        idSenha: senhaId,
-      },
-      include: {
-        aluno: {
-          include: {
-            cursosAluno: {
-              include: { curso: true },
+      if (atendimentoAberto) {
+        throw new AppError("Você já possui um atendimento aberto nesta etapa.", {
+          status: 409,
+          code: "ATENDIMENTO_ABERTO",
+        });
+      }
+
+      const { count } = await tx.senha.updateMany({
+        where: {
+          idSenha: senhaId,
+          etapaSenha: etapa,
+          statusSenha: "aguardando",
+        },
+        data: {
+          statusSenha: "chamada",
+        },
+      });
+
+      if (count === 0) {
+        throw new AppError(
+          "Esta senha não está mais disponível para atendimento.",
+          {
+            status: 409,
+            code: "SENHA_INDISPONIVEL",
+          },
+        );
+      }
+
+      const senha = await tx.senha.findUnique({
+        where: {
+          idSenha: senhaId,
+        },
+        include: {
+          aluno: {
+            include: {
+              cursosAluno: {
+                include: { curso: true },
+              },
             },
           },
         },
-      },
+      });
+
+      const historico = await tx.historicoSenha.create({
+        data: {
+          codSenha: senha.idSenha,
+          codVoluntario: idUsuario,
+          etapaHistorico: etapa,
+        },
+      });
+
+      return { senha, historico };
     });
   }
 }

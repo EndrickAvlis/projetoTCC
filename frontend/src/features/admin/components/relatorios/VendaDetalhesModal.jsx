@@ -13,11 +13,10 @@ const LABELS_PAGAMENTO = {
 };
 
 const formatarItem = (item) => {
-  if (item === "Armário Individual") {
+  if (item === "Armário" || item === "Armário Individual") {
     return item;
-  } else {
-    return `Uniforme ${item}`;
   }
+  return `Uniforme ${item}`;
 };
 
 const VendaDetalhesModal = ({

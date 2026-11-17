@@ -12,7 +12,7 @@ export default class PostosService extends BaseService {
         const senhas = await tx.senha.findMany({
           where: {
             statusSenha: {
-              in: ["em_atendimento", "aguardando", "pendente"],
+              in: ["chamada", "em_atendimento", "aguardando", "pendente"],
             },
           },
           include: {
@@ -39,6 +39,7 @@ export default class PostosService extends BaseService {
         const resumo = senhas.reduce(
           (total, senha) => {
             switch (senha.statusSenha) {
+              case "chamada":
               case "em_atendimento":
                 total.totalEmAtendimento += 1;
                 break;
@@ -57,191 +58,70 @@ export default class PostosService extends BaseService {
           { totalAguardando: 0, totalEmAtendimento: 0, totalPendente: 0 },
         );
 
-        const triagem = senhas.reduce(
-          (posto, senha) => {
-            if (senha.etapaSenha !== "triagem") {
-              return posto;
-            }
+        const agruparPosto = (etapa) =>
+          senhas.reduce(
+            (posto, senha) => {
+              if (senha.etapaSenha !== etapa || senha.statusSenha === "pendente") {
+                return posto;
+              }
 
-            if (senha.tipoSenha) {
-              posto.totais.prioritarias += 1;
-            }
+              if (senha.tipoSenha) {
+                posto.totais.prioritarias += 1;
+              }
 
-            const info = {
-              id: senha.idSenha,
-              codigo: senha.senhaCodigo,
-              prioritaria: senha.tipoSenha,
-              emitidaEm: senha.dataHoraInicioSenha,
-            };
-
-            if (senha.aluno) {
-              info.aluno = {
-                id: senha.aluno.idAluno,
-                nome: senha.aluno.nomeAluno,
+              const info = {
+                id: senha.idSenha,
+                codigo: senha.senhaCodigo,
+                prioritaria: senha.tipoSenha,
+                status: senha.statusSenha,
+                emitidaEm: senha.dataHoraInicioSenha,
               };
 
-              const matricula = senha.aluno.cursosAluno?.[0];
-              if (matricula?.curso) {
-                info.curso = {
-                  id: matricula.curso.idCurso,
-                  nome: matricula.curso.nomeCurso,
-                  periodo: matricula.periodo,
+              if (senha.aluno) {
+                info.aluno = {
+                  id: senha.aluno.idAluno,
+                  nome: senha.aluno.nomeAluno,
                 };
+
+                const matricula = senha.aluno.cursosAluno?.[0];
+                if (matricula?.curso) {
+                  info.curso = {
+                    id: matricula.curso.idCurso,
+                    nome: matricula.curso.nomeCurso,
+                    periodo: matricula.periodo,
+                  };
+                }
               }
-            }
 
-            switch (senha.statusSenha) {
-              case "em_atendimento":
+              if (
+                senha.statusSenha === "chamada" ||
+                senha.statusSenha === "em_atendimento"
+              ) {
                 posto.totais.emAtendimento += 1;
-
                 info.iniciadoEm =
                   senha.historicos?.[0]?.dataHoraInicioHistorico;
                 posto.emAtendimento.push(info);
-                break;
-              case "aguardando":
+              } else if (senha.statusSenha === "aguardando") {
                 posto.totais.aguardando += 1;
                 posto.aguardando.push(info);
-                break;
-              default:
-                break;
-            }
-
-            return posto;
-          },
-          {
-            totais: {
-              aguardando: 0,
-              emAtendimento: 0,
-              prioritarias: 0,
-            },
-            emAtendimento: [],
-            aguardando: [],
-          },
-        );
-
-        const apm = senhas.reduce(
-          (posto, senha) => {
-            if (senha.etapaSenha !== "apm") {
-              return posto;
-            }
-
-            if (senha.tipoSenha) {
-              posto.totais.prioritarias += 1;
-            }
-
-            const info = {
-              id: senha.idSenha,
-              codigo: senha.senhaCodigo,
-              prioritaria: senha.tipoSenha,
-              emitidaEm: senha.dataHoraInicioSenha,
-            };
-
-            if (senha.aluno) {
-              info.aluno = {
-                id: senha.aluno.idAluno,
-                nome: senha.aluno.nomeAluno,
-              };
-
-              const matricula = senha.aluno.cursosAluno?.[0];
-              if (matricula?.curso) {
-                info.curso = {
-                  id: matricula.curso.idCurso,
-                  nome: matricula.curso.nomeCurso,
-                  periodo: matricula.periodo,
-                };
               }
-            }
 
-            switch (senha.statusSenha) {
-              case "em_atendimento":
-                posto.totais.emAtendimento += 1;
-
-                info.iniciadoEm =
-                  senha.historicos?.[0]?.dataHoraInicioHistorico;
-                posto.emAtendimento.push(info);
-                break;
-              case "aguardando":
-                posto.totais.aguardando += 1;
-                posto.aguardando.push(info);
-                break;
-              default:
-                break;
-            }
-
-            return posto;
-          },
-          {
-            totais: {
-              aguardando: 0,
-              emAtendimento: 0,
-              prioritarias: 0,
-            },
-            emAtendimento: [],
-            aguardando: [],
-          },
-        );
-
-        const docs = senhas.reduce(
-          (posto, senha) => {
-            if (senha.etapaSenha !== "docs") {
               return posto;
-            }
-
-            if (senha.tipoSenha) {
-              posto.totais.prioritarias += 1;
-            }
-
-            const info = {
-              id: senha.idSenha,
-              codigo: senha.senhaCodigo,
-              prioritaria: senha.tipoSenha,
-              emitidaEm: senha.dataHoraInicioSenha,
-            };
-
-            if (senha.aluno) {
-              info.aluno = {
-                id: senha.aluno.idAluno,
-                nome: senha.aluno.nomeAluno,
-              };
-
-              const matricula = senha.aluno.cursosAluno?.[0];
-              if (matricula?.curso) {
-                info.curso = {
-                  id: matricula.curso.idCurso,
-                  nome: matricula.curso.nomeCurso,
-                  periodo: matricula.periodo,
-                };
-              }
-            }
-
-            switch (senha.statusSenha) {
-              case "em_atendimento":
-                posto.totais.emAtendimento += 1;
-
-                info.iniciadoEm =
-                  senha.historicos?.[0]?.dataHoraInicioHistorico;
-                posto.emAtendimento.push(info);
-                break;
-              case "aguardando":
-                posto.totais.aguardando += 1;
-                posto.aguardando.push(info);
-                break;
-              default:
-                break;
-            }
-
-            return posto;
-          },
-          {
-            totais: {
-              aguardando: 0,
-              emAtendimento: 0,
-              prioritarias: 0,
             },
-            emAtendimento: [],
-            aguardando: [],
-          },
-        );
+            {
+              totais: {
+                aguardando: 0,
+                emAtendimento: 0,
+                prioritarias: 0,
+              },
+              emAtendimento: [],
+              aguardando: [],
+            },
+          );
+
+        const triagem = agruparPosto("triagem");
+        const apm = agruparPosto("apm");
+        const docs = agruparPosto("docs");
 
         const pendencias = senhas.reduce((totalPendentes, senha) => {
           if (senha.etapaSenha !== "triagem") {
@@ -252,8 +132,8 @@ export default class PostosService extends BaseService {
             return totalPendentes;
           }
 
-          const { registradaEm, ...resto } = senha.documentosPendentes ?? {};
-          const documentos = Object.values(resto);
+          const { registradaEm = null, documentos = [] } =
+            senha.documentosPendentes ?? {};
           const matricula = senha.aluno?.cursosAluno?.[0];
 
           const info = {
@@ -431,7 +311,7 @@ export default class PostosService extends BaseService {
             id: curso.idCurso,
             nome: curso.nomeCurso,
             periodos: periodos,
-            canditadosPeriodo: curso.cursosAluno.length,
+            candidatosPeriodo: curso.cursosAluno.length,
           });
 
           return ativos;
@@ -533,26 +413,32 @@ export default class PostosService extends BaseService {
 
           const tempoTotal = `${hora}h${minutos}`;
 
+          const matricula = senha.aluno?.cursosAluno?.[0];
+
           const info = {
             id: senha.idSenha,
             codigo: senha.senhaCodigo,
             prioritaria: senha.tipoSenha,
             status: senha.statusSenha,
             posto: senha.etapaSenha,
-            aluno: {
-              id: senha.aluno?.idAluno,
-              nome: senha.aluno?.nomeAluno,
-            },
-            curso: {
-              id: senha.aluno?.cursosAluno[0]?.curso?.idCurso,
-              nome: senha.aluno?.cursosAluno[0]?.curso?.nomeCurso,
-              periodo: senha.aluno?.cursosAluno[0]?.periodo,
-            },
-            emiditaEm: senha.dataHoraInicioSenha,
+            ...(senha.aluno && {
+              aluno: {
+                id: senha.aluno.idAluno,
+                nome: senha.aluno.nomeAluno,
+              },
+            }),
+            ...(matricula?.curso && {
+              curso: {
+                id: matricula.curso.idCurso,
+                nome: matricula.curso.nomeCurso,
+                periodo: matricula.periodo,
+              },
+            }),
+            emitidaEm: senha.dataHoraInicioSenha,
             encerradaEm: senha.dataHoraFimSenha,
             tempoTotal: tempoTotal,
             duracaoSegundos: tempo,
-            documentos: senha.documentosPendentes,
+            documentos: senha.documentosPendentes?.documentos ?? [],
           };
 
           itens.push(info);
@@ -580,7 +466,7 @@ export default class PostosService extends BaseService {
 
   async trocarDePosto(idSenha, postoDestino) {
     try {
-      const resultado = prisma.$transaction(async (tx) => {
+      const resultado = await prisma.$transaction(async (tx) => {
         const senha = await tx.senha.findUnique({
           where: {
             idSenha: idSenha,
@@ -607,6 +493,16 @@ export default class PostosService extends BaseService {
             {
               status: 400,
               code: "POSTO_IGUAL",
+            },
+          );
+        }
+
+        if (postoDestino !== "triagem" && !senha.codAluno) {
+          throw new AppError(
+            "Não é possível transferir para este posto sem um aluno vinculado na triagem.",
+            {
+              status: 409,
+              code: "ALUNO_NAO_VINCULADO",
             },
           );
         }

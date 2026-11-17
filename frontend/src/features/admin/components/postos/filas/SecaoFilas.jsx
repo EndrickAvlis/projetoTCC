@@ -138,7 +138,7 @@ const SecaoFilas = () => {
                             setSenhaSelecionada({
                               ...senha,
                               posto: posto.id,
-                              status: "em_atendimento",
+                              status: senha.status || "em_atendimento",
                             })
                           }
                           className={`p-1 rounded-lg border text-center transition-colors cursor-pointer hover:bg-surface-muted flex flex-col items-center justify-center gap-0.5 h-17 ${
