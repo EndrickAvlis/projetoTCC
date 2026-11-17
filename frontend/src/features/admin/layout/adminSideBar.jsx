@@ -3,6 +3,8 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { FiChevronLeft, FiChevronRight, FiLogOut } from "react-icons/fi";
 import { useAuth } from "../../../context/authContext";
 import * as AdminNavigation from "../constants/adminNavigation";
+import logoSigaPhilaEscura from "../../../assets/logo-siga-phila-escura.svg";
+import iconeSigaPhilaContorno from "../../../assets/icone-siga-phila-contorno.svg";
 
 const AdminNavItem = ({ item, collapsed }) => {
   const { label, path, icon: Icon } = item;
@@ -38,6 +40,7 @@ const AdminLogoutButton = ({ collapsed }) => {
     try {
       await logout();
     } catch {
+      return;
     } finally {
       navigate("/", { replace: true });
     }
@@ -64,11 +67,21 @@ const AdminSideBar = ({ collapsed, onToggle }) => {
     return (
         <aside className={`sticky top-0 flex h-screen shrink-0 flex-col overflow-hidden bg-admin-sidebar p-4 text-admin-sidebar-text transition-[width] duration-250 ease-out ${collapsed ? "w-20" : "w-72"}`}>
             <div className="border-b border-admin-sidebar-divider pb-5">
-                <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
-                    {!collapsed && (
+                <div className={`flex ${collapsed ? "flex-col items-center gap-3" : "items-center justify-between gap-2"}`}>
+                    {collapsed ? (
+                        <img
+                            src={iconeSigaPhilaContorno}
+                            alt="SIGA Phila"
+                            className="h-9 w-9 shrink-0"
+                        />
+                    ) : (
                         <div>
-                            <p className="font-bold text-text-inverse">SIGA Phila</p>
-                            <p className="text-base text-admin-sidebar-text-muted">
+                            <img
+                                src={logoSigaPhilaEscura}
+                                alt="SIGA Phila"
+                                className="h-9 w-auto"
+                            />
+                            <p className="mt-1 text-sm text-admin-sidebar-text-muted">
                                 Administração
                             </p>
                         </div>

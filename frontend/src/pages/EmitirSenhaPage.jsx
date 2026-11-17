@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import logoEtec from "../assets/logoEtec.png";
+import logoSigaPhilaClara from "../assets/logo-siga-phila-clara.svg";
 import {
   buscarUltimaSenha,
   emitirSenha,
@@ -148,6 +149,11 @@ const EmitirSenhaPage = () => {
           <p className="mt-5 text-lg font-bold text-text-primary sm:text-2xl">
             Pegue sua senha na impressora.
           </p>
+          <img
+            src={logoSigaPhilaClara}
+            alt="SIGA Phila"
+            className="mt-6 h-7 w-auto opacity-80"
+          />
         </footer>
       </section>
     </main>

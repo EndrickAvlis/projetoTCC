@@ -82,9 +82,6 @@ const MapeamentoCursos = ({
       label: curso.arquivado ? `${curso.nome} (Arquivado)` : curso.nome,
     }));
 
-  let totalPendentes = 0;
-  let totalCandidatos = 0;
-
   const gruposDetalhados = gruposCursos.map((grupo) => {
     const associado = Boolean(grupo.idCurso);
     const cursoSelecionado = associado
@@ -100,9 +97,6 @@ const MapeamentoCursos = ({
     const temPeriodoFaltante = !cursoArquivado && periodosFaltantes.length > 0;
     const precisaAcao = !associado || cursoArquivado || temPeriodoFaltante;
 
-    if (precisaAcao) totalPendentes += 1;
-    totalCandidatos += grupo.totalCandidatos || 0;
-
     return {
       ...grupo,
       associado,
@@ -114,6 +108,11 @@ const MapeamentoCursos = ({
     };
   });
 
+  const totalPendentes = gruposDetalhados.filter((g) => g.precisaAcao).length;
+  const totalCandidatos = gruposDetalhados.reduce(
+    (acc, g) => acc + (g.totalCandidatos || 0),
+    0,
+  );
   const totalAssociados = gruposCursos.length - totalPendentes;
   const temPendencias = totalPendentes > 0;
 

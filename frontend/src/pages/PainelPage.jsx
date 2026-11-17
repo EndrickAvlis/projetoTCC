@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import { FiVolume2, FiClock, FiTv } from "react-icons/fi";
+import { FiVolume2, FiClock } from "react-icons/fi";
 import logoEtec from "../assets/logoEtec.png";
+import iconeSigaPhilaBranco from "../assets/icone-siga-phila-mono-branco.svg";
 import Button from "../components/ui/Button.jsx";
 import { formatarSenha } from "../utils/formatters.js";
 import { API_URL } from "../services/apiClient.js";
@@ -142,7 +143,7 @@ const PainelConteudo = ({ postoValido }) => {
             <div
               className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border ${tema.borda} ${tema.cardInterno} text-text-inverse`}
             >
-              <FiTv size={32} />
+              <img src={iconeSigaPhilaBranco} alt="SIGA Phila" className="h-9 w-9" />
             </div>
             <h1 className="mb-2 text-2xl font-bold tracking-tight">
               Painel de Chamadas — {tema.titulo}
@@ -187,6 +188,11 @@ const PainelConteudo = ({ postoValido }) => {
                 }`}
               />
             </span>
+            <img
+              src={iconeSigaPhilaBranco}
+              alt="SIGA Phila"
+              className="h-7 w-7 shrink-0"
+            />
             <span className="text-base font-bold tracking-tight text-text-inverse sm:text-lg">
               SIGA PHILA — {tema.titulo}
             </span>

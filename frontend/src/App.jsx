@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import * as ReactRouter from "react-router-dom";
 import { AuthProvider } from "./context/authContext";
 import { AtendimentoProvider } from "./features/postos/context/atendimentoContext";
@@ -22,9 +23,43 @@ import SecretariaPage from "./features/secretaria/pages/SecretariaPage";
 import Testes from "./testes";
 import { ToastProvider } from "./context/toastContext";
 
+const TITULOS_ROTAS = {
+  "/": "Login — SIGA Phila",
+  "/emitir-senha": "Emitir Senha — SIGA Phila",
+  "/painel": "Painel Geral — SIGA Phila",
+  "/painel/triagem": "Painel Triagem — SIGA Phila",
+  "/painel/apm": "Painel APM — SIGA Phila",
+  "/painel/docs": "Painel Documentos — SIGA Phila",
+  "/triagem": "Triagem — SIGA Phila",
+  "/apm": "APM — SIGA Phila",
+  "/docs": "Documentos — SIGA Phila",
+  "/secretaria": "Secretaria — SIGA Phila",
+  "/admin/dashboard": "Dashboard — SIGA Phila",
+  "/admin/postos": "Postos — SIGA Phila",
+  "/admin/alunos": "Alunos — SIGA Phila",
+  "/admin/cursos": "Cursos — SIGA Phila",
+  "/admin/produtos": "Produtos — SIGA Phila",
+  "/admin/relatorios": "Relatórios — SIGA Phila",
+  "/admin/usuarios": "Usuários — SIGA Phila",
+  "/admin/configuracoes": "Configurações — SIGA Phila",
+};
+
+const TituloPagina = () => {
+  const { pathname } = ReactRouter.useLocation();
+
+  useEffect(() => {
+    const rotaLimpa =
+      pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+    document.title = TITULOS_ROTAS[rotaLimpa] ?? "SIGA Phila";
+  }, [pathname]);
+
+  return null;
+};
+
 function App() {
   return (
     <ReactRouter.BrowserRouter>
+      <TituloPagina />
       <AuthProvider>
         <ToastProvider>
         <ReactRouter.Routes>

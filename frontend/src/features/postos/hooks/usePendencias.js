@@ -31,7 +31,7 @@ export const usePendencias = () => {
   );
 
   React.useEffect(() => {
-    carregarPendencias();
+    void Promise.resolve().then(() => carregarPendencias());
     const intervalo = window.setInterval(
       () => void carregarPendencias({ silencioso: true }),
       5000,

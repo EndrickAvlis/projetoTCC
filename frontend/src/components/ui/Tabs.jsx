@@ -1,5 +1,3 @@
-import * as React from "react";
-
 const Tabs = ({
   itens = [],
   ativo,

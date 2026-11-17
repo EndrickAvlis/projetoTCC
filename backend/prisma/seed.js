@@ -146,19 +146,42 @@ const SOBRENOMES = [
   "Bertolini", "Fernandes", "Galvão", "Rezende", "Toledo",
 ];
 
+const CANDIDATOS_SALA = [
+  { nome: "Anna Vitória Gonçalves Gomes", escolaridadePublica: true, cidade: "Mirassol", sexo: "FEMININO" },
+  { nome: "Caio Vicensoto", escolaridadePublica: false, cidade: "Tanabi", sexo: "MASCULINO" },
+  { nome: "Carlos Alves Barbosa", escolaridadePublica: true, cidade: "Bady Bassitt", sexo: "MASCULINO" },
+  { nome: "Davi Prado Prates", escolaridadePublica: false, cidade: "Guapiaçu", sexo: "MASCULINO" },
+  { nome: "Denis Eduardo Muniz Pedroso", escolaridadePublica: true, cidade: "Votuporanga", sexo: "MASCULINO" },
+  { nome: "Endrick Silva Souza", escolaridadePublica: true, cidade: "Potirendaba", sexo: "MASCULINO" },
+  { nome: "Enzo Antonio Valentim da Costa", escolaridadePublica: false, cidade: "Monte Aprazível", sexo: "MASCULINO" },
+  { nome: "Felipe Tertuliano Venturini", escolaridadePublica: true, cidade: "Catanduva", sexo: "MASCULINO" },
+  { nome: "Filipe Schimidt Leite", escolaridadePublica: false, cidade: "Olímpia", sexo: "MASCULINO" },
+  { nome: "Gabriel Mori Feltran", escolaridadePublica: true, cidade: "José Bonifácio", sexo: "MASCULINO" },
+  { nome: "Gustavo Alves Barboza Pereira", escolaridadePublica: true, cidade: "Neves Paulista", sexo: "MASCULINO" },
+  { nome: "Heitor Gélio Pazote", escolaridadePublica: false, cidade: "Uchoa", sexo: "MASCULINO" },
+  { nome: "Heitor Reis Ricci", escolaridadePublica: true, cidade: "Nova Granada", sexo: "MASCULINO" },
+  { nome: "Juliana de Araujo", escolaridadePublica: true, cidade: "São José do Rio Preto", sexo: "FEMININO" },
+  { nome: "Kaio Cyrino Moreira", escolaridadePublica: false, cidade: "Adolfo", sexo: "MASCULINO" },
+  { nome: "Luan Henrique Evangelista", escolaridadePublica: true, cidade: "Mirassol", sexo: "MASCULINO" },
+  { nome: "Luana Thauany da Silva Marques", escolaridadePublica: true, cidade: "Tanabi", sexo: "FEMININO" },
+  { nome: "Marcos Feliphe Corrêa Martins", escolaridadePublica: false, cidade: "Cedral", sexo: "MASCULINO" },
+  { nome: "Matheus Sales Pedrosa", escolaridadePublica: true, cidade: "Bady Bassitt", sexo: "MASCULINO" },
+  { nome: "Nathan Lima Gasparoti", escolaridadePublica: true, cidade: "Votuporanga", sexo: "MASCULINO" },
+  { nome: "Nicolas de Barros Andrade", escolaridadePublica: false, cidade: "Guapiaçu", sexo: "MASCULINO" },
+  { nome: "Pedro Otávio de Campos Oliveira", escolaridadePublica: true, cidade: "Potirendaba", sexo: "MASCULINO" },
+  { nome: "Rebeca Westpal Fadil", escolaridadePublica: false, cidade: "Catanduva", sexo: "FEMININO" },
+  { nome: "Ryan da Silva Augusto", escolaridadePublica: true, cidade: "Monte Aprazível", sexo: "MASCULINO" },
+  { nome: "Thales Carvalho Furlan", escolaridadePublica: false, cidade: "José Bonifácio", sexo: "MASCULINO" },
+  { nome: "Thiago Mazzini", escolaridadePublica: true, cidade: "Neves Paulista", sexo: "MASCULINO" },
+  { nome: "Victor Gabriel Barreto", escolaridadePublica: false, cidade: "Nova Granada", sexo: "MASCULINO" },
+  { nome: "Victória Mesquita Barreto de Miranda Ferreira", escolaridadePublica: true, cidade: "São José do Rio Preto", sexo: "FEMININO" },
+];
+
 const NOMES_CSV_DEMONSTRACAO = new Set([
-  "ANDREW HENRIQUE DE AQUINO PIEDADE", "ANNA VITÓRIA GONÇALVES GOMES",
-  "CAIO VICENSOTO", "CARLOS ALVES BARBOSA", "DANIEL MURAKAMI TOSCANO MARTINS",
-  "DAVI PRADO PRATES", "DENIS EDUARDO MUNIZ PEDROSO", "ENDRICK SILVA SOUZA",
-  "ENZO ANTONIO VALENTIM DA COSTA", "FELIPE TERTULIANO VENTURINI",
-  "FILIPE SCHIMIDT LEITE", "GABRIEL MORI FELTRAN", "GUSTAVO ALVES BARBOZA PEREIRA",
-  "HEITOR GÉLIO PAZOTE", "HEITOR REIS RICCI", "JULIANA DE ARAUJO",
-  "KAIO CYRINO MOREIRA", "LUAN HENRIQUE EVANGELISTA", "LUANA THAUANY DA SILVA MARQUES",
-  "MARCOS FELIPHE CORRÊA MARTINS", "MATHEUS SALES PEDROSA", "NATHAN LIMA GASPAROTI",
-  "NICOLAS DE BARROS ANDRADE", "PEDRO MIGUEL DOS SANTOS MOURA",
-  "PEDRO OTÁVIO DE CAMPOS OLIVEIRA", "REBECA WESTPAL FADIL", "RYAN DA SILVA AUGUSTO",
-  "THALES CARVALHO FURLAN", "THIAGO MAZZINI", "VICTOR GABRIEL BARRETO",
-  "VICTÓRIA MESQUITA BARRETO DE MIRANDA FERREIRA",
+  "ANDREW HENRIQUE DE AQUINO PIEDADE",
+  "DANIEL MURAKAMI TOSCANO MARTINS",
+  "PEDRO MIGUEL DOS SANTOS MOURA",
+  ...CANDIDATOS_SALA.map((c) => c.nome.toUpperCase()),
 ]);
 
 const OFERTAS = CURSOS.flatMap((curso) =>
@@ -566,19 +589,21 @@ const equipeDoDia = (equipes) => ({
 });
 
 const limparDados = () =>
-  prisma.$transaction([
-    prisma.historicoSenha.deleteMany(),
-    prisma.itemCompra.deleteMany(),
-    prisma.pagamento.deleteMany(),
-    prisma.contribuicao.deleteMany(),
-    prisma.compra.deleteMany(),
-    prisma.senha.deleteMany(),
-    prisma.cursoAluno.deleteMany(),
-    prisma.aluno.deleteMany(),
-    prisma.periodoCurso.deleteMany(),
-    prisma.curso.deleteMany(),
-    prisma.produto.deleteMany(),
-  ]);
+  prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE
+      "HistoricoSenha",
+      "ItemCompra",
+      "Pagamento",
+      "Contribuicao",
+      "Compra",
+      "Senha",
+      "CursoAluno",
+      "Aluno",
+      "PeriodoCurso",
+      "Curso",
+      "Produto"
+    RESTART IDENTITY
+  `);
 
 const calcularRetiradas = (senhas) => {
   const retiradas = new Map([...UNIFORMES.map((u) => [u.nome, 0]), [ARMARIO.nome, 0]]);
@@ -769,6 +794,13 @@ const resumir = (senhas) => {
   };
 };
 
+const aplicarCandidatosDaSala = () => {
+  const candidatos = alunosPlanejados.filter((aluno) => !aluno.ativo);
+  CANDIDATOS_SALA.forEach((dados, indice) => {
+    if (candidatos[indice]) Object.assign(candidatos[indice], dados);
+  });
+};
+
 const executar = async () => {
   const voluntarios = await prisma.voluntario.findMany();
   const equipes = montarEquipes(voluntarios);
@@ -777,6 +809,7 @@ const executar = async () => {
     ...DIAS_UTEIS.flatMap((dia) => planejarDia(dia, equipeDoDia(equipes))),
     ...planejarApresentacao(equipeDoDia(equipes)),
   ];
+  aplicarCandidatosDaSala();
   distribuirClassificacoes();
 
   if (!SIMULAR) await persistir(senhas);

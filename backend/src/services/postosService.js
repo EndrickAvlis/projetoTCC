@@ -1,4 +1,3 @@
-import { triggerAsyncId } from "node:async_hooks";
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
 import BaseService from "./baseService.js";

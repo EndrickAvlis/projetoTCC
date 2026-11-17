@@ -1,5 +1,3 @@
-import * as React from "react";
-
 const VARIANTS = {
   success: {
     badge: "bg-status-success-bg text-status-success border-status-success/30",

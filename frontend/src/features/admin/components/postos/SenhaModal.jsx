@@ -8,17 +8,11 @@ import { alterarPrioridade } from "../../../postos/services/filaService";
 import { POSTOS, CORES_STATUS, NOMES_DOCUMENTOS } from "../../constants/postos";
 import { useToast } from "../../../../context/toastContext";
 
-const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
+const SenhaModalConteudo = ({ senha, onFechar, onAtualizar }) => {
   const toast = useToast();
   const [carregando, setCarregando] = React.useState(false);
   const [confirmandoCancelamento, setConfirmandoCancelamento] =
     React.useState(false);
-
-  React.useEffect(() => {
-    setConfirmandoCancelamento(false);
-  }, [aberto, senha?.id]);
-
-  if (!aberto || !senha) return null;
 
   const podeTransferir = senha.status === "aguardando";
   const podeGerenciar = !["finalizada", "cancelada"].includes(senha.status);
@@ -67,7 +61,7 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
 
   return (
     <Modal
-      aberto={aberto}
+      aberto
       onFechar={onFechar}
       titulo={`Senha ${formatarSenha(senha.codigo)}`}
       largura="max-w-lg"
@@ -258,6 +252,19 @@ const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
         )}
       </div>
     </Modal>
+  );
+};
+
+const SenhaModal = ({ aberto, senha, onFechar, onAtualizar }) => {
+  if (!aberto || !senha) return null;
+
+  return (
+    <SenhaModalConteudo
+      key={senha.id}
+      senha={senha}
+      onFechar={onFechar}
+      onAtualizar={onAtualizar}
+    />
   );
 };
 

@@ -21,13 +21,17 @@ const ApmMain = () => {
   const [salvando, setSalvando] = React.useState(false);
   const vendaRegistradaSenhaIdRef = React.useRef(null);
 
+  const senhaAtualId = senhaAtual?.id;
+  const { limparVenda } = venda;
+  const { carregarProdutos } = venda.catalogo;
+
   React.useEffect(() => {
-    if (!senhaAtual || fase !== "iniciada") {
-      venda.limparVenda();
+    if (!senhaAtualId || fase !== "iniciada") {
+      limparVenda();
     } else {
-      void venda.catalogo.carregarProdutos({ silencioso: true });
+      void carregarProdutos({ silencioso: true });
     }
-  }, [senhaAtual?.id, fase]);
+  }, [senhaAtualId, fase, limparVenda, carregarProdutos]);
 
   const desabilitado =
     !senhaAtual || fase !== "iniciada" || venda.catalogo.carregando || salvando;

@@ -1,4 +1,3 @@
-import * as React from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import Button from "./Button";
 

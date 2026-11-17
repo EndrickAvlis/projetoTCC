@@ -35,9 +35,6 @@ const AdminHeader = () => {
           </div>
 
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">
-              Painel administrativo
-            </p>
             <h1 className="truncate text-xl font-semibold text-text-primary">
               {pageTitle}
             </h1>

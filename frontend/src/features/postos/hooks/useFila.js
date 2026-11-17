@@ -32,7 +32,7 @@ export const useFila = (etapa) => {
   );
 
   React.useEffect(() => {
-    carregarFila();
+    void Promise.resolve().then(() => carregarFila());
 
     const intervalo = window.setInterval(() => {
       carregarFila({ silencioso: true });

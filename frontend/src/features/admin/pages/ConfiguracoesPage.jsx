@@ -58,7 +58,9 @@ const ConfiguracoesPage = () => {
   }, [toast]);
 
   React.useEffect(() => {
-    if (ehAdmin) carregarUltimaSenha();
+    if (ehAdmin) {
+      void Promise.resolve().then(carregarUltimaSenha);
+    }
   }, [carregarUltimaSenha, ehAdmin]);
 
   const armarioDisponivel = Boolean(armario?.status);

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAtendimento } from "../context/atendimentoContext";
 import { useAuth } from "../../../context/authContext";
 import Button from "../../../components/ui/Button";
+import iconeSigaPhilaContorno from "../../../assets/icone-siga-phila-contorno.svg";
 
 const NOMES_POSTOS = {
   triagem: "Triagem",
@@ -28,8 +29,16 @@ const Header = ({ etapa: etapaProp }) => {
   return (
     <header className="sticky top-0 z-20 bg-primary text-text-inverse px-6 py-2.5 shadow-xs">
       <div className="grid grid-cols-3 items-center min-h-14 gap-4">
-        <div className="flex items-center justify-start">
-          <div className="text-left">
+        <div className="flex items-center justify-start gap-3">
+          <img
+            src={iconeSigaPhilaContorno}
+            alt="SIGA Phila"
+            className="h-9 w-9 shrink-0"
+          />
+          <div className="min-w-0 text-left">
+            <p className="text-xs font-bold tracking-wide text-primary-text-muted leading-tight">
+              SIGA Phila
+            </p>
             <p className="text-sm font-semibold text-text-inverse leading-tight truncate">
               Atendente: {usuario?.nome || "Usuário"}
             </p>

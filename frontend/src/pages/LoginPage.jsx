@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import { useAuth } from "../context/authContext";
+import iconeSigaPhila from "../assets/icone-siga-phila-contorno.svg";
 
 const TELAS = [
   { value: "admin", label: "Administrador" },
@@ -120,120 +121,134 @@ const LoginPage = () => {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-page p-4">
-      <div className="bg-surface border border-border rounded-lg p-8 max-w-md w-full shadow-sm">
-        <h1 className="text-title font-bold text-primary text-center mb-6">
-          Entrar no sistema
-        </h1>
-
-        {mensagemAlerta && (
-          <div className="mb-4">
-            <Alert
-              type="error"
-              message={mensagemAlerta}
-              onClose={() => {
-                setErro("");
-                if (alertaSessao) limparAlertaSessao();
-              }}
-            />
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <Input
-            label="Nome de usuário"
-            name="nome"
-            size="md"
-            maxLength={100}
-            autoComplete="username"
-            autoFocus
-            placeholder="Digite seu usuário"
-            value={nome}
-            onChange={(event) => {
-              setNome(event.target.value);
-              limparMensagens("nome");
-            }}
-            error={erros.nome}
-            disabled={carregando}
-            icon={<FiUser />}
-            iconPosition="left"
-            required
+      <div className="bg-surface border border-border rounded-lg overflow-hidden max-w-3xl w-full shadow-md flex">
+        <aside className="w-72 shrink-0 bg-linear-to-br from-primary to-primary-hover flex flex-col items-center justify-center p-8 text-center select-none">
+          <img
+            src={iconeSigaPhila}
+            alt="Logo SIGA Phila"
+            className="h-24 w-24 mb-5 drop-shadow-sm"
           />
+          <p className="text-3xl tracking-tight leading-none">
+            <span className="font-extrabold text-text-inverse">SIGA</span>{" "}
+            <span className="font-semibold text-focus-ring">Phila</span>
+          </p>
+        </aside>
 
-          <Input
-            label="Senha"
-            name="senha"
-            size="md"
-            type="password"
-            maxLength={50}
-            autoComplete="current-password"
-            placeholder="Digite sua senha"
-            value={senha}
-            onChange={(event) => {
-              setSenha(event.target.value);
-              limparMensagens("senha");
-            }}
-            error={erros.senha}
-            disabled={carregando}
-            icon={<FiLock />}
-            iconPosition="left"
-            required
-          />
+        <div className="flex-1 p-8">
+          <h1 className="text-title font-bold text-primary text-center mb-6">
+            Entrar no sistema
+          </h1>
 
-          <div className="flex gap-4 items-start">
-            <Select
-              label="Tela de acesso"
-              name="tela"
-              placeholder="Selecione a tela..."
-              options={TELAS}
-              value={tela}
+          {mensagemAlerta && (
+            <div className="mb-4">
+              <Alert
+                type="error"
+                message={mensagemAlerta}
+                onClose={() => {
+                  setErro("");
+                  if (alertaSessao) limparAlertaSessao();
+                }}
+              />
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <Input
+              label="Nome de usuário"
+              name="nome"
+              size="md"
+              maxLength={100}
+              autoComplete="username"
+              autoFocus
+              placeholder="Digite seu usuário"
+              value={nome}
               onChange={(event) => {
-                const novaTela = event.target.value;
-                setTela(novaTela);
-                if (!TELAS_COM_GUICHE.includes(novaTela)) {
-                  setGuiche("");
-                  setErros((prev) => ({ ...prev, tela: "", guiche: "" }));
-                } else {
-                  setErros((prev) => ({ ...prev, tela: "" }));
-                }
-                if (erro) setErro("");
-                if (alertaSessao) limparAlertaSessao();
+                setNome(event.target.value);
+                limparMensagens("nome");
               }}
-              error={erros.tela}
+              error={erros.nome}
               disabled={carregando}
-              id="tela"
+              icon={<FiUser />}
+              iconPosition="left"
               required
             />
-            {exigeGuiche && (
-              <div className="max-w-37.5">
-                <Input
-                  label="Guichê"
-                  name="guiche"
-                  size="md"
-                  type="text"
-                  maxLength={4}
-                  placeholder="Ex.: 01"
-                  value={guiche}
-                  onChange={(event) => {
-                    setGuiche(event.target.value.replace(/[^a-zA-Z0-9]/g, ""));
-                    limparMensagens("guiche");
-                  }}
-                  error={erros.guiche}
-                  disabled={carregando}
-                  required
-                />
-              </div>
-            )}
-          </div>
 
-          <Button
-            variant="primary"
-            className="w-full mt-2"
-            loading={carregando}
-            type="submit"
-          >
-            {carregando ? "Entrando..." : "Entrar"}
-          </Button>
-        </form>
+            <Input
+              label="Senha"
+              name="senha"
+              size="md"
+              type="password"
+              maxLength={50}
+              autoComplete="current-password"
+              placeholder="Digite sua senha"
+              value={senha}
+              onChange={(event) => {
+                setSenha(event.target.value);
+                limparMensagens("senha");
+              }}
+              error={erros.senha}
+              disabled={carregando}
+              icon={<FiLock />}
+              iconPosition="left"
+              required
+            />
+
+            <div className="flex gap-4 items-start">
+              <Select
+                label="Tela de acesso"
+                name="tela"
+                placeholder="Selecione a tela..."
+                options={TELAS}
+                value={tela}
+                onChange={(event) => {
+                  const novaTela = event.target.value;
+                  setTela(novaTela);
+                  if (!TELAS_COM_GUICHE.includes(novaTela)) {
+                    setGuiche("");
+                    setErros((prev) => ({ ...prev, tela: "", guiche: "" }));
+                  } else {
+                    setErros((prev) => ({ ...prev, tela: "" }));
+                  }
+                  if (erro) setErro("");
+                  if (alertaSessao) limparAlertaSessao();
+                }}
+                error={erros.tela}
+                disabled={carregando}
+                id="tela"
+                required
+              />
+              {exigeGuiche && (
+                <div className="max-w-37.5">
+                  <Input
+                    label="Guichê"
+                    name="guiche"
+                    size="md"
+                    type="text"
+                    maxLength={4}
+                    placeholder="Ex.: 01"
+                    value={guiche}
+                    onChange={(event) => {
+                      setGuiche(event.target.value.replace(/[^a-zA-Z0-9]/g, ""));
+                      limparMensagens("guiche");
+                    }}
+                    error={erros.guiche}
+                    disabled={carregando}
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            <Button
+              variant="primary"
+              className="w-full mt-2"
+              loading={carregando}
+              type="submit"
+            >
+              {carregando ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+        </div>
       </div>
     </main>
   );

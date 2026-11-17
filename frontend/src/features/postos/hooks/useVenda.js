@@ -34,7 +34,7 @@ export const useVenda = () => {
   }, []);
 
   React.useEffect(() => {
-    carregarProdutos();
+    void Promise.resolve().then(() => carregarProdutos());
   }, [carregarProdutos]);
 
   const adicionarUniforme = (idUniforme) => {
@@ -132,13 +132,13 @@ export const useVenda = () => {
   const diferencaPagamento = Math.round((totalCompra - totalPago) * 100) / 100;
   const podeFinalizar = totalCompra === 0 || diferencaPagamento === 0;
 
-  const limparVenda = () => {
+  const limparVenda = React.useCallback(() => {
     setUniformesSelecionados([]);
     setArmarioIncluido(false);
     setContribuicao(0);
     setPagamentosSelecionados([]);
     setValoresPagamento(PAGAMENTOS_ZERADOS);
-  };
+  }, []);
 
   const gerarPayload = () => {
     const itens = uniformesSelecionados.map((item) => ({

@@ -33,7 +33,7 @@ export const useFilas = () => {
   }, []);
 
   React.useEffect(() => {
-    carregar();
+    void Promise.resolve().then(() => carregar());
 
     const intervalo = window.setInterval(() => {
       carregar(true);

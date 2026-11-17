@@ -43,7 +43,7 @@ export const useBuscaAlunos = ({ limite = 5 } = {}) => {
   }, [buscaDebounced, limite]);
 
   React.useEffect(() => {
-    carregarAlunos();
+    void Promise.resolve().then(carregarAlunos);
   }, [carregarAlunos]);
 
   const limparBusca = React.useCallback(() => {
