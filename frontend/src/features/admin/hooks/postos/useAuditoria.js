@@ -4,7 +4,7 @@ import { useDebounce } from "../../../../hooks/useDebounce";
 
 export const useAuditoria = ({
   busca = "",
-  status = "",
+  status = null,
   tipoPeriodo = "hoje",
   dataInicio,
   dataFim,
@@ -18,6 +18,14 @@ export const useAuditoria = ({
   const [erro, setErro] = React.useState(null);
 
   const carregar = React.useCallback(async (silencioso = false) => {
+    if (tipoPeriodo === "PERSONALIZADO" && (!dataInicio || !dataFim)) {
+      if (!silencioso) {
+        setErro(null);
+        setCarregando(false);
+      }
+      return;
+    }
+
     if (!silencioso) {
       setCarregando(true);
       setErro(null);
@@ -44,7 +52,7 @@ export const useAuditoria = ({
   }, [buscaDebounced, status, tipoPeriodo, dataInicio, dataFim, pagina, limite]);
 
   React.useEffect(() => {
-    carregar();
+    void Promise.resolve().then(() => carregar());
 
     const intervalo = window.setInterval(() => {
       carregar(true);

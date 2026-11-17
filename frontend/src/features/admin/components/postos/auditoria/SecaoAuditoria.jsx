@@ -3,20 +3,20 @@ import { FiSearch } from "react-icons/fi";
 import Alert from "../../../../../components/ui/Alert";
 import DataTable from "../../../../../components/ui/DataTable";
 import Input from "../../../../../components/ui/Input";
-import Select from "../../../../../components/ui/Select";
 import Button from "../../../../../components/ui/Button";
 import Badge from "../../../../../components/ui/Badge";
 import TableFiltro from "../../../../../components/ui/TableFiltro";
+import FiltroPeriodo from "../../../../../components/ui/FiltroPeriodo";
 import SenhaModal from "../SenhaModal";
 import { useAuditoria } from "../../../hooks/postos/useAuditoria";
 import { formatarSenha } from "../../../../../utils/formatters";
 
-import { OPCOES_TIPO_PERIODO, OPCOES_STATUS } from "../../../constants/postos";
+import { OPCOES_STATUS } from "../../../constants/postos";
 
 const SecaoAuditoria = () => {
   const [busca, setBusca] = React.useState("");
   const [status, setStatus] = React.useState("");
-  const [tipoPeriodo, setTipoPeriodo] = React.useState("hoje");
+  const [tipoPeriodo, setTipoPeriodo] = React.useState("HOJE");
   const [dataInicio, setDataInicio] = React.useState("");
   const [dataFim, setDataFim] = React.useState("");
   const [pagina, setPagina] = React.useState(1);
@@ -27,8 +27,8 @@ const SecaoAuditoria = () => {
     busca,
     status: status || undefined,
     tipoPeriodo,
-    dataInicio: tipoPeriodo === "personalizado" ? dataInicio : undefined,
-    dataFim: tipoPeriodo === "personalizado" ? dataFim : undefined,
+    dataInicio: tipoPeriodo === "PERSONALIZADO" ? dataInicio : undefined,
+    dataFim: tipoPeriodo === "PERSONALIZADO" ? dataFim : undefined,
     pagina,
     limite: 7,
   });
@@ -38,8 +38,18 @@ const SecaoAuditoria = () => {
     setPagina(1);
   };
 
-  const handleTipoPeriodoChange = (e) => {
-    setTipoPeriodo(e.target.value);
+  const handleTipoPeriodoChange = (novoPeriodo) => {
+    setTipoPeriodo(novoPeriodo);
+    setPagina(1);
+  };
+
+  const handleDataInicioChange = (novaData) => {
+    setDataInicio(novaData);
+    setPagina(1);
+  };
+
+  const handleDataFimChange = (novaData) => {
+    setDataFim(novaData);
     setPagina(1);
   };
 
@@ -122,9 +132,9 @@ const SecaoAuditoria = () => {
         {total} {total === 1 ? "senha encontrada" : "senhas encontradas"}.
       </p>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex-1 min-w-60 max-w-md">
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="w-full sm:max-w-md">
             <Input
               value={busca}
               onChange={handleBuscaChange}
@@ -134,48 +144,23 @@ const SecaoAuditoria = () => {
             />
           </div>
 
-          <div className="w-full sm:w-56">
-            <Select
-              size="md"
-              value={tipoPeriodo}
-              onChange={handleTipoPeriodoChange}
-              options={OPCOES_TIPO_PERIODO}
-              placeholder={null}
-            />
-          </div>
-
-          {tipoPeriodo === "personalizado" && (
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                size="md"
-                value={dataInicio}
-                onChange={(e) => {
-                  setDataInicio(e.target.value);
-                  setPagina(1);
-                }}
-                ariaLabel="Data de início"
-              />
-              <span className="text-sm text-text-secondary">até</span>
-              <Input
-                type="date"
-                size="md"
-                value={dataFim}
-                onChange={(e) => {
-                  setDataFim(e.target.value);
-                  setPagina(1);
-                }}
-                ariaLabel="Data de fim"
-              />
-            </div>
-          )}
+          <TableFiltro
+            options={OPCOES_STATUS}
+            value={status}
+            onChange={handleStatusChange}
+            ariaLabel="Situação da senha"
+          />
         </div>
 
-        <TableFiltro
-          options={OPCOES_STATUS}
-          value={status}
-          onChange={handleStatusChange}
-          ariaLabel="Situação da senha"
+        <FiltroPeriodo
+          incluirTodo={false}
+          periodo={tipoPeriodo}
+          dataInicio={dataInicio}
+          dataFim={dataFim}
+          onPeriodoChange={handleTipoPeriodoChange}
+          onDataInicioChange={handleDataInicioChange}
+          onDataFimChange={handleDataFimChange}
+          ariaLabel="Período da auditoria"
         />
       </div>
 

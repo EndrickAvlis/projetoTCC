@@ -14,13 +14,17 @@ alunoRoutes.get(
   alunoController.listarAlunos,
 );
 
-alunoRoutes.get("/cidades", alunoController.listarCidades);
+alunoRoutes.get(
+  "/cidades",
+  validarRequisicao(alunos.listarCidadesSchema),
+  alunoController.listarCidades,
+);
 
 alunoRoutes.patch(
   "/arquivar",
   auth.validarRole(["admin", "supervisor"]),
   validarRequisicao(alunos.arquivarCandidatosSchema),
-  alunoController.arquivarCandidatos,
+  alunoController.arquivarAlunos,
 );
 
 alunoRoutes.patch(

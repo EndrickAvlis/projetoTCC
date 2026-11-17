@@ -3,14 +3,26 @@ import BaseService from "./baseService.js";
 import AppError from "../errors/AppError.js";
 import { formatarNome } from "../utils/formatarNome.js";
 
-const removerDuplicadosLocais = (candidatos) => {
+const normalizarAlunos = (alunos) => {
   const vistos = new Set();
-  return candidatos.filter((c) => {
-    const chave = formatarNome(c.nome).toUpperCase();
-    if (vistos.has(chave)) return false;
+  const unicos = [];
+
+  for (const c of alunos) {
+    const nome = formatarNome(c.nome);
+    const chave = nome.toUpperCase();
+    if (vistos.has(chave)) continue;
     vistos.add(chave);
-    return true;
-  });
+
+    unicos.push({
+      ...c,
+      nome,
+      chave,
+      cidade: c.cidade ? formatarNome(c.cidade) : null,
+      classificacao: c.classificacao ?? null,
+    });
+  }
+
+  return unicos;
 };
 
 const alunoInclude = {
@@ -54,9 +66,8 @@ export default class AlunoService extends BaseService {
     };
 
     const [total, alunos] = await Promise.all([
-      prisma.aluno.count({ where }),
-      prisma.aluno.findMany({
-        where,
+      this.model.count({ where }),
+      super.listar(where, {
         skip,
         take,
         orderBy: { nomeAluno: "asc" },
@@ -73,21 +84,24 @@ export default class AlunoService extends BaseService {
     };
   }
 
-  async listarCidades() {
-    const registros = await prisma.aluno.findMany({
-      where: { cidadeAluno: { not: null } },
-      select: { cidadeAluno: true },
-      distinct: ["cidadeAluno"],
-      orderBy: { cidadeAluno: "asc" },
-    });
+  async listarCidades({ status } = {}) {
+    const registros = await super.listar(
+      {
+        cidadeAluno: { not: null },
+        ...(status && { statusAluno: status }),
+      },
+      {
+        select: { cidadeAluno: true },
+        distinct: ["cidadeAluno"],
+        orderBy: { cidadeAluno: "asc" },
+      },
+    );
     return registros.map((r) => r.cidadeAluno).filter(Boolean);
   }
 
   async atualizarAluno(id, { nome, status }) {
-    const aluno = await prisma.aluno.findUnique({
-      where: {
-        idAluno: id,
-      },
+    const aluno = await super.buscarPorId(id, {
+      select: { idAluno: true },
     });
 
     if (!aluno) {
@@ -97,20 +111,38 @@ export default class AlunoService extends BaseService {
       });
     }
 
-    return super.atualizar(
-      id,
-      {
-        nomeAluno: nome ? formatarNome(nome) : undefined,
-        statusAluno: status,
-      },
-      {
-        include: alunoInclude,
-      },
-    );
+    const data = {
+      nomeAluno: nome ? formatarNome(nome) : undefined,
+      statusAluno: status,
+    };
+
+    if (status === "ATIVO") {
+      return prisma.$transaction(async (tx) => {
+        await tx.cursoAluno.updateMany({
+          where: {
+            codAluno: id,
+            statusMatricula: "PENDENTE",
+          },
+          data: { statusMatricula: "ATIVA" },
+        });
+
+        return tx.aluno.update({
+          where: { idAluno: id },
+          data,
+          include: alunoInclude,
+        });
+      });
+    }
+
+    return this.model.update({
+      where: { idAluno: id },
+      data,
+      include: alunoInclude,
+    });
   }
 
-  async arquivarCandidatos({ anoProcesso, semestreProcesso } = {}) {
-    const { count } = await prisma.aluno.updateMany({
+  async arquivarAlunos({ anoProcesso, semestreProcesso } = {}) {
+    const { count } = await this.model.updateMany({
       where: {
         statusAluno: "CANDIDATO",
         ...(anoProcesso != null && semestreProcesso != null
@@ -124,8 +156,7 @@ export default class AlunoService extends BaseService {
   }
 
   async excluirAluno(id) {
-    const aluno = await prisma.aluno.findUnique({
-      where: { idAluno: id },
+    const aluno = await super.buscarPorId(id, {
       select: {
         idAluno: true,
         statusAluno: true,
@@ -169,30 +200,27 @@ export default class AlunoService extends BaseService {
   }
 
   async excluirAlunos() {
-    return prisma.$transaction(async (tx) => {
-      const [totalArquivados, elegiveis] = await Promise.all([
-        tx.aluno.count({ where: { statusAluno: "ARQUIVADO" } }),
-        tx.aluno.findMany({
-          where: {
-            statusAluno: "ARQUIVADO",
-            compras: { none: {} },
-            senhas: { none: {} },
-          },
-          select: { idAluno: true },
-        }),
-      ]);
+    const filtroElegiveis = {
+      statusAluno: "ARQUIVADO",
+      compras: { none: {} },
+      senhas: { none: {} },
+    };
 
-      if (elegiveis.length === 0) {
-        return { excluidos: 0, mantidos: totalArquivados };
+    return prisma.$transaction(async (tx) => {
+      const totalArquivados = await tx.aluno.count({
+        where: { statusAluno: "ARQUIVADO" },
+      });
+
+      if (totalArquivados === 0) {
+        return { excluidos: 0, mantidos: 0 };
       }
 
-      const ids = elegiveis.map((a) => a.idAluno);
       await tx.cursoAluno.deleteMany({
-        where: { codAluno: { in: ids } },
+        where: { aluno: filtroElegiveis },
       });
 
       const { count } = await tx.aluno.deleteMany({
-        where: { idAluno: { in: ids } },
+        where: filtroElegiveis,
       });
 
       return {
@@ -204,12 +232,55 @@ export default class AlunoService extends BaseService {
 
   async importarAlunos({ anoProcesso, semestreProcesso, candidatos }) {
     return prisma.$transaction(async (tx) => {
-      const candidatosUnicos = removerDuplicadosLocais(candidatos);
+      const idsCursos = [...new Set(candidatos.map((c) => c.cursoId))];
+      const cursosAtivos = await tx.curso.findMany({
+        where: { idCurso: { in: idsCursos }, arquivado: false },
+        select: {
+          idCurso: true,
+          periodos: { select: { periodo: true } },
+        },
+      });
+
+      if (cursosAtivos.length !== idsCursos.length) {
+        throw new AppError(
+          "Um ou mais cursos selecionados não existem ou estão arquivados.",
+          {
+            status: 409,
+            code: "CURSO_INDISPONIVEL",
+          },
+        );
+      }
+
+      const periodosPorCurso = new Map(
+        cursosAtivos.map((c) => [
+          c.idCurso,
+          new Set(c.periodos.map((p) => p.periodo)),
+        ]),
+      );
+
+      const possuiPeriodoInexistente = candidatos.some(
+        (c) => !periodosPorCurso.get(c.cursoId)?.has(c.periodo),
+      );
+
+      if (possuiPeriodoInexistente) {
+        throw new AppError(
+          "Um ou mais cursos selecionados não possuem o período informado no arquivo.",
+          {
+            status: 409,
+            code: "PERIODO_CURSO_INEXISTENTE",
+          },
+        );
+      }
+
+      const candidatosUnicos = normalizarAlunos(candidatos);
       const duplicadosInternos = candidatos.length - candidatosUnicos.length;
 
-      const nomes = candidatosUnicos.map((c) => formatarNome(c.nome));
       const existentes = await tx.aluno.findMany({
-        where: { anoProcesso, semestreProcesso, nomeAluno: { in: nomes } },
+        where: {
+          anoProcesso,
+          semestreProcesso,
+          nomeAluno: { in: candidatosUnicos.map((c) => c.nome) },
+        },
         select: { nomeAluno: true },
       });
 
@@ -218,7 +289,7 @@ export default class AlunoService extends BaseService {
       );
 
       const paraInserir = candidatosUnicos.filter(
-        (c) => !nomesExistentesSet.has(formatarNome(c.nome).toUpperCase()),
+        (c) => !nomesExistentesSet.has(c.chave),
       );
 
       const totalDuplicados =
@@ -229,9 +300,9 @@ export default class AlunoService extends BaseService {
 
       const novosAlunos = await tx.aluno.createManyAndReturn({
         data: paraInserir.map((c) => ({
-          nomeAluno: formatarNome(c.nome),
+          nomeAluno: c.nome,
           escolaridadePublica: Boolean(c.escolaridadePublica),
-          cidadeAluno: c.cidade ? formatarNome(c.cidade) : null,
+          cidadeAluno: c.cidade,
           sexoAluno: c.sexo,
           statusAluno: "CANDIDATO",
           anoProcesso,
@@ -244,16 +315,13 @@ export default class AlunoService extends BaseService {
         novosAlunos.map((a) => [a.nomeAluno.toUpperCase(), a.idAluno]),
       );
       const matriculas = paraInserir
-        .filter(
-          (c) => c.cursoId && idPorNome.has(formatarNome(c.nome).toUpperCase()),
-        )
+        .filter((c) => c.cursoId && idPorNome.has(c.chave))
         .map((c) => ({
           codCurso: c.cursoId,
-          codAluno: idPorNome.get(formatarNome(c.nome).toUpperCase()),
+          codAluno: idPorNome.get(c.chave),
           statusMatricula: "PENDENTE",
           periodo: c.periodo,
-          classificacao:
-            c.classificacao != null && c.classificacao !== "" && Number(c.classificacao) > 0 ? Number(c.classificacao) : null,
+          classificacao: c.classificacao,
         }));
 
       if (matriculas.length > 0) {

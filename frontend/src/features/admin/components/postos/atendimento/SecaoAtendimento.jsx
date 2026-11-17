@@ -1,15 +1,15 @@
 import * as React from "react";
 import Alert from "../../../../../components/ui/Alert";
 import Select from "../../../../../components/ui/Select";
-import Input from "../../../../../components/ui/Input";
 import Card from "../../../../../components/ui/Card";
+import FiltroPeriodo from "../../../../../components/ui/FiltroPeriodo";
+import { obterRotuloPeriodo } from "../../../../../constants/periodoOptions";
 import { useAtendimento } from "../../../hooks/postos/useAtendimento";
 import { useCursos } from "../../../hooks/useCursos";
 import GraficoFinalizadasHora from "./GraficoFinalizadasHora";
 import CursosAtivos from "./CursosAtivos";
 
 import { PERIODOS_CURSO } from "../../../../../constants/cursoOptions";
-import { OPCOES_TIPO_PERIODO } from "../../../constants/postos";
 
 const CONFIG_CARDS = [
   {
@@ -46,80 +46,60 @@ const CONFIG_CARDS = [
 const SecaoAtendimento = () => {
   const [cursoId, setCursoId] = React.useState("");
   const [periodoCurso, setPeriodoCurso] = React.useState("");
-  const [tipoPeriodo, setTipoPeriodo] = React.useState("hoje");
+  const [tipoPeriodo, setTipoPeriodo] = React.useState("HOJE");
   const [dataInicio, setDataInicio] = React.useState("");
   const [dataFim, setDataFim] = React.useState("");
 
   const { cursos } = useCursos();
   const { cards, finalizadasPorHora, cursosAtivos, erro } = useAtendimento({
     tipoPeriodo,
-    dataInicio: tipoPeriodo === "personalizado" ? dataInicio : undefined,
-    dataFim: tipoPeriodo === "personalizado" ? dataFim : undefined,
+    dataInicio: tipoPeriodo === "PERSONALIZADO" ? dataInicio : undefined,
+    dataFim: tipoPeriodo === "PERSONALIZADO" ? dataFim : undefined,
     cursoId: cursoId ? Number(cursoId) : undefined,
     periodoCurso: periodoCurso || undefined,
   });
 
-  const handleTipoPeriodoChange = (e) => {
-    setTipoPeriodo(e.target.value);
-  };
-
-  const rotuloPeriodoAtual =
-    tipoPeriodo === "personalizado" && dataInicio && dataFim
-      ? `${dataInicio} a ${dataFim}`
-      : OPCOES_TIPO_PERIODO.find((o) => o.value === tipoPeriodo)?.label;
+  const rotuloPeriodoAtual = obterRotuloPeriodo({
+    periodo: tipoPeriodo,
+    dataInicio,
+    dataFim,
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
-        <div className="flex-1 min-w-56">
-          <Select
-            size="md"
-            value={cursoId}
-            onChange={(e) => setCursoId(e.target.value)}
-            options={cursos.map((c) => ({ value: c.id, label: c.nome }))}
-            placeholder="Todos os cursos"
-          />
-        </div>
-
-        <div className="w-56">
-          <Select
-            size="md"
-            value={periodoCurso}
-            onChange={(e) => setPeriodoCurso(e.target.value)}
-            options={PERIODOS_CURSO}
-            placeholder="Todos os períodos"
-          />
-        </div>
-
-        <div className="w-56">
-          <Select
-            size="md"
-            value={tipoPeriodo}
-            onChange={handleTipoPeriodoChange}
-            options={OPCOES_TIPO_PERIODO}
-            placeholder={null}
-          />
-        </div>
-
-        {tipoPeriodo === "personalizado" && (
-          <div className="flex items-center gap-2">
-            <Input
-              type="date"
+      <div className="flex flex-col gap-3 border-b border-border pb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-56">
+            <Select
               size="md"
-              value={dataInicio}
-              onChange={(e) => setDataInicio(e.target.value)}
-              ariaLabel="Data inicial"
-            />
-            <span className="text-sm text-text-secondary">até</span>
-            <Input
-              type="date"
-              size="md"
-              value={dataFim}
-              onChange={(e) => setDataFim(e.target.value)}
-              ariaLabel="Data final"
+              value={cursoId}
+              onChange={(e) => setCursoId(e.target.value)}
+              options={cursos.map((c) => ({ value: c.id, label: c.nome }))}
+              placeholder="Todos os cursos"
             />
           </div>
-        )}
+
+          <div className="w-full sm:w-56">
+            <Select
+              size="md"
+              value={periodoCurso}
+              onChange={(e) => setPeriodoCurso(e.target.value)}
+              options={PERIODOS_CURSO}
+              placeholder="Todos os períodos"
+            />
+          </div>
+        </div>
+
+        <FiltroPeriodo
+          incluirTodo={false}
+          periodo={tipoPeriodo}
+          dataInicio={dataInicio}
+          dataFim={dataFim}
+          onPeriodoChange={setTipoPeriodo}
+          onDataInicioChange={setDataInicio}
+          onDataFimChange={setDataFim}
+          ariaLabel="Período do atendimento"
+        />
       </div>
 
       {erro && <Alert type="error" message={erro} />}

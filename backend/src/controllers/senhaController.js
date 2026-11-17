@@ -1,4 +1,5 @@
 import SenhaService from "../services/senhaService.js";
+import { painelService } from "../services/painelService.js";
 
 const senhaService = new SenhaService();
 
@@ -34,6 +35,7 @@ export const alterarPrioridadeSenha = async (req, res) => {
 
 export const reiniciarSequencia = async (_req, res) => {
   const resultado = await senhaService.reiniciarSequencia();
+  await painelService.limparPainel();
 
   return res.json({
     message: "Sequência diária de senhas reiniciada com sucesso.",

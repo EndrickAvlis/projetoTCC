@@ -1,19 +1,22 @@
 import * as React from "react";
-import * as FiIcons from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiFileText,
+  FiInfo,
+  FiTrash2,
+  FiUploadCloud,
+} from "react-icons/fi";
 import Alert from "../../../../../components/ui/Alert";
 import Button from "../../../../../components/ui/Button";
 import Input from "../../../../../components/ui/Input";
 import Select from "../../../../../components/ui/Select";
+import { OPCOES_SEMESTRE } from "../../../../../constants/cursoOptions";
 import {
   decodificarCsv,
   parsearCsv,
   analisarCsvAlunos,
 } from "./importAluno";
-
-const OPCOES_SEMESTRE = [
-  { value: "1", label: "1º Semestre" },
-  { value: "2", label: "2º Semestre" },
-];
+import { bloquearTeclasNaoInteiras } from "../../../../../utils/formHelpers";
 
 const formatarTamanhoArquivo = (bytes) => {
   if (bytes === 0) return "0 B";
@@ -24,6 +27,8 @@ const formatarTamanhoArquivo = (bytes) => {
 };
 
 const UploadCsv = ({
+  arquivo = null,
+  onAlterarArquivo,
   anoProcesso,
   onAlterarAno,
   semestreProcesso,
@@ -33,7 +38,6 @@ const UploadCsv = ({
   onAvancar,
   onCancelar,
 }) => {
-  const [arquivo, setArquivo] = React.useState(null);
   const [arrastando, setArrastando] = React.useState(false);
   const [analisando, setAnalisando] = React.useState(false);
   const [erro, setErro] = React.useState(null);
@@ -61,7 +65,7 @@ const UploadCsv = ({
 
   const handleArquivoSelecionado = (novoArquivo) => {
     if (validarArquivo(novoArquivo)) {
-      setArquivo(novoArquivo);
+      onAlterarArquivo?.(novoArquivo);
     }
   };
 
@@ -84,11 +88,8 @@ const UploadCsv = ({
   };
 
   const handleRemoverArquivo = () => {
-    setArquivo(null);
+    onAlterarArquivo?.(null);
     setErro(null);
-    if (inputArquivoRef.current) {
-      inputArquivoRef.current.value = "";
-    }
   };
 
   const handleProcessarArquivo = async () => {
@@ -151,7 +152,7 @@ const UploadCsv = ({
     } catch (err) {
       setErro(
         err.message ||
-          "Erro ao processar o arquivo CSV. Verifique a estrutura e os dados.",
+        "Erro ao processar o arquivo CSV. Verifique a estrutura e os dados.",
       );
     } finally {
       setAnalisando(false);
@@ -165,7 +166,7 @@ const UploadCsv = ({
       )}
 
       <div className="flex items-start gap-3 rounded-lg border border-border bg-surface-muted/50 p-4 text-sm text-text-secondary">
-        <FiIcons.FiInfo className="mt-0.5 shrink-0 text-primary" size={18} />
+        <FiInfo className="mt-0.5 shrink-0 text-primary" size={18} />
         <div className="space-y-1">
           <p className="font-medium text-text-primary">
             Importação da Lista de Classificação do Vestibulinho
@@ -186,6 +187,7 @@ const UploadCsv = ({
           required
           min="2000"
           max="2100"
+          onKeyDown={bloquearTeclasNaoInteiras}
           value={anoProcesso}
           onChange={(e) => onAlterarAno(e.target.value)}
           placeholder="Digite o ano..."
@@ -213,9 +215,9 @@ const UploadCsv = ({
           accept=".csv,text/csv"
           className="hidden"
           onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) {
-              handleArquivoSelecionado(e.target.files[0]);
-            }
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) handleArquivoSelecionado(file);
           }}
         />
 
@@ -225,28 +227,23 @@ const UploadCsv = ({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => inputArquivoRef.current?.click()}
-            className={`group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200 ${
-              arrastando
+            className={`group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200 ${arrastando
                 ? "border-primary bg-primary/5 scale-[1.01]"
                 : "border-border hover:border-primary/60 hover:bg-surface-muted/40"
-            }`}
+              }`}
           >
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:scale-110">
-              <FiIcons.FiUploadCloud size={28} />
+              <FiUploadCloud size={28} />
             </div>
             <p className="text-sm font-semibold text-text-primary">
               Clique para selecionar ou arraste o arquivo CSV aqui
-            </p>
-            <p className="mt-1 text-xs text-text-secondary">
-              Codificações aceitas: UTF-8 e Windows-1252 (ANSI) • Delimitador:
-              ponto e vírgula (;)
             </p>
           </div>
         ) : (
           <div className="flex items-center justify-between rounded-xl border border-border bg-surface-muted/40 p-4 transition-all">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <FiIcons.FiFileText size={24} />
+                <FiFileText size={24} />
               </div>
               <div>
                 <p className="font-semibold text-text-primary text-sm">
@@ -264,7 +261,7 @@ const UploadCsv = ({
               size="sm"
               onClick={handleRemoverArquivo}
               className="text-status-danger hover:bg-status-danger-bg hover:text-status-danger"
-              leftIcon={<FiIcons.FiTrash2 size={16} />}
+              leftIcon={<FiTrash2 size={16} />}
             >
               Remover
             </Button>
@@ -290,7 +287,7 @@ const UploadCsv = ({
           onClick={handleProcessarArquivo}
           disabled={!arquivo || analisando}
           loading={analisando}
-          rightIcon={<FiIcons.FiArrowRight size={18} />}
+          rightIcon={<FiArrowRight size={18} />}
         >
           {analisando ? "Analisando..." : "Analisar Arquivo"}
         </Button>

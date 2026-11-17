@@ -15,7 +15,7 @@ export const listarAlunos = async (req, res) => {
 };
 
 export const listarCidades = async (req, res) => {
-  const cidades = await alunoService.listarCidades();
+  const cidades = await alunoService.listarCidades(req.validado.query);
   return res.json({ cidades });
 };
 
@@ -36,8 +36,8 @@ export const importarAlunos = async (req, res) => {
   return res.status(201).json(resultado);
 };
 
-export const arquivarCandidatos = async (req, res) => {
-  const resultado = await alunoService.arquivarCandidatos(req.validado.body);
+export const arquivarAlunos = async (req, res) => {
+  const resultado = await alunoService.arquivarAlunos(req.validado.body);
 
   return res.json(resultado);
 };

@@ -1,11 +1,3 @@
-export const OPCOES_TIPO_PERIODO = [
-  { value: "hoje", label: "Hoje" },
-  { value: "semana", label: "Semana" },
-  { value: "mes", label: "Mês" },
-  { value: "personalizado", label: "Personalizado" },
-];
-
-
 export const OPCOES_STATUS = [
   { valor: "", label: "Todas" },
   { valor: "finalizada", label: "Finalizadas" },

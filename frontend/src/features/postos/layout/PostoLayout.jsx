@@ -2,15 +2,19 @@ import * as React from "react";
 import Header from "./Header";
 import SidePostos from "./SidePostos";
 import { useAtendimento } from "../context/atendimentoContext";
+import { useToast } from "../../../context/toastContext";
 
 const PostoLayout = ({ etapa, children }) => {
   const { recuperarAtendimentoAtivo } = useAtendimento();
+  const toast = useToast();
 
   React.useEffect(() => {
     if (etapa) {
-      recuperarAtendimentoAtivo(etapa).catch(() => {});
+      recuperarAtendimentoAtivo(etapa).catch((erro) => {
+        toast.erro(erro.message);
+      });
     }
-  }, [etapa, recuperarAtendimentoAtivo]);
+  }, [etapa, recuperarAtendimentoAtivo, toast]);
 
   return (
     <div className="flex h-screen" aria-label={`Posto de ${etapa}`}>

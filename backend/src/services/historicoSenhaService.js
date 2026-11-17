@@ -1,6 +1,6 @@
 import prisma from "../config/prisma.js";
 import BaseService from "./baseService.js";
-import { obterIntervaloDia } from "./senhaService.js";
+import { cancelarSenhas, obterIntervaloDia } from "./senhaService.js";
 
 export default class HistoricoSenhaService extends BaseService {
   constructor() {
@@ -8,6 +8,7 @@ export default class HistoricoSenhaService extends BaseService {
   }
 
   async listarAtendimentoAberto(idUsuario, etapa) {
+    await cancelarSenhas();
     return await prisma.historicoSenha.findFirst({
       where: {
         codVoluntario: idUsuario,

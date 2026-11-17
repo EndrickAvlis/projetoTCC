@@ -1,15 +1,14 @@
 import BaseService from "./baseService.js";
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
-import { intervaloPeriodo } from "./dashboardService.js";
-
-const arredondarMoeda = (valor) => Math.round(valor * 100) / 100;
+import { arredondarMoeda, intervaloPeriodo } from "./dashboardService.js";
 
 const compraDetalhesInclude = {
   aluno: {
     include: {
       cursosAluno: {
         include: { curso: true },
+        orderBy: [{ statusMatricula: "desc" }, { codCurso: "asc" }],
         take: 1,
       },
     },

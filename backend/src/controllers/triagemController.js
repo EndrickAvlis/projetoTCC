@@ -1,5 +1,6 @@
 import TriagemService from "../services/triagemService.js";
 import { painelService } from "../services/painelService.js";
+import AppError from "../errors/AppError.js";
 
 const triagemService = new TriagemService();
 
@@ -29,6 +30,13 @@ export const listarPendencias = async (req, res) => {
 };
 
 export const retomarAtendimento = async (req, res) => {
+  if (req.validado.body.etapa !== req.usuario.tela) {
+    throw new AppError("A senha e o usuario estão em etapas diferentes", {
+      status: 403,
+      code: "ETAPAS_DIFERENTES",
+    });
+  }
+
   const resultado = await triagemService.retomarAtendimento(
     req.validado.body.senhaId,
     req.validado.body.etapa,
@@ -37,7 +45,8 @@ export const retomarAtendimento = async (req, res) => {
   painelService.mostrarSenhaChamada({
     codigo: resultado.senha.codigo,
     posto: req.validado.body.etapa,
-    guiche: req.usuario?.guiche,
-  })
+    guiche: req.usuario?.guiche ?? null,
+    prioritaria: Boolean(resultado.senha.prioritaria),
+  });
   return res.status(200).json(resultado);
 };

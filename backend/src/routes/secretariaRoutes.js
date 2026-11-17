@@ -8,7 +8,7 @@ const secretariaRoutes = Router();
 
 secretariaRoutes.use(
   auth.accessValidator,
-  auth.validarRole(["admin", "supervisor", "atendente"]),
+  auth.validarRole(["admin", "supervisor"]),
 );
 
 secretariaRoutes.get("/", SecretariaController.obterKpis);

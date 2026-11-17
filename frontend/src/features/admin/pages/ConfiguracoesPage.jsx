@@ -17,6 +17,7 @@ import { useArmario } from "../hooks/useArmario";
 import * as produtoService from "../services/produtoService";
 import * as configuracoesService from "../services/configuracoesService";
 import { formatarSenha } from "../../../utils/formatters";
+import { LISTA_PAINEIS } from "../../../constants/paineis";
 import { useAuth } from "../../../context/authContext";
 import { useToast } from "../../../context/toastContext";
 
@@ -25,54 +26,6 @@ const CLASSE_BOTAO_LINK =
 
 const BOTAO_PRIMARY =
   "border-primary text-primary hover:bg-primary hover:text-text-inverse";
-
-const PAINEIS_CHAMADA = [
-  {
-    id: "principal",
-    nome: "PRINCIPAL",
-    rota: "/painel",
-    senhaExemplo: "A001",
-    fundo: "bg-primary",
-    bordaInterna: "border-admin-sidebar-divider",
-    area: "bg-admin-sidebar-hover/40",
-    barra: "bg-focus-ring",
-    botao: BOTAO_PRIMARY,
-  },
-  {
-    id: "triagem",
-    nome: "TRIAGEM",
-    rota: "/painel/triagem",
-    senhaExemplo: "A001",
-    fundo: "bg-triagem-dark",
-    bordaInterna: "border-triagem-border/30",
-    area: "bg-triagem/20",
-    barra: "bg-triagem-border",
-    botao:
-      "border-triagem text-triagem-text hover:bg-triagem hover:text-text-inverse",
-  },
-  {
-    id: "apm",
-    nome: "APM",
-    rota: "/painel/apm",
-    senhaExemplo: "A002",
-    fundo: "bg-apm-dark",
-    bordaInterna: "border-apm-border/30",
-    area: "bg-apm/20",
-    barra: "bg-apm-border",
-    botao: "border-apm text-apm-text hover:bg-apm hover:text-text-inverse",
-  },
-  {
-    id: "docs",
-    nome: "DOCS",
-    rota: "/painel/docs",
-    senhaExemplo: "A003",
-    fundo: "bg-docs-dark",
-    bordaInterna: "border-docs-border/30",
-    area: "bg-docs/20",
-    barra: "bg-docs-border",
-    botao: "border-docs text-docs-text hover:bg-docs hover:text-text-inverse",
-  },
-];
 
 const ConfiguracoesPage = () => {
   const toast = useToast();
@@ -287,22 +240,22 @@ const ConfiguracoesPage = () => {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {PAINEIS_CHAMADA.map((painel) => (
+          {LISTA_PAINEIS.map((painel) => (
             <div key={painel.id} className="flex flex-col gap-3">
               <div
                 aria-hidden="true"
-                className={`overflow-hidden rounded-lg border ${painel.bordaInterna} ${painel.fundo} shadow-xs`}
+                className={`overflow-hidden rounded-lg border ${painel.borda} ${painel.fundo} shadow-xs`}
               >
                 <div
-                  className={`flex items-center justify-between border-b ${painel.bordaInterna} px-3 py-2`}
+                  className={`flex items-center justify-between border-b ${painel.borda} px-3 py-2`}
                 >
-                  <span className="h-2 w-12 rounded-full bg-white/30" />
-                  <span className="h-2 w-7 rounded-full bg-white/20" />
+                  <span className="h-2 w-12 rounded-full bg-surface/30" />
+                  <span className="h-2 w-7 rounded-full bg-surface/20" />
                 </div>
 
                 <div className="flex h-36 gap-2.5 p-2.5">
                   <div
-                    className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-md border ${painel.bordaInterna} ${painel.area}`}
+                    className={`flex flex-1 flex-col items-center justify-center gap-2 rounded-md border ${painel.borda} ${painel.container}`}
                   >
                     <span
                       className={`h-2 w-10 rounded-full ${painel.barra} opacity-80`}
@@ -311,17 +264,17 @@ const ConfiguracoesPage = () => {
                       {painel.senhaExemplo}
                     </span>
                     <div className="flex gap-2">
-                      <span className="h-3.5 w-8 rounded-xs bg-white/15" />
-                      <span className="h-3.5 w-8 rounded-xs bg-white/25" />
+                      <span className="h-3.5 w-8 rounded-xs bg-surface/15" />
+                      <span className="h-3.5 w-8 rounded-xs bg-surface/25" />
                     </div>
                   </div>
 
                   <div
-                    className={`flex w-1/3 flex-col gap-2 rounded-md border ${painel.bordaInterna} ${painel.area} p-2`}
+                    className={`flex w-1/3 flex-col gap-2 rounded-md border ${painel.borda} ${painel.container} p-2`}
                   >
-                    <span className="h-1.5 w-full rounded-full bg-white/20" />
-                    <span className="h-7 w-full rounded-xs border border-white/10 bg-white/10" />
-                    <span className="h-7 w-full rounded-xs border border-white/10 bg-white/10" />
+                    <span className="h-1.5 w-full rounded-full bg-surface/20" />
+                    <span className="h-7 w-full rounded-xs border border-surface/10 bg-surface/10" />
+                    <span className="h-7 w-full rounded-xs border border-surface/10 bg-surface/10" />
                   </div>
                 </div>
               </div>
@@ -332,7 +285,7 @@ const ConfiguracoesPage = () => {
                 rel="noopener noreferrer"
                 className={`${CLASSE_BOTAO_LINK} ${painel.botao}`}
               >
-                {painel.nome}
+                {painel.titulo}
                 <FiExternalLink size={14} />
               </Link>
             </div>

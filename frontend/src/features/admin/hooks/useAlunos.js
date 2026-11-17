@@ -1,5 +1,5 @@
 import * as React from "react";
-import { listarAlunos } from "../services/alunoService";
+import { listarAlunos, listarCidades } from "../services/alunoService";
 import { useDebounce } from "../../../hooks/useDebounce";
 
 export const useAlunos = ({
@@ -13,44 +13,85 @@ export const useAlunos = ({
   const buscaDebounced = useDebounce(busca);
   const [alunos, setAlunos] = React.useState([]);
   const [total, setTotal] = React.useState(0);
+  const [cidades, setCidades] = React.useState([]);
   const [carregando, setCarregando] = React.useState(true);
   const [erro, setErro] = React.useState(null);
+  const requisicaoRef = React.useRef(0);
+  const cidadesReqRef = React.useRef(0);
 
-  const carregarAlunos = React.useCallback(async () => {
-    setCarregando(true);
-    setErro(null);
+  const carregarAlunos = React.useCallback(
+    async ({ silencioso = false } = {}) => {
+      const requisicaoId = ++requisicaoRef.current;
+
+      if (!silencioso) setCarregando(true);
+      setErro(null);
+
+      try {
+        const res = await listarAlunos({
+          nome: buscaDebounced,
+          cursoId,
+          cidade,
+          status,
+          pagina,
+          limite,
+        });
+
+        if (requisicaoId !== requisicaoRef.current) return;
+
+        setAlunos(res?.alunos ?? []);
+        setTotal(res?.total ?? 0);
+      } catch (err) {
+        if (requisicaoId !== requisicaoRef.current) return;
+
+        setAlunos([]);
+        setTotal(0);
+        setErro(err.message);
+      } finally {
+        if (!silencioso && requisicaoId === requisicaoRef.current) {
+          setCarregando(false);
+        }
+      }
+    },
+    [buscaDebounced, cursoId, cidade, status, pagina, limite],
+  );
+
+  const carregarCidades = React.useCallback(async () => {
+    const requisicaoId = ++cidadesReqRef.current;
 
     try {
-      const res = await listarAlunos({
-        nome: buscaDebounced,
-        cursoId,
-        cidade,
-        status,
-        pagina,
-        limite,
-      });
-
-      setAlunos(res?.alunos ?? []);
-      setTotal(res?.total ?? 0);
-    } catch (err) {
-      setAlunos([]);
-      setTotal(0);
-      setErro(err.message);
-    } finally {
-      setCarregando(false);
+      const res = await listarCidades({ status });
+      if (requisicaoId !== cidadesReqRef.current) return;
+      setCidades(res?.cidades ?? []);
+    } catch {
+      if (requisicaoId !== cidadesReqRef.current) return;
+      setCidades([]);
     }
-  }, [buscaDebounced, cursoId, cidade, status, pagina, limite]);
+  }, [status]);
 
   React.useEffect(() => {
-    void Promise.resolve().then(carregarAlunos);
+    void Promise.resolve().then(() => carregarAlunos());
+
+    return () => {
+      requisicaoRef.current += 1;
+    };
   }, [carregarAlunos]);
+
+  React.useEffect(() => {
+    void Promise.resolve().then(() => carregarCidades());
+
+    return () => {
+      cidadesReqRef.current += 1;
+    };
+  }, [carregarCidades]);
 
   return {
     alunos,
     total,
+    cidades,
     carregando,
     erro,
     recarregar: carregarAlunos,
+    recarregarCidades: carregarCidades,
   };
 };
 
