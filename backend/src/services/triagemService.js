@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
 import { mapearAluno } from "../mappers/alunoMapper.js";
+import { cancelarSenhas } from "./senhaService.js";
 
 const erro = (mensagem, status = 409, code = "ERRO_TRIAGEM") =>
   new AppError(mensagem, { status, code });
@@ -187,6 +188,7 @@ export default class TriagemService {
   }
 
   async listarPendencias(etapa) {
+    await cancelarSenhas();
     const senhas = await prisma.senha.findMany({
       where: { etapaSenha: etapa, statusSenha: "pendente" },
       include: {
@@ -209,6 +211,7 @@ export default class TriagemService {
   }
 
   async retomarAtendimento(senhaId, etapa, idUsuario) {
+    await cancelarSenhas();
     return prisma.$transaction(async (transacao) => {
       const aberto = await transacao.historicoSenha.findFirst({
         where: {

@@ -2,10 +2,12 @@ import { triggerAsyncId } from "node:async_hooks";
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
 import BaseService from "./baseService.js";
+import { cancelarSenhas } from "./senhaService.js";
 
 export default class PostosService extends BaseService {
   async ListarFilas() {
     try {
+      await cancelarSenhas();
       const resultado = await prisma.$transaction(async (tx) => {
         const senhas = await tx.senha.findMany({
           where: {
@@ -38,7 +40,7 @@ export default class PostosService extends BaseService {
           (total, senha) => {
             switch (senha.statusSenha) {
               case "em_atendimento":
-                total.totalAguardando += 1;
+                total.totalEmAtendimento += 1;
                 break;
               case "aguardando":
                 total.totalAguardando += 1;
@@ -78,14 +80,12 @@ export default class PostosService extends BaseService {
                 nome: senha.aluno.nomeAluno,
               };
 
-              if (
-                senha.aluno.cursosAluno[0].curso &&
-                senha.aluno.cursosAluno[0]
-              ) {
+              const matricula = senha.aluno.cursosAluno?.[0];
+              if (matricula?.curso) {
                 info.curso = {
-                  id: senha.aluno.cursosAluno[0].curso.idCurso,
-                  nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
-                  periodo: senha.aluno.cursosAluno[0].periodo,
+                  id: matricula.curso.idCurso,
+                  nome: matricula.curso.nomeCurso,
+                  periodo: matricula.periodo,
                 };
               }
             }
@@ -94,7 +94,8 @@ export default class PostosService extends BaseService {
               case "em_atendimento":
                 posto.totais.emAtendimento += 1;
 
-                info.iniciadoEm = senha.historicos[0].dataHoraInicioHistorico;
+                info.iniciadoEm =
+                  senha.historicos?.[0]?.dataHoraInicioHistorico;
                 posto.emAtendimento.push(info);
                 break;
               case "aguardando":
@@ -141,14 +142,12 @@ export default class PostosService extends BaseService {
                 nome: senha.aluno.nomeAluno,
               };
 
-              if (
-                senha.aluno.cursosAluno[0].curso &&
-                senha.aluno.cursosAluno[0]
-              ) {
+              const matricula = senha.aluno.cursosAluno?.[0];
+              if (matricula?.curso) {
                 info.curso = {
-                  id: senha.aluno.cursosAluno[0].curso.idCurso,
-                  nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
-                  periodo: senha.aluno.cursosAluno[0].periodo,
+                  id: matricula.curso.idCurso,
+                  nome: matricula.curso.nomeCurso,
+                  periodo: matricula.periodo,
                 };
               }
             }
@@ -157,7 +156,8 @@ export default class PostosService extends BaseService {
               case "em_atendimento":
                 posto.totais.emAtendimento += 1;
 
-                info.iniciadoEm = senha.historicos[0].dataHoraInicioHistorico;
+                info.iniciadoEm =
+                  senha.historicos?.[0]?.dataHoraInicioHistorico;
                 posto.emAtendimento.push(info);
                 break;
               case "aguardando":
@@ -204,14 +204,12 @@ export default class PostosService extends BaseService {
                 nome: senha.aluno.nomeAluno,
               };
 
-              if (
-                senha.aluno.cursosAluno[0].curso &&
-                senha.aluno.cursosAluno[0]
-              ) {
+              const matricula = senha.aluno.cursosAluno?.[0];
+              if (matricula?.curso) {
                 info.curso = {
-                  id: senha.aluno.cursosAluno[0].curso.idCurso,
-                  nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
-                  periodo: senha.aluno.cursosAluno[0].periodo,
+                  id: matricula.curso.idCurso,
+                  nome: matricula.curso.nomeCurso,
+                  periodo: matricula.periodo,
                 };
               }
             }
@@ -220,7 +218,8 @@ export default class PostosService extends BaseService {
               case "em_atendimento":
                 posto.totais.emAtendimento += 1;
 
-                info.iniciadoEm = senha.historicos[0].dataHoraInicioHistorico;
+                info.iniciadoEm =
+                  senha.historicos?.[0]?.dataHoraInicioHistorico;
                 posto.emAtendimento.push(info);
                 break;
               case "aguardando":
@@ -253,25 +252,29 @@ export default class PostosService extends BaseService {
             return totalPendentes;
           }
 
-          const { registradaEm, ...resto } = senha.documentosPendentes;
-
-          const documentos = Object.value(resto);
+          const { registradaEm, ...resto } = senha.documentosPendentes ?? {};
+          const documentos = Object.values(resto);
+          const matricula = senha.aluno?.cursosAluno?.[0];
 
           const info = {
             id: senha.idSenha,
             codigo: senha.senhaCodigo,
             prioritaria: senha.tipoSenha,
-            regitradaEm: senha.documentosPendentes.registradaEm,
+            registradaEm,
             documentos,
-            aluno: {
-              id: senha.aluno.idAluno,
-              nome: senha.aluno.nomeAluno,
-            },
-            curso: {
-              id: senha.aluno.cursosAluno[0].curso.idCurso,
-              nome: senha.aluno.cursosAluno[0].curso.nomeCurso,
-              periodo: senha.aluno.cursosAluno[0].periodo,
-            },
+            ...(senha.aluno && {
+              aluno: {
+                id: senha.aluno.idAluno,
+                nome: senha.aluno.nomeAluno,
+              },
+            }),
+            ...(matricula?.curso && {
+              curso: {
+                id: matricula.curso.idCurso,
+                nome: matricula.curso.nomeCurso,
+                periodo: matricula.periodo,
+              },
+            }),
           };
 
           totalPendentes.push(info);
@@ -336,6 +339,7 @@ export default class PostosService extends BaseService {
     periodoCurso,
   ) {
     try {
+      await cancelarSenhas();
       const intervalo = obterIntervaloDatas(tipoPeriodo, dataInicio, dataFim);
       const resultado = await prisma.$transaction(async (tx) => {
         const senhasFinalizadas = await tx.senha.count({
@@ -363,7 +367,7 @@ export default class PostosService extends BaseService {
             dataHoraInicioSenha: {
               gte: intervalo.dataInicio,
               lte: intervalo.dataFim,
-            }
+            },
           },
         });
 
@@ -460,6 +464,7 @@ export default class PostosService extends BaseService {
     limite,
   ) {
     try {
+      await cancelarSenhas();
       const intervalo = obterIntervaloDatas(tipoPeriodo, dataInicio, dataFim);
       const skip = (pagina - 1) * limite;
 
@@ -632,7 +637,7 @@ export default class PostosService extends BaseService {
 
   async cancelarSenha(idSenha) {
     try {
-      const resultado = prisma.$transaction(async (tx) => {
+      const resultado = await prisma.$transaction(async (tx) => {
         const senha = await tx.senha.findUnique({
           where: {
             idSenha: idSenha,
@@ -661,28 +666,15 @@ export default class PostosService extends BaseService {
 
         const agora = new Date();
 
-        const emAtendimento = await tx.historicoSenha.findFirst({
+        await tx.historicoSenha.updateMany({
           where: {
             codSenha: idSenha,
-            NOT: {
-              dataHoraFimHistorico: {
-                lte: agora,
-              },
-            },
+            dataHoraFimHistorico: null,
+          },
+          data: {
+            dataHoraFimHistorico: agora,
           },
         });
-
-        if (emAtendimento) {
-          await tx.historicoSenha.update({
-            where: {
-              idHistorico: emAtendimento.idHistorico,
-              codSenha: idSenha,
-            },
-            data: {
-              dataHoraFimHistorico: agora,
-            },
-          });
-        }
 
         const senhaAtualizada = await tx.senha.update({
           where: {
@@ -710,56 +702,66 @@ export default class PostosService extends BaseService {
   }
 }
 
-const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
-  const agora = new Date();
+const FUSO_HORARIO = "America/Sao_Paulo";
 
-  let dataInicio;
-  let dataFim;
+const obterDiaLocal = (data = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: FUSO_HORARIO,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(data);
+
+const inicioDiaLocal = (dia) => new Date(`${dia}T00:00:00.000-03:00`);
+const fimDiaLocal = (dia) => new Date(`${dia}T23:59:59.999-03:00`);
+
+const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
+  const hoje = obterDiaLocal();
 
   switch (tipoPeriodo) {
     case "HOJE":
-      dataInicio = new Date(agora);
-      dataInicio.setHours(0, 0, 0, 0);
+      return {
+        dataInicio: inicioDiaLocal(hoje),
+        dataFim: fimDiaLocal(hoje),
+      };
 
-      dataFim = new Date(agora);
-      dataFim.setHours(23, 59, 59, 999);
-      break;
+    case "SEMANA": {
+      const data = new Date(`${hoje}T12:00:00Z`);
+      const deslocamento = (data.getUTCDay() + 6) % 7;
+      data.setUTCDate(data.getUTCDate() - deslocamento);
+      const primeiroDia = data.toISOString().slice(0, 10);
 
-    case "SEMANA":
-      dataInicio = new Date(agora);
-      dataInicio.setDate(agora.getDate() - ((agora.getDay() + 6) % 7));
-      dataInicio.setHours(0, 0, 0, 0);
+      data.setUTCDate(data.getUTCDate() + 6);
+      const ultimoDia = data.toISOString().slice(0, 10);
 
-      dataFim = new Date(dataInicio);
-      dataFim.setDate(dataFim.getDate() + 6);
-      dataFim.setHours(23, 59, 59, 999);
-      break;
+      return {
+        dataInicio: inicioDiaLocal(primeiroDia),
+        dataFim: fimDiaLocal(ultimoDia),
+      };
+    }
 
-    case "MES":
-      dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
-      dataFim = new Date(
-        agora.getFullYear(),
-        agora.getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-        999,
-      );
-      break;
+    case "MES": {
+      const [ano, mes] = hoje.split("-").map(Number);
+      const ultimoDiaMes = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+      const prefixoMes = hoje.slice(0, 7);
 
-    case "PERSONALIZADO":
-      if (!inicio || !fim) {
-        dataInicio = new Date(agora);
-        dataInicio.setHours(0, 0, 0, 0);
+      return {
+        dataInicio: inicioDiaLocal(`${prefixoMes}-01`),
+        dataFim: fimDiaLocal(
+          `${prefixoMes}-${String(ultimoDiaMes).padStart(2, "0")}`,
+        ),
+      };
+    }
 
-        dataFim = new Date(agora);
-        dataFim.setHours(23, 59, 59, 999);
-      } else {
-  dataInicio = new Date(`${inicio}T00:00:00.000-03:00`);
-  dataFim = new Date(`${fim}T23:59:59.999-03:00`);
-}
-      break;
+    case "PERSONALIZADO": {
+      const diaInicio = inicio && fim ? inicio : hoje;
+      const diaFim = inicio && fim ? fim : hoje;
+
+      return {
+        dataInicio: inicioDiaLocal(diaInicio),
+        dataFim: fimDiaLocal(diaFim),
+      };
+    }
 
     default:
       throw new AppError("periodo inválido", {
@@ -767,8 +769,6 @@ const obterIntervaloDatas = (tipoPeriodo, inicio, fim) => {
         code: "TIPO_PERIODO_INVALIDO",
       });
   }
-
-  return { dataInicio, dataFim };
 };
 
 const obterFinalizadasPorHora = async (dataInicio, dataFim, tx) => {
@@ -782,6 +782,9 @@ const obterFinalizadasPorHora = async (dataInicio, dataFim, tx) => {
   const senhas = await tx.senha.findMany({
     where: {
       statusSenha: "finalizada",
+      dataHoraInicioSenha: {
+        gte: dataInicio,
+      },
       dataHoraFimSenha: {
         lte: dataFim,
       },

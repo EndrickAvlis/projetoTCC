@@ -48,6 +48,73 @@ export const obterIntervaloDia = (agora = new Date()) => {
   return { inicioDia, fimDia, inicioSequencia };
 };
 
+let ultimoDiaVerificado = null;
+let limpezaEmAndamento = null;
+
+export const cancelarSenhas = async () => {
+  const agora = new Date();
+  const hoje = obterDia(agora);
+  if (ultimoDiaVerificado === hoje) return;
+
+  if (!limpezaEmAndamento) {
+    limpezaEmAndamento = (async () => {
+      const { inicioDia } = obterIntervaloDia(agora);
+
+      await prisma.$transaction(async (tx) => {
+        const senhasAbertas = await tx.senha.findMany({
+          where: {
+            dataHoraInicioSenha: { lt: inicioDia },
+            statusSenha: { notIn: ["cancelada", "finalizada"] },
+          },
+          select: {
+            idSenha: true,
+            dataHoraInicioSenha: true,
+          },
+        });
+
+        if (senhasAbertas.length === 0) return;
+
+        const idsPorDia = new Map();
+        for (const senha of senhasAbertas) {
+          const dia = obterDia(senha.dataHoraInicioSenha);
+          if (!idsPorDia.has(dia)) idsPorDia.set(dia, []);
+          idsPorDia.get(dia).push(senha.idSenha);
+        }
+
+        for (const [dia, ids] of idsPorDia) {
+          const fimDoDia = new Date(`${dia}T23:59:59.999-03:00`);
+
+          await tx.historicoSenha.updateMany({
+            where: {
+              codSenha: { in: ids },
+              dataHoraFimHistorico: null,
+            },
+            data: {
+              dataHoraFimHistorico: fimDoDia,
+            },
+          });
+
+          await tx.senha.updateMany({
+            where: {
+              idSenha: { in: ids },
+            },
+            data: {
+              statusSenha: "cancelada",
+              dataHoraFimSenha: fimDoDia,
+            },
+          });
+        }
+      });
+
+      ultimoDiaVerificado = hoje;
+    })().finally(() => {
+      limpezaEmAndamento = null;
+    });
+  }
+
+  return limpezaEmAndamento;
+};
+
 export default class SenhaService extends BaseService {
   constructor() {
     super(prisma.senha, "idSenha");
@@ -194,4 +261,6 @@ export default class SenhaService extends BaseService {
 
     return senhaAtualizada;
   }
+
+
 }

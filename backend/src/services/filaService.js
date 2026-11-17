@@ -2,6 +2,7 @@
 import prisma from "../config/prisma.js";
 import AppError from "../errors/AppError.js";
 import BaseService from "./baseService.js";
+import { cancelarSenhas } from "./senhaService.js";
 
 const senhaFilaSelect = {
   idSenha: true,
@@ -17,6 +18,7 @@ export default class FilaService extends BaseService {
   }
 
   async listarSenhasAguardando(etapa) {
+    await cancelarSenhas();
     return super.listar(
       {
         etapaSenha: etapa,
